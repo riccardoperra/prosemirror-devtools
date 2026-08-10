@@ -1,0 +1,41 @@
+{
+  "name": "prosemirror-devtools-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Development workspace for ProseMirror DevTools and its TanStack Devtools demo.",
+  "license": "MIT",
+  "author": "Riccardo Perra",
+  "type": "module",
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0",
+    "pnpm": ">=11.0.0 <12.0.0"
+  },
+  "scripts": {
+    "build": "pnpm --recursive --if-present run build",
+    "check": "pnpm lint && pnpm format:check && pnpm build && pnpm typecheck && pnpm test",
+    "changeset": "changeset",
+    "changeset:status": "changeset status --since=main",
+    "dev": "pnpm --filter prosemirror-devtools run build && pnpm --parallel --filter prosemirror-devtools --filter @prosemirror-devtools/tanstack-demo run dev",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "lint": "eslint . --max-warnings=0",
+    "release": "pnpm build && changeset publish",
+    "test": "pnpm --recursive --if-present run test",
+    "typecheck": "pnpm --filter prosemirror-devtools run build && pnpm --recursive --if-present run typecheck",
+    "version-packages": "changeset version"
+  },
+  "devDependencies": {
+    "@changesets/cli": "catalog:",
+    "@eslint/js": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "eslint-plugin-react-refresh": "catalog:",
+    "globals": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
+  }
+}

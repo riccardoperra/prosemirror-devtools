@@ -1,0 +1,33 @@
+{
+  "name": "@prosemirror-devtools/tanstack-demo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-devtools": "catalog:",
+    "prosemirror-commands": "catalog:",
+    "prosemirror-devtools": "workspace:*",
+    "prosemirror-history": "catalog:",
+    "prosemirror-keymap": "catalog:",
+    "prosemirror-model": "catalog:",
+    "prosemirror-schema-basic": "catalog:",
+    "prosemirror-schema-list": "catalog:",
+    "prosemirror-state": "catalog:",
+    "prosemirror-view": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

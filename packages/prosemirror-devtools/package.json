@@ -1,0 +1,96 @@
+{
+  "name": "prosemirror-devtools",
+  "version": "0.0.0",
+  "description": "Compact, multi-instance ProseMirror developer tools with transaction and plugin performance profiling.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "default": "./dist/core.js"
+    },
+    "./performance": {
+      "types": "./dist/performance.d.ts",
+      "default": "./dist/performance.js"
+    },
+    "./tanstack": {
+      "types": "./dist/tanstack.d.ts",
+      "default": "./dist/tanstack.js"
+    },
+    "./tiptap": {
+      "types": "./dist/tiptap.d.ts",
+      "default": "./dist/tiptap.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src test",
+    "publint": "publint"
+  },
+  "keywords": [
+    "prosemirror",
+    "tiptap",
+    "devtools",
+    "tanstack",
+    "performance",
+    "editor",
+    "debugging"
+  ],
+  "author": "Riccardo Perra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/riccardoperra/prosemirror-devtools.git",
+    "directory": "packages/prosemirror-devtools"
+  },
+  "homepage": "https://github.com/riccardoperra/prosemirror-devtools#readme",
+  "bugs": "https://github.com/riccardoperra/prosemirror-devtools/issues",
+  "peerDependencies": {
+    "@tanstack/react-devtools": ">=0.7.0",
+    "prosemirror-model": ">=1.19.0",
+    "prosemirror-state": ">=1.4.0",
+    "prosemirror-view": ">=1.31.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tanstack/react-devtools": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@tanstack/charts": "catalog:",
+    "@tanstack/react-charts": "catalog:",
+    "@tanstack/react-devtools": "catalog:",
+    "@types/d3-scale": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "d3-scale": "catalog:",
+    "jsdom": "catalog:",
+    "prosemirror-model": "catalog:",
+    "prosemirror-state": "catalog:",
+    "prosemirror-view": "catalog:",
+    "publint": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
