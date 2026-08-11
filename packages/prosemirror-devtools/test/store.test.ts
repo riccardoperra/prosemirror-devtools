@@ -111,6 +111,13 @@ describe("createProseMirrorDevtoolsStore", () => {
     });
   });
 
+  it("retains up to 500 transaction records by default", () => {
+    const store = createProseMirrorDevtoolsStore();
+    store.register({ id: "editor", view: viewForState() });
+
+    expect(store.getSnapshot().instances[0]?.transactionLimit).toBe(500);
+  });
+
   it("keeps only the configured number of transaction records and clears profiling data", () => {
     const store = createProseMirrorDevtoolsStore();
     let state = createTestState();

@@ -304,8 +304,8 @@ adapter does this automatically.
 
 ### Performance
 
-- An interactive TanStack Charts stacked bar for each of the latest 60 retained dispatches,
-  updated after every dispatch and selectable by pointer or keyboard.
+- An interactive TanStack Charts stacked bar for each retained dispatch that fits the measured
+  viewport, updated after every dispatch and selectable by pointer or keyboard.
 - Apply, view-update, or inclusive custom-dispatch phase segments.
 - A compact status strip for average, p95, maximum, dispatch count, and retained-record count.
 - One selected-dispatch inspector shared with History: plugin cost remains visible beside
@@ -364,10 +364,12 @@ One root call to `view.dispatch` produces one `TransactionRecord`. Its
 `appendedTransactionCount` excludes the root. A rejected root transaction has zero applied
 transactions and is marked as filtered.
 
-The default retention limit is 100 records and is configurable through `transactionLimit`.
-Headline average/p95/max values use retained records, and the chart displays the last 60. Plugin
-hook aggregates cover calls since attachment or the last `clearTransactions` call, including calls
-older than the retained transaction window.
+The default retention limit is 500 records and is configurable through `transactionLimit`.
+Headline average/p95/max values use retained records. The chart measures its available width and
+shows as many fixed-width dispatch bars as fit, selects every new dispatch automatically, and moves
+its window when previous/next selection reaches an off-screen record. Plugin hook aggregates cover
+calls since attachment or the last `clearTransactions` call, including calls older than the retained
+transaction window.
 
 ### User Timing measures
 

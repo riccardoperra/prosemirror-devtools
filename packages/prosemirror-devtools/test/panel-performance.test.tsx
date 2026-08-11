@@ -4,6 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProseMirrorDevtoolsPanel } from "../src";
 import { createProseMirrorDevtoolsStore } from "../src/core";
+import {
+  resolveDispatchWindow,
+  resolveDispatchWindowSize,
+} from "../src/panel/features/performance/overview/dispatch-timeline";
 import { appendTextTransaction, createTestState, createTestView } from "./helpers";
 
 const reactTestEnvironment = globalThis as typeof globalThis & {
@@ -86,13 +90,19 @@ describe("performance panel", () => {
       expect(dispatchChart?.getAttribute("tabindex")).toBe("0");
       expect(
         container.querySelector<HTMLElement>(".pm-dispatch-chart-plot")?.style.inlineSize,
-      ).toBe("52px");
+      ).toBe("24px");
       const dispatchSegments = Array.from(dispatchChart?.querySelectorAll("rect") ?? []);
       expect(dispatchSegments.length).toBeGreaterThan(0);
       expect(dispatchSegments.every((segment) => segment.getAttribute("rx") === "0")).toBe(true);
-      expect(container.querySelector(".pm-chart-selection")?.textContent).toBe(
-        "Selected dispatch #1",
-      );
+      expect(container.querySelector(".pm-chart-selection")).toBeNull();
+      expect(container.querySelector(".pm-dispatch-selection output")?.textContent).toBe("1 / 1");
+      expect(
+        container.querySelector<HTMLButtonElement>('[aria-label="Select previous dispatch"]')
+          ?.disabled,
+      ).toBe(true);
+      expect(
+        container.querySelector<HTMLButtonElement>('[aria-label="Select next dispatch"]')?.disabled,
+      ).toBe(true);
       const pluginChart = container.querySelector<SVGElement>(
         'svg[role="img"][aria-label="Plugin cost ranking"]',
       );
@@ -103,7 +113,7 @@ describe("performance panel", () => {
       expect(performanceSummary?.textContent).toContain("Dispatches1");
       expect(performanceSummary?.querySelectorAll(".pm-status-dot")).toHaveLength(5);
       expect(container.querySelector('[aria-label="Dispatch 1 timings"]')?.textContent).toContain(
-        "Full dispatch18.0 ms",
+        "Total18.0 ms",
       );
 
       const slowGroup = groups[0];
@@ -168,27 +178,25 @@ describe("performance panel", () => {
       expect(inspector?.querySelector('[aria-label="Dispatch cost view"]')).not.toBeNull();
       expect(inspector?.textContent).not.toContain("Steps / applied");
       expect(inspector?.textContent).toContain("Steps1");
-      expect(inspector?.textContent).toContain("Applied transactions1");
+      expect(inspector?.textContent).toContain("Transactions1");
       const markers = inspector?.querySelector('[aria-label="Custom markers"]');
       expect(markers?.textContent).toContain("Collaboration rebase");
       expect(markers?.textContent).toContain("collaboration · at 18.0 ms");
       expect(markers?.textContent).toContain("version");
-      const appliedTransaction =
-        inspector?.querySelector<HTMLDetailsElement>(".pm-transaction-record");
-      expect(appliedTransaction?.open).toBe(true);
-      expect(appliedTransaction?.querySelector(".pm-transaction-kind")?.textContent).toBe("Root");
+      const appliedTransaction = inspector?.querySelector<HTMLElement>(".pm-transaction-record");
+      expect(appliedTransaction?.tagName).toBe("SECTION");
+      expect(appliedTransaction?.querySelector(".pm-transaction-kind")).toBeNull();
       expect(appliedTransaction?.textContent).toContain("Transaction 1");
-      expect(appliedTransaction?.textContent).toContain("Steps1");
+      expect(appliedTransaction?.textContent).toContain("steps");
+      expect(appliedTransaction?.textContent).toContain("meta");
+      expect(appliedTransaction?.textContent).toContain("docChanged");
       expect(inspector?.querySelector(".pm-plugin-timing-group")).not.toBeNull();
       expect(
         inspector?.querySelector<HTMLDetailsElement>(".pm-plugin-breakdown-details")?.open,
       ).toBe(false);
 
-      const stepsSection = appliedTransaction?.querySelector(
-        ".pm-transaction-payload > section:first-child",
-      );
       expect(
-        stepsSection?.querySelectorAll('[aria-label="Collapse value"]').length,
+        appliedTransaction?.querySelectorAll('[aria-label="Collapse value"]').length,
       ).toBeGreaterThanOrEqual(4);
       expect(inspector?.textContent).not.toContain("Changed ranges");
       expect(inspector?.textContent).toContain("Selection");
@@ -227,7 +235,7 @@ describe("performance panel", () => {
       expect(timelineCalls[1]?.textContent).toContain("↳ Decoration change");
       expect(
         inspector?.querySelector('.pm-timeline-lane-label[data-kind="dispatch"]')?.textContent,
-      ).toContain("Full dispatchSynchronous boundary · 18.0 ms");
+      ).toContain("Dispatch18.0 ms");
       const orderedTimeline = inspector?.querySelector<SVGElement>(
         'svg[aria-label="Ordered synchronous dispatch timeline"]',
       );
@@ -237,6 +245,121 @@ describe("performance panel", () => {
       expect(
         inspector?.querySelector<HTMLElement>(".pm-timeline-chart-surface")?.style.minInlineSize,
       ).toBe("960px");
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      unregister();
+      view.destroy();
+    }
+  });
+
+  it("moves the dispatch chart window only when the selection leaves it", () => {
+    const records = Array.from({ length: 65 }, (_, index) => ({ id: index + 1 }));
+
+    const latest = resolveDispatchWindow(records, null, 65);
+    expect([latest.startIndex, latest.endIndex]).toEqual([5, 65]);
+    expect([latest.visible.at(0)?.id, latest.visible.at(-1)?.id]).toEqual([6, 65]);
+
+    const stillVisible = resolveDispatchWindow(records, 6, 64);
+    expect([stillVisible.startIndex, stillVisible.endIndex]).toEqual([5, 65]);
+
+    const beforeViewport = resolveDispatchWindow(records, 6, 5);
+    expect([beforeViewport.startIndex, beforeViewport.endIndex]).toEqual([4, 64]);
+    expect([beforeViewport.visible.at(0)?.id, beforeViewport.visible.at(-1)?.id]).toEqual([5, 64]);
+
+    const afterViewport = resolveDispatchWindow(records, 1, 61);
+    expect([afterViewport.startIndex, afterViewport.endIndex]).toEqual([1, 61]);
+    expect([afterViewport.visible.at(0)?.id, afterViewport.visible.at(-1)?.id]).toEqual([2, 61]);
+
+    const compact = resolveDispatchWindow(records, null, 65, 20);
+    expect([compact.startIndex, compact.endIndex]).toEqual([45, 65]);
+    expect([compact.visible.at(0)?.id, compact.visible.at(-1)?.id]).toEqual([46, 65]);
+  });
+
+  it("fits a fixed-width dispatch window to the measured chart width", () => {
+    expect(resolveDispatchWindowSize(312)).toBe(13);
+    expect(resolveDispatchWindowSize(1_850)).toBe(77);
+    expect(resolveDispatchWindowSize(0)).toBe(60);
+  });
+
+  it("selects individual dispatches and returns to the newest one when a dispatch arrives", async () => {
+    let clock = 500;
+    vi.spyOn(performance, "now").mockImplementation(() => clock);
+
+    const store = createProseMirrorDevtoolsStore();
+    const view = createTestView(createTestState());
+    const unregister = store.register({ id: "editor", transactionLimit: 100, view });
+    const recordDispatch = (text: string): void => {
+      const transaction = appendTextTransaction(view.state, text);
+      const measurement = store.beginTransaction("editor", transaction, view.state, false);
+      const applied = view.state.applyTransaction(transaction);
+      view.updateState(applied.state);
+      clock += 1;
+      store.finishTransaction(measurement, {
+        stateAfter: applied.state,
+        appliedTransactions: applied.transactions,
+      });
+    };
+
+    for (let index = 0; index < 65; index += 1) recordDispatch("x");
+
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+
+    try {
+      await act(async () => {
+        root.render(
+          <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+        );
+      });
+      await act(async () => {
+        await import("../src/panel/features/performance/performance-view");
+      });
+
+      const selectionLabel = (): string | null | undefined =>
+        container.querySelector(".pm-dispatch-selection output")?.textContent;
+      const chartWindow = (): { start: string | undefined; end: string | undefined } => {
+        const plot = container.querySelector<HTMLElement>(".pm-dispatch-chart-plot");
+        return { start: plot?.dataset.windowStartId, end: plot?.dataset.windowEndId };
+      };
+      const previous = container.querySelector<HTMLButtonElement>(
+        '[aria-label="Select previous dispatch"]',
+      );
+      const next = container.querySelector<HTMLButtonElement>(
+        '[aria-label="Select next dispatch"]',
+      );
+
+      expect(selectionLabel()).toBe("65 / 65");
+      expect(chartWindow()).toEqual({ start: "6", end: "65" });
+      expect(previous?.disabled).toBe(false);
+      expect(next?.disabled).toBe(true);
+      expect(container.querySelector('[aria-label="Dispatch 65 inspector"]')).not.toBeNull();
+
+      await act(async () => previous?.click());
+
+      expect(selectionLabel()).toBe("64 / 65");
+      expect(chartWindow()).toEqual({ start: "6", end: "65" });
+      expect(previous?.disabled).toBe(false);
+      expect(next?.disabled).toBe(false);
+      expect(container.querySelector('[aria-label="Dispatch 64 inspector"]')).not.toBeNull();
+
+      await act(async () => recordDispatch("y"));
+      expect(selectionLabel()).toBe("66 / 66");
+      expect(chartWindow()).toEqual({ start: "7", end: "66" });
+      expect(next?.disabled).toBe(true);
+      expect(container.querySelector('[aria-label="Dispatch 66 inspector"]')).not.toBeNull();
+
+      await act(async () => previous?.click());
+      expect(selectionLabel()).toBe("65 / 66");
+
+      await act(async () => recordDispatch("z"));
+      expect(selectionLabel()).toBe("67 / 67");
+      expect(chartWindow()).toEqual({ start: "8", end: "67" });
+      expect(next?.disabled).toBe(true);
+      expect(container.querySelector('[aria-label="Dispatch 67 inspector"]')).not.toBeNull();
     } finally {
       await act(async () => {
         root.unmount();

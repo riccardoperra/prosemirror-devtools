@@ -76,7 +76,9 @@ function pluginLane(entry: PluginTimelineEntry): PluginCallTimelineLane {
 }
 
 export function buildPluginTimelineModel(record: TransactionRecord): PluginTimelineModel {
-  const phaseLanes = buildPhaseTimeline(record).map(phaseLane);
+  const phaseLanes = buildPhaseTimeline(record)
+    .filter((entry) => entry.phase !== "customDispatch")
+    .map(phaseLane);
   const pluginLanes = buildPluginTimeline(record).map(pluginLane);
 
   return {
@@ -85,7 +87,7 @@ export function buildPluginTimelineModel(record: TransactionRecord): PluginTimel
         id: "dispatch",
         laneKey: "dispatch",
         kind: "dispatch",
-        label: "Full dispatch",
+        label: "Dispatch",
         startOffset: 0,
         endOffset: Math.max(0, record.totalDuration),
         duration: Math.max(0, record.totalDuration),

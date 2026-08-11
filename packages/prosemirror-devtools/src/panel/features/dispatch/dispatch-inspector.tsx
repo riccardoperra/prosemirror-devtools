@@ -79,7 +79,7 @@ function DispatchInspectorHeader(): ReactElement {
   return (
     <header className="pm-dispatch-header">
       <div className="pm-dispatch-identity">
-        <span className="pm-eyebrow">Selected dispatch</span>
+        <span className="pm-eyebrow">Dispatch transaction</span>
         <strong>#{record.id}</strong>
         <span className="pm-row-detail">{formatTime(record.timestamp)}</span>
       </div>
@@ -104,12 +104,12 @@ function DispatchInspectorMetrics(): ReactElement {
     <CompactMetrics
       label={`Dispatch ${record.id} timings`}
       metrics={[
-        { label: "Full dispatch", value: formatMs(record.totalDuration) },
+        { label: "Total", value: formatMs(record.totalDuration) },
         { label: "State apply", value: formatMs(record.applyDuration) },
         { label: "View update", value: formatMs(record.viewUpdateDuration) },
         { label: "Steps", value: String(record.stepCount) },
         {
-          label: "Applied transactions",
+          label: "Transactions",
           value: String(record.appliedTransactionCount ?? "?"),
         },
         { label: "Markers", value: String(markers.length) },
@@ -147,15 +147,16 @@ function TransactionDetails(): ReactElement {
     state: { record },
     meta: { markers },
   } = useDispatchInspector();
+  const transactionCount = record.appliedTransactionCount ?? record.transactions.length;
 
   return (
     <aside aria-label="Transaction details" className="pm-dispatch-detail-pane">
       <DispatchMarkers markers={markers} />
       <div className="pm-workspace-heading">
-        <span className="pm-section-title">Transactions</span>
-        <Badge>{record.appliedTransactionCount ?? record.transactions.length}</Badge>
-        <span className="pm-spacer" />
-        <span className="pm-row-detail">root + appended</span>
+        <span className="pm-section-title">
+          {transactionCount === 1 ? "Transaction JSON" : "Transactions"}
+        </span>
+        {transactionCount > 1 ? <Badge>{transactionCount}</Badge> : null}
       </div>
       {record.error ? <div className="pm-warning">{record.error}</div> : null}
       <AppliedTransactions record={record} />

@@ -25,9 +25,7 @@ function LaneText({ lane }: { lane: PluginTimelineLane }): ReactElement {
   return (
     <span className="pm-timeline-lane-copy">
       <strong>{lane.label}</strong>
-      <span>
-        {timelineLaneDetail(lane)} · {formatMs(lane.duration)}
-      </span>
+      <span>{formatMs(lane.duration)}</span>
     </span>
   );
 }

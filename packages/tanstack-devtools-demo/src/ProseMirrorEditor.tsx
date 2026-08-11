@@ -116,6 +116,8 @@ function createInitialDocument() {
   });
 }
 
+const SLOW_APPLY_DURATION_MS = 30;
+
 function spinFor(milliseconds: number) {
   const startedAt = performance.now();
   let checksum = 0;
@@ -142,11 +144,10 @@ function createPlugins(
       init: () => ({ enabled: false, lastDurationMs: 0, transactions: 0 }),
       apply: (_transaction, value) => {
         const enabled = latencyEnabled.current;
-        const duration = enabled ? 5.5 + (value.transactions % 4) * 0.7 : 0;
+        const duration = enabled ? SLOW_APPLY_DURATION_MS : 0;
 
         if (enabled) {
-          // The changing duration makes the timing chart easier to read while
-          // keeping the demo responsive.
+          // Keep the delay stable so dispatch timings are easy to compare.
           spinFor(duration);
         }
 

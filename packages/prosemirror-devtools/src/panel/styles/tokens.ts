@@ -18,6 +18,12 @@ export const panelTokens = String.raw`
   --pm-red-soft: #fee7eb;
   --pm-blue: #2775c9;
   --pm-blue-soft: #e5f1fd;
+  --pm-timeline-dispatch: #64748b;
+  --pm-timeline-handler: #db2777;
+  --pm-timeline-props: #d97706;
+  --pm-timeline-state: #7c3aed;
+  --pm-timeline-transaction: #0284c7;
+  --pm-timeline-view: #059669;
   --pm-shadow: 0 1px 2px rgba(24, 30, 42, .06);
   container-type: inline-size;
   color: var(--pm-text);
@@ -52,6 +58,12 @@ export const panelTokens = String.raw`
   --pm-red-soft: #40232a;
   --pm-blue: #73b7ff;
   --pm-blue-soft: #1d3045;
+  --pm-timeline-dispatch: #64748b;
+  --pm-timeline-handler: #fb7185;
+  --pm-timeline-props: #fbbf24;
+  --pm-timeline-state: #c4b5fd;
+  --pm-timeline-transaction: #38bdf8;
+  --pm-timeline-view: #4ade80;
   --pm-shadow: 0 1px 2px rgba(0, 0, 0, .3);
   color-scheme: dark;
 }

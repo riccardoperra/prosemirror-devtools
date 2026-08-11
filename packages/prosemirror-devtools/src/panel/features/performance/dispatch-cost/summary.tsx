@@ -16,7 +16,7 @@ export function DispatchCostSummary({ record }: { record: TransactionRecord }): 
   return (
     <div className="pm-dispatch-cost-summary">
       <div className="pm-dispatch-cost-heading">
-        <span>Full synchronous dispatch</span>
+        <span>Dispatch time</span>
         <strong className="pm-mono">{formatMs(coverage.totalDuration)}</strong>
       </div>
       <div
@@ -30,19 +30,14 @@ export function DispatchCostSummary({ record }: { record: TransactionRecord }): 
       <div className="pm-dispatch-cost-legend">
         <span>
           <i className="pm-legend-dot" data-segment="plugin" />
-          Measured plugin hooks{" "}
+          Plugin hooks{" "}
           <strong className="pm-mono">{formatMs(coverage.measuredPluginDuration)}</strong>
         </span>
         <span>
           <i className="pm-legend-dot" data-segment="other" />
-          Other synchronous work{" "}
-          <strong className="pm-mono">{formatMs(coverage.otherSyncDuration)}</strong>
+          Other work <strong className="pm-mono">{formatMs(coverage.otherSyncDuration)}</strong>
         </span>
       </div>
-      <p className="pm-dispatch-cost-note">
-        Other work includes ProseMirror core, dispatcher code, and DOM/view work outside wrapped
-        plugin hooks. Later browser paint and asynchronous work are not part of this dispatch.
-      </p>
     </div>
   );
 }

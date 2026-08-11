@@ -54,6 +54,7 @@ const EMPTY_SNAPSHOT: DevtoolsSnapshot = {
   instances: [],
   version: 0,
 };
+const DEFAULT_TRANSACTION_LIMIT = 500;
 
 function notify(listeners: ReadonlySet<Listener>): void {
   for (const listener of listeners) {
@@ -176,7 +177,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
         registeredAt,
         updatedAt: registeredAt,
         dispatchCount: 0,
-        transactionLimit: Math.max(1, options.transactionLimit ?? 100),
+        transactionLimit: Math.max(1, options.transactionLimit ?? DEFAULT_TRANSACTION_LIMIT),
         transactions: [],
         pluginTimings,
       };

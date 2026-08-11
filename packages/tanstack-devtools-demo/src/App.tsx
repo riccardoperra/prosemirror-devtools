@@ -31,7 +31,7 @@ export function App() {
             <code>history · keymap · wordCount</code>
           </div>
 
-          <label className="plugin-toggle" title="Adds 6–8 ms to each transaction">
+          <label className="plugin-toggle" title="Adds about 30 ms to each transaction">
             <input
               checked={latencyEnabled}
               onChange={(event) => setLatencyEnabled(event.target.checked)}

@@ -38,7 +38,7 @@ export function StateView({ instance }: { instance: RegisteredProseMirrorInstanc
   );
 
   return (
-    <div className="pm-split">
+    <div className="pm-split pm-state-layout">
       <div className="pm-pane">
         <div className="pm-pane-header">
           <span className="pm-pane-title">Document</span>

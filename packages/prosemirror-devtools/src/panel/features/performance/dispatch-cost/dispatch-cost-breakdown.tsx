@@ -22,8 +22,8 @@ function DispatchCoverageWarning({ record }: { record: TransactionRecord }): Rea
   return (
     <div className="pm-warning">
       {record.applicationStatus === "unknown"
-        ? "The dispatched transaction could not be correlated with the final view state. Observed phases are timed, but application and appended-transaction counts remain unknown."
-        : "This custom dispatcher did not expose both phases synchronously. Public state and view calls are split when observed; deferred or externally managed work remains unattributed."}
+        ? "Could not match this transaction to the final editor state. Transaction counts are unavailable."
+        : "dispatchTransaction() did not expose synchronous state apply and view update calls."}
     </div>
   );
 }

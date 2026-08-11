@@ -143,7 +143,7 @@ function phaseLabel(phase: DispatchPhaseTiming["phase"]): string {
     case "viewUpdate":
       return "View update";
     case "customDispatch":
-      return "Custom dispatcher";
+      return "dispatchTransaction()";
   }
 }
 

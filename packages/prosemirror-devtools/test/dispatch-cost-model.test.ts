@@ -209,6 +209,7 @@ describe("dispatch cost model", () => {
       [
         { phase: "viewUpdate", startOffset: 4, duration: 3 },
         { phase: "apply", startOffset: 0.5, duration: 3 },
+        { phase: "customDispatch", startOffset: 0, duration: 8 },
       ],
     );
 

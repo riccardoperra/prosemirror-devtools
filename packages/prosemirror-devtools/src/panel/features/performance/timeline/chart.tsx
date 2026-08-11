@@ -18,14 +18,14 @@ const chartMargin = { top: 10, right: 18, bottom: 34, left: 12 } as const;
 const minimumTimelineWidth = 960;
 const minimumIntervalPixels = 2;
 const timelineColors: Record<PluginTimelineColor, string> = {
-  dispatch: "var(--pm-border-strong)",
-  apply: "var(--pm-accent)",
-  viewUpdate: "var(--pm-green)",
-  customDispatch: "var(--pm-blue)",
-  state: "var(--pm-accent)",
-  transaction: "var(--pm-blue)",
-  view: "var(--pm-green)",
-  props: "var(--pm-yellow)",
+  dispatch: "var(--pm-timeline-dispatch)",
+  apply: "var(--pm-timeline-state)",
+  viewUpdate: "var(--pm-timeline-view)",
+  customDispatch: "var(--pm-timeline-handler)",
+  state: "var(--pm-timeline-state)",
+  transaction: "var(--pm-timeline-transaction)",
+  view: "var(--pm-timeline-view)",
+  props: "var(--pm-timeline-props)",
 };
 
 export function pluginTimelineChartHeight(laneCount: number): number {

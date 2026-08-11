@@ -48,7 +48,12 @@ export function PerformanceView({
           },
         ]}
       />
-      <DispatchTimeline records={records} selectedId={selectedId} onSelect={select} />
+      <DispatchTimeline
+        key={instance.id}
+        records={records}
+        selectedId={selectedId}
+        onSelect={select}
+      />
       {selected ? <PerformanceDispatchInspector instance={instance} record={selected} /> : null}
       <PluginPerformanceTable summaries={instance.pluginTimings} />
       <div className="pm-performance-note">

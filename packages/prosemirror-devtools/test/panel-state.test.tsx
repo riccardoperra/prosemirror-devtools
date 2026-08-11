@@ -65,6 +65,7 @@ describe("State panel", () => {
     const { container, root, view } = await renderStateView("hello");
 
     try {
+      expect(container.firstElementChild?.classList.contains("pm-state-layout")).toBe(true);
       const docRow = container.querySelector<HTMLElement>('[data-node-type="doc"]');
       const paragraphRow = container.querySelector<HTMLElement>('[data-node-type="paragraph"]');
       const textRow = container.querySelector<HTMLElement>('[data-node-type="text"]');

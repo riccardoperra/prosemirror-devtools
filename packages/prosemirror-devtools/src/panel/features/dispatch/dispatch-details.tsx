@@ -15,42 +15,32 @@ function AppliedTransaction({
 }: {
   transaction: AppliedTransactionRecord;
 }): ReactElement {
-  const [open, setOpen] = useState(transaction.index === 0);
+  const value = useMemo(
+    () => ({
+      steps: transaction.steps,
+      meta: transaction.meta,
+      docChanged: transaction.docChanged,
+      selectionSet: transaction.selectionSet,
+      storedMarksSet: transaction.storedMarksSet,
+    }),
+    [transaction],
+  );
 
   return (
-    <details
-      className="pm-transaction-record"
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-      open={open}
-    >
-      <summary>
-        <span className="pm-transaction-kind">{transaction.appended ? "Appended" : "Root"}</span>
+    <section className="pm-transaction-record">
+      <div className="pm-transaction-record-heading">
         <strong>Transaction {transaction.index + 1}</strong>
         <span className="pm-spacer" />
+        {transaction.appended ? <Badge tone="yellow">appended</Badge> : null}
         {transaction.docChanged ? <Badge tone="green">doc</Badge> : null}
         {transaction.selectionSet ? <Badge tone="blue">selection</Badge> : null}
         {transaction.storedMarksSet ? <Badge>marks</Badge> : null}
         <span className="pm-row-detail">
           {transaction.steps.length} {transaction.steps.length === 1 ? "step" : "steps"}
         </span>
-      </summary>
-      <div className="pm-transaction-payload">
-        <section>
-          <div className="pm-detail-heading">
-            <span className="pm-section-title">Steps</span>
-            <Badge>{transaction.steps.length}</Badge>
-          </div>
-          <JsonTree defaultExpandedDepth={4} value={transaction.steps} />
-        </section>
-        <section>
-          <div className="pm-detail-heading">
-            <span className="pm-section-title">Metadata</span>
-            <Badge>{Object.keys(transaction.meta).length}</Badge>
-          </div>
-          <JsonTree defaultExpandedDepth={4} value={transaction.meta} />
-        </section>
       </div>
-    </details>
+      <JsonTree defaultExpandedDepth={4} value={value} />
+    </section>
   );
 }
 
@@ -59,8 +49,8 @@ export function AppliedTransactions({ record }: { record: TransactionRecord }): 
     return (
       <div className="pm-inspector-empty">
         {record.filtered
-          ? "The root transaction was filtered before it could be applied."
-          : "No applied transaction payload was observed for this dispatch."}
+          ? "The dispatched transaction was filtered before it could be applied."
+          : "Transaction payload unavailable."}
       </div>
     );
   }
@@ -95,7 +85,6 @@ export function DispatchDocuments({ record }: { record: TransactionRecord }): Re
       >
         <summary>
           <span className="pm-section-title">Documents</span>
-          <span className="pm-row-detail">Before and after JSON</span>
         </summary>
         <div className="pm-detail-columns">
           <section>
