@@ -5,6 +5,8 @@ export interface PanelTabDefinition {
   label: string;
 }
 
+export const DEFAULT_PERFORMANCE_FRAME_BUDGET_MS = 1000 / 60;
+
 export const PANEL_TABS: readonly PanelTabDefinition[] = [
   { id: "state", label: "State" },
   { id: "history", label: "History" },

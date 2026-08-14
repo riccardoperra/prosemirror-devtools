@@ -4,6 +4,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProseMirrorDevtoolsPanel } from "../src";
 import { createProseMirrorDevtoolsStore } from "../src/core";
+import {
+  calculateFrameRate,
+  createDispatchDurationScale,
+  resolveAdaptiveDetailThreshold,
+  resolveDispatchTimelineScale,
+} from "../src/panel/features/performance/overview/dispatch-timeline";
 import { appendTextTransaction, createTestState, createTestView } from "./helpers";
 
 const reactTestEnvironment = globalThis as typeof globalThis & {
@@ -22,6 +28,34 @@ afterEach(() => {
 });
 
 describe("performance panel", () => {
+  it("uses the configured frame budget as the timeline scale floor", () => {
+    const fastScale = resolveDispatchTimelineScale(0.5, 20, 0.5);
+    const slowScale = resolveDispatchTimelineScale(40, 20, 0.5);
+    const fallbackScale = resolveDispatchTimelineScale(0.5, Number.NaN, 0.5);
+    const adaptiveDetail = resolveAdaptiveDetailThreshold(
+      [0.1, 0.2, 0.3, 0.4, 1, 2, 3, 4, 5, 6],
+      20,
+    );
+
+    expect(fastScale.frameBudgetMs).toBe(20);
+    expect(fastScale.frameRate).toBe(50);
+    expect(fastScale.detailThresholdMs).toBe(0.5);
+    expect(fastScale.maximum).toBeCloseTo(23);
+    expect(slowScale.maximum).toBeCloseTo(46);
+    expect(fallbackScale.frameBudgetMs).toBeCloseTo(1000 / 60);
+    expect(adaptiveDetail.sampleSize).toBe(2);
+    expect(adaptiveDetail.shortAverageMs).toBeCloseTo(0.15);
+    expect(adaptiveDetail.thresholdMs).toBeCloseTo(0.6);
+    expect(calculateFrameRate(0)).toBe(60);
+    expect(calculateFrameRate(17.7)).toBe(56);
+
+    const detailScale = createDispatchDurationScale(fastScale.maximum, 0.5).range([0, 114]);
+    expect(detailScale(Number.EPSILON)).toBeCloseTo(6);
+    expect(detailScale(0.1)).toBeGreaterThan(6);
+    expect(detailScale(0.2)).toBeGreaterThan(detailScale(0.1));
+    expect(detailScale(0.5)).toBeCloseTo(42);
+  });
+
   it("renders the selected dispatch grouped by slowest synchronous plugin cost", async () => {
     let clock = 100;
     vi.spyOn(performance, "now").mockImplementation(() => clock);
@@ -86,13 +120,31 @@ describe("performance panel", () => {
       expect(dispatchChart?.getAttribute("tabindex")).toBe("0");
       expect(
         container.querySelector<HTMLElement>(".pm-dispatch-chart-plot")?.style.inlineSize,
-      ).toBe("52px");
+      ).toBe("240px");
+      expect(container.querySelector(".pm-frame-budget-label")?.textContent).toBe(
+        "Frame budget: 16.7 ms (60 FPS target)",
+      );
+      expect(container.querySelector(".pm-duration-scale-note")).toBeNull();
+      expect(container.querySelector(".pm-chart-axis-unit")).toBeNull();
+      expect(dispatchChart?.textContent).not.toContain("Dispatch time (ms)");
+      expect(dispatchChart?.textContent).toContain("Recent dispatches");
+      const dispatchChartContainer = container.querySelector<HTMLElement>(".pm-dispatch-chart");
+      expect(Number(dispatchChartContainer?.dataset.frameBudgetMs)).toBeCloseTo(1000 / 60);
+      expect(dispatchChartContainer?.dataset.detailThresholdMode).toBe("auto");
+      expect(Number(dispatchChartContainer?.dataset.detailThresholdMs)).toBeCloseTo(
+        (1000 / 60) * 0.25,
+      );
+      expect(Number(dispatchChartContainer?.dataset.scaleMaximumMs)).toBeCloseTo(18 * 1.15);
       const dispatchSegments = Array.from(dispatchChart?.querySelectorAll("rect") ?? []);
       expect(dispatchSegments.length).toBeGreaterThan(0);
       expect(dispatchSegments.every((segment) => segment.getAttribute("rx") === "0")).toBe(true);
-      expect(container.querySelector(".pm-chart-selection")?.textContent).toBe(
-        "Selected dispatch #1",
-      );
+      const dispatchSelection = container.querySelector('[aria-label="Dispatch selection"]');
+      expect(dispatchSelection?.querySelector("output")?.textContent).toBe("1 / 1");
+      expect(
+        Array.from(dispatchSelection?.querySelectorAll("button") ?? []).every(
+          (button) => button.disabled,
+        ),
+      ).toBe(true);
       const pluginChart = container.querySelector<SVGElement>(
         'svg[role="img"][aria-label="Plugin cost ranking"]',
       );
@@ -101,7 +153,11 @@ describe("performance panel", () => {
       expect(container.querySelector(".pm-card-grid")).toBeNull();
       const performanceSummary = container.querySelector('[aria-label="Performance summary"]');
       expect(performanceSummary?.textContent).toContain("Dispatches1");
-      expect(performanceSummary?.querySelectorAll(".pm-status-dot")).toHaveLength(5);
+      expect(performanceSummary?.textContent).toContain("Average18.0 ms");
+      expect(performanceSummary?.textContent).not.toContain("retained");
+      expect(performanceSummary?.querySelectorAll(".pm-chart-summary-metric")).toHaveLength(4);
+      expect(container.querySelectorAll(".pm-performance-toolbar")).toHaveLength(1);
+      expect(container.querySelector(".pm-performance-view > .pm-compact-metrics")).toBeNull();
       expect(container.querySelector('[aria-label="Dispatch 1 timings"]')?.textContent).toContain(
         "Full dispatch18.0 ms",
       );
@@ -237,6 +293,38 @@ describe("performance panel", () => {
       expect(
         inspector?.querySelector<HTMLElement>(".pm-timeline-chart-surface")?.style.minInlineSize,
       ).toBe("960px");
+
+      await act(async () => {
+        const nextTransaction = appendTextTransaction(view.state, "y");
+        const nextMeasurement = store.beginTransaction(
+          "editor",
+          nextTransaction,
+          view.state,
+          false,
+        );
+        clock += 1;
+        const nextApplied = view.state.applyTransaction(nextTransaction);
+        view.updateState(nextApplied.state);
+        store.finishTransaction(nextMeasurement, {
+          stateAfter: nextApplied.state,
+          appliedTransactions: nextApplied.transactions,
+        });
+      });
+
+      const previousButton = container.querySelector<HTMLButtonElement>(
+        '[aria-label="Select previous dispatch"]',
+      );
+      const nextButton = container.querySelector<HTMLButtonElement>(
+        '[aria-label="Select next dispatch"]',
+      );
+      expect(previousButton?.disabled).toBe(true);
+      expect(nextButton?.disabled).toBe(false);
+      expect(dispatchSelection?.querySelector("output")?.textContent).toBe("1 / 2");
+      await act(async () => {
+        nextButton?.click();
+      });
+      expect(dispatchSelection?.querySelector("output")?.textContent).toBe("2 / 2");
+      expect(container.querySelector('[aria-label="Dispatch 2 inspector"]')).not.toBeNull();
     } finally {
       await act(async () => {
         root.unmount();
@@ -281,7 +369,13 @@ describe("performance panel", () => {
     try {
       await act(async () => {
         root.render(
-          <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+          <ProseMirrorDevtoolsPanel
+            defaultTab="performance"
+            performanceDetailThresholdMs={0.25}
+            performanceFrameBudgetMs={8}
+            store={store}
+            theme="light"
+          />,
         );
       });
       await act(async () => {
@@ -291,6 +385,13 @@ describe("performance panel", () => {
       const disclosure = container.querySelector<HTMLButtonElement>(
         ".pm-fast-plugin-disclosure > button",
       );
+      expect(container.querySelector(".pm-frame-budget-label")?.textContent).toBe(
+        "Frame budget: 8.00 ms (125 FPS target)",
+      );
+      expect(container.querySelector(".pm-duration-scale-note")).toBeNull();
+      expect(
+        container.querySelector<HTMLElement>(".pm-dispatch-chart")?.dataset.detailThresholdMode,
+      ).toBe("fixed");
       const collapsedChart = container.querySelector<SVGElement>(
         'svg[aria-label="Plugin cost ranking"]',
       );

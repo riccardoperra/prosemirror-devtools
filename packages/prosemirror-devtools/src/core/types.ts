@@ -147,6 +147,7 @@ export interface RegisterProseMirrorInstanceOptions {
   id: string;
   label?: string;
   view: EditorView;
+  /** Maximum retained dispatch records. Defaults to 10,000. */
   transactionLimit?: number;
 }
 

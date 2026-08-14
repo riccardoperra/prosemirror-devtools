@@ -34,8 +34,8 @@ describe("createProseMirrorDevtoolsStore", () => {
     expect(store.getSnapshot()).toMatchObject({
       activeInstanceId: "first",
       instances: [
-        { id: "first", label: "First editor", view: firstView },
-        { id: "second", label: "Second editor", view: secondView },
+        { id: "first", label: "First editor", transactionLimit: 10_000, view: firstView },
+        { id: "second", label: "Second editor", transactionLimit: 10_000, view: secondView },
       ],
     });
 

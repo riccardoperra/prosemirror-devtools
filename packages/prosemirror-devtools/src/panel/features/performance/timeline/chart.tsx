@@ -122,7 +122,7 @@ export function PluginTimelineChart({
     });
 
     return defineChart(sceneDefinition, {
-      animate: false,
+      animate: true,
       keyboard: true,
       tooltip: {
         use: tooltip,

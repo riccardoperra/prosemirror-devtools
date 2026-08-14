@@ -154,6 +154,7 @@ import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/tanstack";
 
 const prosemirrorPlugin = createProseMirrorDevtoolsPlugin({
   defaultOpen: false,
+  performanceFrameBudgetMs: 1000 / 60,
 });
 
 export function App() {
@@ -173,19 +174,19 @@ disappear as views attach and detach, and the active editor can be changed witho
 panel.
 
 For isolation, call `createProseMirrorDevtoolsStore()` and pass the result to instrumentation,
-attachment, and the panel/TanStack adapter. A store entry keeps 100 transaction records by default; set
-`transactionLimit` while attaching to change that bound.
+attachment, and the panel/TanStack adapter. A store entry keeps 10,000 transaction records by
+default; set `transactionLimit` while attaching to change that bound.
 
 ## Panel capabilities
 
-| Tab         | What it shows                                                                                                                                                                   |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| State       | Expandable document tree, positions, selected node JSON, selection, marks, and document statistics                                                                              |
-| History     | Recent root dispatches, appended transactions, steps, metadata, before/after documents, and document restore                                                                    |
-| Performance | Interactive TanStack Charts dispatch timeline and slowest-first plugin ranking, compact timing summary, transaction/step payloads, document changes, and cumulative hook timing |
-| Plugins     | Searchable plugin list, plugin state, ordering, and exposed editor props                                                                                                        |
-| Schema      | Node and mark specs plus the top node type                                                                                                                                      |
-| Snapshots   | Per-instance local save, restore, import, export, and delete controls                                                                                                           |
+| Tab         | What it shows                                                                                                                                                                                                                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| State       | Expandable document tree, positions, selected node JSON, selection, marks, and document statistics                                                                                                                                                                                      |
+| History     | Recent root dispatches, appended transactions, steps, metadata, before/after documents, and document restore                                                                                                                                                                            |
+| Performance | Interactive TanStack Charts dispatch timeline with a configurable frame-budget reference and adaptive low-duration detail zone, previous/next navigation, slowest-first plugin ranking, compact timing summary, transaction/step payloads, document changes, and cumulative hook timing |
+| Plugins     | Searchable plugin list, plugin state, ordering, and exposed editor props                                                                                                                                                                                                                |
+| Schema      | Node and mark specs plus the top node type                                                                                                                                                                                                                                              |
+| Snapshots   | Per-instance local save, restore, import, export, and delete controls                                                                                                                                                                                                                   |
 
 The toolbar also provides live instance switching, system/light/dark color modes, and two density
 levels.
