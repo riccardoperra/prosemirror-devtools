@@ -33,6 +33,8 @@ import { createTransactionRecord } from "./transaction-record";
 
 type Listener = () => void;
 
+const DEFAULT_TRANSACTION_LIMIT = 10_000;
+
 type InternalInstanceState = {
   id: string;
   label: string;
@@ -176,7 +178,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
         registeredAt,
         updatedAt: registeredAt,
         dispatchCount: 0,
-        transactionLimit: Math.max(1, options.transactionLimit ?? 100),
+        transactionLimit: Math.max(1, options.transactionLimit ?? DEFAULT_TRANSACTION_LIMIT),
         transactions: [],
         pluginTimings,
       };

@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 
 import { prosemirrorDevtoolsStore } from "../core/store/create-devtools-store";
+import { DEFAULT_PERFORMANCE_FRAME_BUDGET_MS } from "./panel.constants";
 import type { ProseMirrorDevtoolsPanelProps } from "./panel.types";
 import { PanelProvider } from "./panel-provider";
 import { PanelContent } from "./shell/panel-content";
@@ -14,6 +15,8 @@ export function ProseMirrorDevtoolsPanel({
   store = prosemirrorDevtoolsStore,
   theme = "system",
   defaultTab = "state",
+  performanceFrameBudgetMs = DEFAULT_PERFORMANCE_FRAME_BUDGET_MS,
+  performanceDetailThresholdMs,
   className,
   style,
   styleTarget,
@@ -25,7 +28,10 @@ export function ProseMirrorDevtoolsPanel({
           <PanelToolbar />
           <PanelTabList />
         </header>
-        <PanelContent />
+        <PanelContent
+          performanceDetailThresholdMs={performanceDetailThresholdMs}
+          performanceFrameBudgetMs={performanceFrameBudgetMs}
+        />
       </PanelFrame>
     </PanelProvider>
   );

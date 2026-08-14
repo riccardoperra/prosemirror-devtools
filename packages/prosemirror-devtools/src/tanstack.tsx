@@ -8,6 +8,10 @@ export interface CreateProseMirrorDevtoolsPluginOptions {
   id?: string;
   name?: string;
   defaultOpen?: boolean;
+  /** See `ProseMirrorDevtoolsPanelProps.performanceFrameBudgetMs`. */
+  performanceFrameBudgetMs?: number;
+  /** See `ProseMirrorDevtoolsPanelProps.performanceDetailThresholdMs`. */
+  performanceDetailThresholdMs?: number;
 }
 
 /** Creates a TanStack Devtools plugin that follows the shell's light/dark theme. */
@@ -23,6 +27,12 @@ export function createProseMirrorDevtoolsPlugin(
         {props.devtoolsOpen ? (
           <ProseMirrorDevtoolsPanel
             {...(options.store ? { store: options.store } : {})}
+            {...(options.performanceDetailThresholdMs === undefined
+              ? {}
+              : { performanceDetailThresholdMs: options.performanceDetailThresholdMs })}
+            {...(options.performanceFrameBudgetMs === undefined
+              ? {}
+              : { performanceFrameBudgetMs: options.performanceFrameBudgetMs })}
             styleTarget={element.ownerDocument}
             theme={props.theme}
           />

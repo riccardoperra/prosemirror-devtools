@@ -21,10 +21,14 @@ function ActivePanelView({
   tab,
   instance,
   onClearHistory,
+  performanceDetailThresholdMs,
+  performanceFrameBudgetMs,
 }: {
   tab: ProseMirrorDevtoolsTab;
   instance: RegisteredProseMirrorInstance;
   onClearHistory: () => void;
+  performanceDetailThresholdMs: number | undefined;
+  performanceFrameBudgetMs: number;
 }): ReactElement {
   switch (tab) {
     case "state":
@@ -34,7 +38,12 @@ function ActivePanelView({
     case "performance":
       return (
         <Suspense fallback={<div className="pm-empty">Loading performance tools…</div>}>
-          <PerformanceView key={instance.id} instance={instance} />
+          <PerformanceView
+            key={instance.id}
+            instance={instance}
+            detailThresholdMs={performanceDetailThresholdMs}
+            frameBudgetMs={performanceFrameBudgetMs}
+          />
         </Suspense>
       );
     case "plugins":
@@ -46,7 +55,13 @@ function ActivePanelView({
   }
 }
 
-export function PanelContent(): ReactElement {
+export function PanelContent({
+  performanceDetailThresholdMs,
+  performanceFrameBudgetMs,
+}: {
+  performanceDetailThresholdMs: number | undefined;
+  performanceFrameBudgetMs: number;
+}): ReactElement {
   const store = usePanelStore();
   const activeInstance = useActiveInstance();
   const { activeTab } = usePanelNavigation();
@@ -64,6 +79,8 @@ export function PanelContent(): ReactElement {
         <ActivePanelView
           instance={activeInstance}
           onClearHistory={() => store.clearTransactions(activeInstance.id)}
+          performanceDetailThresholdMs={performanceDetailThresholdMs}
+          performanceFrameBudgetMs={performanceFrameBudgetMs}
           tab={activeTab}
         />
       ) : (

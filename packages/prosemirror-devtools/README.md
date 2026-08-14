@@ -47,7 +47,7 @@ const devtools = attachProseMirrorDevtools({
   id: instanceId,
   label: "Main editor",
   view,
-  transactionLimit: 150,
+  transactionLimit: 10_000,
   performanceMarks: true,
   performanceExtension: true,
 });
@@ -251,6 +251,8 @@ const prosemirrorPlugin = createProseMirrorDevtoolsPlugin({
   id: "prosemirror-devtools",
   name: "ProseMirror",
   defaultOpen: false,
+  performanceFrameBudgetMs: 1000 / 60,
+  // performanceDetailThresholdMs: 0.5, // optional fixed override
   // store, // optional; defaults to the shared singleton
 });
 
@@ -272,6 +274,7 @@ export function Diagnostics() {
     <ProseMirrorDevtoolsPanel
       defaultTab="state"
       theme="system"
+      performanceFrameBudgetMs={1000 / 60}
       className="my-devtools"
       style={{ height: 520 }}
     />
@@ -283,6 +286,17 @@ export function Diagnostics() {
 mounted and provides an in-panel theme cycle plus compact/comfortable density control. Pass a
 `styleTarget` document when rendering into a popup or picture-in-picture document; the TanStack
 adapter does this automatically.
+
+`performanceFrameBudgetMs` defaults to `1000 / 60`. It draws the performance timeline reference
+line and acts as the minimum upper bound of its Y scale, so very fast dispatches remain visually
+small instead of filling the chart. For a 120 FPS budget use `1000 / 120`. This is a synchronous
+dispatch-time comparison; it does not measure the browser's actual frame rate.
+
+When `performanceDetailThresholdMs` is omitted, the panel averages the fastest 20% of the 60
+visible dispatches and uses four times that value as the detail threshold, capped at one quarter of
+the frame budget. The adaptive zone can use up to 42 chart pixels and gives every positive dispatch
+at least six painted pixels. Tooltips keep the exact values. Pass a number for a fixed threshold or
+`0` for a fully linear Y scale.
 
 ## Panel reference
 
@@ -304,10 +318,15 @@ adapter does this automatically.
 
 ### Performance
 
-- An interactive TanStack Charts stacked bar for each of the latest 60 retained dispatches,
-  updated after every dispatch and selectable by pointer or keyboard.
+- An interactive TanStack Charts stacked bar for a navigable window of up to 60 retained
+  dispatches, updated after every dispatch and selectable by pointer or keyboard.
+- A configurable dispatch-time budget line (16.7 ms / 60 FPS by default) and stable minimum Y
+  scale, with labeled time and dispatch axes.
+- An adaptive low-duration detail zone based on the fastest visible dispatches, exact tooltip
+  values, and explicit previous/next dispatch controls.
 - Apply, view-update, or inclusive custom-dispatch phase segments.
-- A compact status strip for average, p95, maximum, dispatch count, and retained-record count.
+- One compact timeline toolbar for dispatch count, average, p95, maximum, navigation, and the phase
+  legend. The retained-record count appears only when it differs from the total dispatch count.
 - One selected-dispatch inspector shared with History: plugin cost remains visible beside
   root/appended transaction steps and metadata, with selection and before/after documents in the
   detail pane.
@@ -364,10 +383,9 @@ One root call to `view.dispatch` produces one `TransactionRecord`. Its
 `appendedTransactionCount` excludes the root. A rejected root transaction has zero applied
 transactions and is marked as filtered.
 
-The default retention limit is 100 records and is configurable through `transactionLimit`.
-Headline average/p95/max values use retained records, and the chart displays the last 60. Plugin
-hook aggregates cover calls since attachment or the last `clearTransactions` call, including calls
-older than the retained transaction window.
+The default retention limit is 10,000 records and is configurable through `transactionLimit`.
+Headline average/p95/max values use retained records, while the chart navigates them in windows of 60. Plugin hook aggregates cover calls since attachment or the last `clearTransactions` call,
+including calls older than the retained transaction window.
 
 ### User Timing measures
 
