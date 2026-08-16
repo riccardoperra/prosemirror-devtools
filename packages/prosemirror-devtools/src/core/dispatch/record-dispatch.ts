@@ -36,6 +36,7 @@ export function recordSynchronousDispatch({
     beforeState,
     options.performanceMarks ?? true,
     options.performanceExtension,
+    options.sessionId,
   );
   let appliedTransactions: readonly Transaction[] | undefined;
   let error: unknown;

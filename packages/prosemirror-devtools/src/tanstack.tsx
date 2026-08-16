@@ -1,13 +1,18 @@
 import type { TanStackDevtoolsReactPlugin } from "@tanstack/react-devtools";
 
+import type { DevtoolsExtension } from "./core/extensions";
 import type { DevtoolsStore } from "./core/types";
-import { ProseMirrorDevtoolsPanel } from "./panel/panel";
+import { ProseMirrorDevtoolsPanel, type ProseMirrorDevtoolsPanelProps } from "./panel/panel";
 
 export interface CreateProseMirrorDevtoolsPluginOptions {
   store?: DevtoolsStore;
   id?: string;
   name?: string;
   defaultOpen?: boolean;
+  extensions?: readonly DevtoolsExtension[];
+  defaultPanel?: string;
+  activePanel?: string;
+  onActivePanelChange?: ProseMirrorDevtoolsPanelProps["onActivePanelChange"];
   /** See `ProseMirrorDevtoolsPanelProps.performanceFrameBudgetMs`. */
   performanceFrameBudgetMs?: number;
   /** See `ProseMirrorDevtoolsPanelProps.performanceDetailThresholdMs`. */
@@ -26,6 +31,12 @@ export function createProseMirrorDevtoolsPlugin(
       <>
         {props.devtoolsOpen ? (
           <ProseMirrorDevtoolsPanel
+            {...(options.activePanel === undefined ? {} : { activePanel: options.activePanel })}
+            {...(options.defaultPanel === undefined ? {} : { defaultPanel: options.defaultPanel })}
+            {...(options.extensions === undefined ? {} : { extensions: options.extensions })}
+            {...(options.onActivePanelChange === undefined
+              ? {}
+              : { onActivePanelChange: options.onActivePanelChange })}
             {...(options.store ? { store: options.store } : {})}
             {...(options.performanceDetailThresholdMs === undefined
               ? {}
@@ -42,5 +53,10 @@ export function createProseMirrorDevtoolsPlugin(
   };
 }
 
-export { ProseMirrorDevtoolsPanel } from "./panel/panel";
-export type { ProseMirrorDevtoolsPanelProps, ProseMirrorDevtoolsTab } from "./panel/panel";
+export { createReactDevtoolsExtension, ProseMirrorDevtoolsPanel } from "./panel/panel";
+export type {
+  ProseMirrorDevtoolsPanelProps,
+  ProseMirrorDevtoolsTab,
+  ReactDevtoolsExtensionOptions,
+  ReactDevtoolsPanelExtension,
+} from "./panel/panel";

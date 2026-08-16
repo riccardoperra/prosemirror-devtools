@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import type { DevtoolsExtension } from "../core/extensions";
 import type { DevtoolsTheme, DevtoolsStore } from "../core/types";
 
 export type ProseMirrorDevtoolsTab =
@@ -10,7 +11,15 @@ export type PanelDensity = "compact" | "comfortable";
 export interface ProseMirrorDevtoolsPanelProps {
   store?: DevtoolsStore;
   theme?: DevtoolsTheme;
+  /** @deprecated Use `defaultPanel`. */
   defaultTab?: ProseMirrorDevtoolsTab;
+  /** Initial built-in or extension panel id for uncontrolled navigation. */
+  defaultPanel?: string;
+  /** Controlled built-in or extension panel id. */
+  activePanel?: string;
+  onActivePanelChange?: (panelId: string) => void;
+  /** Per-host panel extensions; no global registry is used. */
+  extensions?: readonly DevtoolsExtension[];
   /**
    * Dispatch-time reference shown in the performance timeline, in milliseconds.
    * It also provides the minimum upper bound for the timeline scale. Defaults to

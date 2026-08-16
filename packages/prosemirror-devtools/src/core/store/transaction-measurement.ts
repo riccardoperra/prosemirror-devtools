@@ -13,6 +13,7 @@ import type {
 } from "../types";
 
 export type InternalTransactionMeasurement = TransactionMeasurement & {
+  captureSequence: number;
   clockStartedAt: number;
   timings: PluginTiming[];
   markers: DevtoolsMarker[];
@@ -24,28 +25,32 @@ export type InternalTransactionMeasurement = TransactionMeasurement & {
   phaseTimings: PerformancePhaseTiming[];
   performanceExtension: ResolvedPerformanceExtensionOptions | null;
   measureName: string | null;
-  startMark: string | null;
 };
 
 export function monotonicNow(): number {
   return globalThis.performance?.now?.() ?? Date.now();
 }
 
-function canMarkPerformance(): boolean {
-  return Boolean(
-    globalThis.performance &&
-    typeof globalThis.performance.mark === "function" &&
-    typeof globalThis.performance.measure === "function",
-  );
+function canMeasurePerformance(): boolean {
+  return typeof globalThis.performance?.measure === "function";
 }
 
-function sanitizeMarkPart(value: string): string {
-  return value.replace(/[^a-zA-Z0-9_.-]/g, "_");
+function encodeMeasurePart(value: string): string {
+  try {
+    return encodeURIComponent(value);
+  } catch {
+    return Array.from(
+      { length: value.length },
+      (_, index) => `%u${value.charCodeAt(index).toString(16).padStart(4, "0")}`,
+    ).join("");
+  }
 }
 
 export function createTransactionMeasurement({
   instanceId,
+  sessionId,
   id,
+  captureSequence,
   instanceLabel,
   transaction,
   beforeState,
@@ -53,30 +58,25 @@ export function createTransactionMeasurement({
   performanceExtension,
 }: {
   instanceId: string;
+  sessionId: string;
   id: number;
+  captureSequence: number;
   instanceLabel: string;
   transaction: Transaction;
   beforeState: EditorState;
   performanceMarks: boolean;
   performanceExtension?: boolean | DevtoolsPerformanceExtensionOptions;
 }): InternalTransactionMeasurement {
-  let measureName =
-    id > 0 && performanceMarks && canMarkPerformance()
-      ? `prosemirror-devtools:${sanitizeMarkPart(instanceId)}:dispatch:${id}`
+  const measureName =
+    id > 0 && performanceMarks && canMeasurePerformance()
+      ? `prosemirror-devtools:${encodeMeasurePart(sessionId)}:${encodeMeasurePart(instanceId)}:dispatch:${id}`
       : null;
-  let startMark = measureName ? `${measureName}:start` : null;
-  if (startMark) {
-    try {
-      globalThis.performance.mark(startMark);
-    } catch {
-      measureName = null;
-      startMark = null;
-    }
-  }
 
   return {
     instanceId,
+    sessionId,
     id,
+    captureSequence,
     startedAt: Date.now(),
     clockStartedAt: monotonicNow(),
     beforeState,
@@ -87,7 +87,6 @@ export function createTransactionMeasurement({
     phaseTimings: [],
     performanceExtension: resolvePerformanceExtensionOptions(performanceExtension, instanceLabel),
     measureName,
-    startMark,
   };
 }
 
@@ -109,17 +108,15 @@ export function recordTransactionPhase(
 
 export function finishTransactionClock(measurement: InternalTransactionMeasurement): number {
   const totalDuration = Math.max(0, monotonicNow() - measurement.clockStartedAt);
-  if (!measurement.measureName || !measurement.startMark) return totalDuration;
+  if (!measurement.measureName) return totalDuration;
 
-  const endMark = `${measurement.measureName}:end`;
   try {
-    globalThis.performance.mark(endMark);
-    globalThis.performance.measure(measurement.measureName, measurement.startMark, endMark);
+    globalThis.performance.measure(measurement.measureName, {
+      start: measurement.clockStartedAt,
+      duration: totalDuration,
+    });
   } catch {
     // User Timing is optional and must never interfere with editor dispatch.
-  } finally {
-    globalThis.performance.clearMarks?.(measurement.startMark);
-    globalThis.performance.clearMarks?.(endMark);
   }
   return totalDuration;
 }

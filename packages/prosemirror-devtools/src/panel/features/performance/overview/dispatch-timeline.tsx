@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import type { ReactElement } from "react";
 
 import type { TransactionRecord } from "../../../../core/types";
+import { buildDispatchPhaseBreakdown } from "../../../../performance/phase-timings";
 import { formatMs } from "../../../formatters";
 import { DEFAULT_PERFORMANCE_FRAME_BUDGET_MS } from "../../../panel.constants";
 import { buildPerformanceSummary } from "./metrics";
@@ -248,15 +249,12 @@ function dispatchRows(
     plotHeight,
   ]);
   for (const record of records) {
-    const apply = Math.max(0, record.applyDuration ?? 0);
-    const view = Math.max(0, record.viewUpdateDuration ?? 0);
-    const custom = Math.max(0, (record.customDispatchDuration ?? 0) - apply - view);
-    const other = Math.max(0, record.totalDuration - apply - view - custom);
+    const breakdown = buildDispatchPhaseBreakdown(record);
     const phases: Array<[DispatchBarDatum["phase"], number]> = [
-      ["State apply", apply],
-      ["View update", view],
-      ["Custom code", custom],
-      ["Other sync work", other],
+      ["State apply", breakdown.applyDuration],
+      ["View update", breakdown.viewUpdateDuration],
+      ["Custom code", breakdown.customCodeDuration],
+      ["Other sync work", breakdown.otherDuration],
     ];
     const phaseTotal = phases.reduce((total, [, duration]) => total + duration, 0);
     const paintedTotal = durationScale(record.totalDuration);

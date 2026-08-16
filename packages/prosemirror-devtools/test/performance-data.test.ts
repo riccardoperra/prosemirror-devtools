@@ -1,4 +1,9 @@
-import { groupPluginTimings, type PluginHook, type PluginTiming } from "../src/performance";
+import {
+  buildDispatchPhaseBreakdown,
+  groupPluginTimings,
+  type PluginHook,
+  type PluginTiming,
+} from "../src/performance";
 import { describe, expect, it } from "vitest";
 
 function timing(
@@ -142,5 +147,27 @@ describe("groupPluginTimings", () => {
         ],
       },
     ]);
+  });
+});
+
+describe("buildDispatchPhaseBreakdown", () => {
+  it("merges nested observations into mutually exclusive phase durations", () => {
+    expect(
+      buildDispatchPhaseBreakdown({
+        totalDuration: 20,
+        phaseTimings: [
+          { phase: "customDispatch", startOffset: 0, duration: 20 },
+          { phase: "apply", startOffset: 2, duration: 6 },
+          { phase: "apply", startOffset: 3, duration: 2 },
+          { phase: "viewUpdate", startOffset: 6, duration: 6 },
+        ],
+      }),
+    ).toEqual({
+      totalDuration: 20,
+      applyDuration: 6,
+      viewUpdateDuration: 4,
+      customCodeDuration: 10,
+      otherDuration: 0,
+    });
   });
 });

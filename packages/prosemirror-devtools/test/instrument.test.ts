@@ -1,6 +1,6 @@
 import type { EditorState } from "prosemirror-state";
 import { Plugin } from "prosemirror-state";
-import type { EditorView } from "prosemirror-view";
+import { DecorationSet, type EditorView } from "prosemirror-view";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -101,6 +101,7 @@ describe("instrumentProseMirrorPlugins", () => {
       expect.objectContaining({ hook: "appendTransaction", duration: 7 }),
     ]);
 
+    store.flush();
     const summaries = Object.fromEntries(
       (store.getSnapshot().instances[0]?.pluginTimings ?? []).map((summary) => [
         summary.hook,
@@ -236,6 +237,7 @@ describe("instrumentProseMirrorPlugins", () => {
     } as KeyboardEvent);
 
     expect(handled).toBe(true);
+    store.flush();
     expect(listener).toHaveBeenCalledOnce();
     expect(store.getSnapshot().version).toBe(previousVersion + 1);
     expect(store.getSnapshot().instances[0]?.pluginTimings).toEqual([
@@ -248,5 +250,44 @@ describe("instrumentProseMirrorPlugins", () => {
 
     unsubscribe();
     unregister();
+  });
+
+  it("keeps wrapped NodeView method identities stable", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const view = { state: createTestState() } as EditorView;
+    store.register({ id: "editor", view });
+    const nodeView = {
+      dom: document.createElement("div"),
+      update: vi.fn(() => true),
+    };
+    const plugin = new Plugin({
+      props: {
+        nodeViews: {
+          paragraph: () => nodeView,
+        },
+      },
+    });
+    const [wrapped] = instrumentProseMirrorPlugins([plugin], { instanceId: "editor", store });
+    const factory = wrapped?.props.nodeViews?.paragraph;
+    if (!factory) throw new Error("Expected an instrumented node view factory");
+    const measuredNodeView = factory(
+      view.state.doc.firstChild as NonNullable<typeof view.state.doc.firstChild>,
+      view,
+      () => 0,
+      [],
+      DecorationSet.empty,
+    );
+
+    expect(measuredNodeView.update).toBe(measuredNodeView.update);
+    measuredNodeView.update?.(
+      view.state.doc.firstChild as NonNullable<typeof view.state.doc.firstChild>,
+      [],
+      DecorationSet.empty,
+    );
+    store.flush();
+    expect(nodeView.update).toHaveBeenCalledOnce();
+    expect(store.getInstance("editor")?.pluginTimings).toEqual(
+      expect.arrayContaining([expect.objectContaining({ hook: "nodeView.update", count: 1 })]),
+    );
   });
 });

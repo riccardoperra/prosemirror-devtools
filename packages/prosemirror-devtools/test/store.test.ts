@@ -34,8 +34,8 @@ describe("createProseMirrorDevtoolsStore", () => {
     expect(store.getSnapshot()).toMatchObject({
       activeInstanceId: "first",
       instances: [
-        { id: "first", label: "First editor", transactionLimit: 10_000, view: firstView },
-        { id: "second", label: "Second editor", transactionLimit: 10_000, view: secondView },
+        { id: "first", label: "First editor", transactionLimit: null, view: firstView },
+        { id: "second", label: "Second editor", transactionLimit: null, view: secondView },
       ],
     });
 
@@ -79,6 +79,21 @@ describe("createProseMirrorDevtoolsStore", () => {
     );
   });
 
+  it("treats repeated same-view registrations as independent leases", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const view = viewForState();
+    const releaseFirst = store.register({ id: "editor", view });
+    const releaseSecond = store.register({ id: "editor", view });
+
+    releaseFirst();
+    expect(store.getInstance("editor")?.view).toBe(view);
+    releaseFirst();
+    expect(store.getInstance("editor")?.view).toBe(view);
+
+    releaseSecond();
+    expect(store.getInstance("editor")).toBeUndefined();
+  });
+
   it("clamps a negative transaction limit when the same view is registered again", () => {
     const store = createProseMirrorDevtoolsStore();
     let state = createTestState();
@@ -105,6 +120,7 @@ describe("createProseMirrorDevtoolsStore", () => {
       (view as { state: typeof state }).state = state;
     }
 
+    store.flush();
     expect(store.getSnapshot().instances[0]?.transactions).toHaveLength(1);
     expect(store.getSnapshot().instances[0]?.transactions[0]?.docAfter).toMatchObject({
       content: [{ content: [{ text: "ab" }] }],
@@ -150,6 +166,7 @@ describe("createProseMirrorDevtoolsStore", () => {
       });
     }
 
+    store.flush();
     const instance = store.getSnapshot().instances[0];
     expect(instance?.dispatchCount).toBe(3);
     expect(instance?.transactions.map((record) => record.id)).toEqual([2, 3]);
@@ -200,6 +217,7 @@ describe("createProseMirrorDevtoolsStore", () => {
     });
     firstState = applied.state;
     (firstView as { state: typeof firstState }).state = firstState;
+    store.flush();
 
     expect(all).toHaveBeenCalledOnce();
     expect(first).toHaveBeenCalledOnce();
@@ -213,6 +231,66 @@ describe("createProseMirrorDevtoolsStore", () => {
     expect(first).toHaveBeenCalledOnce();
     expect(descriptors).not.toHaveBeenCalled();
     expect(second).not.toHaveBeenCalled();
+  });
+
+  it("keeps history unbounded by default and publishes lossless dispatch batches", () => {
+    const store = createProseMirrorDevtoolsStore();
+    let state = createTestState();
+    const view = viewForState(state);
+    store.register({ id: "editor", view });
+    const storeListener = vi.fn();
+    const instanceListener = vi.fn();
+    const dispatchListener = vi.fn();
+    store.subscribe(storeListener);
+    store.subscribeInstance("editor", instanceListener);
+    store.subscribeDispatch(dispatchListener);
+
+    for (const text of ["a", "b", "c"]) {
+      const beforeState = state;
+      const transaction = appendTextTransaction(state, text);
+      const measurement = store.beginTransaction("editor", transaction, state, false);
+      const applied = state.applyTransaction(transaction);
+      state = applied.state;
+      (view as { state: typeof state }).state = state;
+      store.finishTransaction(measurement, {
+        stateAfter: state,
+        appliedTransactions: applied.transactions,
+      });
+      expect(measurement.beforeState).toBe(beforeState);
+    }
+
+    expect(store.getTransactionCount("editor")).toBe(3);
+    expect(
+      store
+        .getTransactions("editor", { limit: 2, order: "newest-first" })
+        .records.map(({ id }) => id),
+    ).toEqual([3, 2]);
+    expect(store.getTransactions("editor", { offset: 2, limit: 2 })).toMatchObject({
+      total: 3,
+      offset: 2,
+      hasMore: false,
+      records: [expect.objectContaining({ id: 3 })],
+    });
+    expect(store.getInstance("editor")?.transactionLimit).toBeNull();
+    expect(storeListener).not.toHaveBeenCalled();
+    expect(instanceListener).not.toHaveBeenCalled();
+    expect(dispatchListener).not.toHaveBeenCalled();
+
+    store.flush();
+
+    expect(storeListener).toHaveBeenCalledOnce();
+    expect(instanceListener).toHaveBeenCalledOnce();
+    expect(dispatchListener).toHaveBeenCalledOnce();
+    const events = dispatchListener.mock.calls[0]?.[0];
+    expect(events).toHaveLength(3);
+    expect(events.map(({ record }: { record: { id: number } }) => record.id)).toEqual([1, 2, 3]);
+    expect(events[0]).toMatchObject({
+      instanceId: "editor",
+      beforeState: expect.any(Object),
+      stateAfter: expect.any(Object),
+      transaction: expect.any(Object),
+    });
+    expect(store.getSnapshot().instances[0]?.transactions).toHaveLength(3);
   });
 
   it("serializes transaction details lazily and caches the result", () => {
@@ -325,7 +403,7 @@ describe("createProseMirrorDevtoolsStore", () => {
       const store = createProseMirrorDevtoolsStore();
       const state = createTestState();
       const view = viewForState(state);
-      store.register({ id: "editor", label: "Article editor", view });
+      store.register({ id: "editor", label: "Article editor", sessionId: "session1", view });
       const transaction = appendTextTransaction(state, "x");
       const measurement = store.beginTransaction("editor", transaction, state, false, {
         trackGroup: "Editor diagnostics",
@@ -367,6 +445,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         stateAfter: applied.state,
         appliedTransactions: applied.transactions,
       });
+      store.flush();
 
       expect(measure).toHaveBeenCalledTimes(8);
       expect(measure.mock.calls.some(([name]) => String(name).startsWith("Fast plugin ·"))).toBe(
@@ -381,7 +460,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         }),
       ).toBe(false);
       expect(measure).toHaveBeenCalledWith(
-        "Dispatch #1 · editor",
+        "Dispatch #1 · editor · session1",
         expect.objectContaining({
           start: 100,
           duration: 10,
@@ -399,7 +478,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         }),
       );
       expect(measure).toHaveBeenCalledWith(
-        "Slow plugin · state.apply · editor #1 · 1",
+        "Slow plugin · state.apply · editor #1 [session1] · 1",
         expect.objectContaining({
           start: 101,
           duration: 2,
@@ -412,7 +491,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         }),
       );
       expect(measure).toHaveBeenCalledWith(
-        "State apply · editor #1 · 1",
+        "State apply · editor #1 [session1] · 1",
         expect.objectContaining({
           start: 100,
           duration: 3,
@@ -422,7 +501,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         }),
       );
       expect(measure).toHaveBeenCalledWith(
-        "View update · editor #1 · 2",
+        "View update · editor #1 [session1] · 2",
         expect.objectContaining({
           start: 104,
           duration: 6,
@@ -432,7 +511,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         }),
       );
       expect(measure).toHaveBeenCalledWith(
-        "Slow plugin · props.decorations · editor #1 · 3",
+        "Slow plugin · props.decorations · editor #1 [session1] · 3",
         expect.objectContaining({
           start: 105,
           duration: 2,
@@ -442,7 +521,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         }),
       );
       expect(measure).toHaveBeenCalledWith(
-        "Rebase · editor #1 · 2",
+        "Rebase · editor #1 [session1] · 2",
         expect.objectContaining({
           start: 107,
           duration: 3,
@@ -456,7 +535,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         }),
       );
       expect(mark).toHaveBeenCalledWith(
-        "Remote steps · editor #1 · 1",
+        "Remote steps · editor #1 [session1] · 1",
         expect.objectContaining({
           startTime: 107,
           detail: expect.objectContaining({
@@ -469,7 +548,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         }),
       );
       expect(measure).toHaveBeenCalledWith(
-        "Remote steps · editor #1 · 1 · track",
+        "Remote steps · editor #1 [session1] · 1 · track",
         expect.objectContaining({
           start: 107,
           duration: 0,
@@ -483,7 +562,7 @@ describe("createProseMirrorDevtoolsStore", () => {
         }),
       );
       expect(measure).toHaveBeenCalledWith(
-        "Custom code · editor #1 · 1",
+        "Custom code · editor #1 [session1] · 1",
         expect.objectContaining({
           start: 103,
           duration: 1,
@@ -501,12 +580,14 @@ describe("createProseMirrorDevtoolsStore", () => {
       );
 
       store.clearTransactions("editor");
-      expect(clearMeasures).toHaveBeenCalledWith("Dispatch #1 · editor");
-      expect(clearMeasures).toHaveBeenCalledWith("Slow plugin · state.apply · editor #1 · 1");
-      expect(clearMeasures).toHaveBeenCalledWith("Rebase · editor #1 · 2");
-      expect(clearMeasures).toHaveBeenCalledWith("Remote steps · editor #1 · 1 · track");
-      expect(clearMeasures).toHaveBeenCalledWith("Custom code · editor #1 · 1");
-      expect(clearMarks).toHaveBeenCalledWith("Remote steps · editor #1 · 1");
+      expect(clearMeasures).toHaveBeenCalledWith("Dispatch #1 · editor · session1");
+      expect(clearMeasures).toHaveBeenCalledWith(
+        "Slow plugin · state.apply · editor #1 [session1] · 1",
+      );
+      expect(clearMeasures).toHaveBeenCalledWith("Rebase · editor #1 [session1] · 2");
+      expect(clearMeasures).toHaveBeenCalledWith("Remote steps · editor #1 [session1] · 1 · track");
+      expect(clearMeasures).toHaveBeenCalledWith("Custom code · editor #1 [session1] · 1");
+      expect(clearMarks).toHaveBeenCalledWith("Remote steps · editor #1 [session1] · 1");
     } finally {
       Object.defineProperty(globalThis, "performance", {
         configurable: true,

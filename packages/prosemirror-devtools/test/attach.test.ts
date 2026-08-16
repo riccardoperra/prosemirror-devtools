@@ -255,6 +255,7 @@ describe("attachProseMirrorDevtools", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     expect(() => view.dispatch(appendTextTransaction(view.state, "x"))).not.toThrow();
+    expect(() => store.flush()).not.toThrow();
 
     expect(view.state.doc.textContent).toBe("x");
     expect(store.getSnapshot().instances[0]?.transactions).toHaveLength(1);
@@ -292,5 +293,48 @@ describe("attachProseMirrorDevtools", () => {
 
     attachment.detach();
     view.destroy();
+  });
+
+  it("rejects taking over an attachment owned by another explicit session", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const view = createTestView(createTestState());
+    const attachment = attachProseMirrorDevtools({
+      id: "editor",
+      performanceMarks: false,
+      sessionId: "first",
+      store,
+      view,
+    });
+
+    expect(() =>
+      attachProseMirrorDevtools({
+        id: "editor",
+        performanceMarks: false,
+        sessionId: "second",
+        store,
+        view,
+      }),
+    ).toThrow("This EditorView is already attached to a different devtools session.");
+    expect(store.getInstance("editor")?.view).toBe(view);
+
+    attachment.detach();
+    view.destroy();
+  });
+
+  it("rolls back registration when dispatcher installation fails", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const installationError = new Error("setProps failed");
+    const view = {
+      state: createTestState(),
+      props: {},
+      setProps: vi.fn(() => {
+        throw installationError;
+      }),
+    } as unknown as EditorView;
+
+    expect(() =>
+      attachProseMirrorDevtools({ id: "editor", performanceMarks: false, store, view }),
+    ).toThrow(installationError);
+    expect(store.getSnapshot().instances).toEqual([]);
   });
 });

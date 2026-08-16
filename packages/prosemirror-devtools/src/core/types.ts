@@ -95,6 +95,8 @@ export interface AppliedTransactionRecord {
 export interface TransactionRecord {
   readonly id: number;
   readonly instanceId: string;
+  /** Private attachment/session namespace used to isolate browser performance entries. */
+  readonly sessionId: string;
   readonly timestamp: number;
   readonly totalDuration: number;
   readonly applyDuration: number | null;
@@ -127,7 +129,8 @@ export interface RegisteredProseMirrorInstance {
   registeredAt: number;
   updatedAt: number;
   dispatchCount: number;
-  transactionLimit: number;
+  /** Explicit retention cap, or `null` when history is unbounded. */
+  transactionLimit: number | null;
   transactions: readonly TransactionRecord[];
   pluginTimings: readonly PluginTimingSummary[];
 }
@@ -147,8 +150,13 @@ export interface RegisterProseMirrorInstanceOptions {
   id: string;
   label?: string;
   view: EditorView;
-  /** Maximum retained dispatch records. Defaults to 10,000. */
-  transactionLimit?: number;
+  /** Private namespace for this registration lifecycle. */
+  sessionId?: string;
+  /**
+   * Optional escape-hatch cap for retained dispatch records. History is
+   * unbounded by default. Pass `null` to remove a previously configured cap.
+   */
+  transactionLimit?: number | null;
 }
 
 export interface AttachProseMirrorDevtoolsOptions extends RegisterProseMirrorInstanceOptions {
@@ -160,6 +168,7 @@ export interface AttachProseMirrorDevtoolsOptions extends RegisterProseMirrorIns
 
 export interface AttachedProseMirrorDevtools {
   readonly id: string;
+  readonly sessionId: string;
   readonly view: EditorView;
   detach(): void;
 }
@@ -167,6 +176,10 @@ export interface AttachedProseMirrorDevtools {
 export interface InstrumentPluginsOptions {
   instanceId: string;
   store?: DevtoolsStore;
+  /** Isolates wrappers and timings belonging to one editor lifecycle. */
+  sessionId?: string;
+  /** Allows a controller to stop stale lifecycle hooks after teardown. */
+  isActive?: () => boolean;
   getPluginLabel?: (plugin: Plugin, index: number) => string;
 }
 
@@ -181,6 +194,7 @@ export interface SavedSnapshot {
 
 export interface TransactionMeasurement {
   readonly instanceId: string;
+  readonly sessionId: string;
   readonly id: number;
   readonly startedAt: number;
   readonly beforeState: EditorState;
@@ -193,6 +207,38 @@ export interface FinishTransactionMeasurement {
   error?: unknown;
 }
 
+export interface DevtoolsTransactionQuery {
+  /** Zero-based offset from the selected ordering edge. Defaults to `0`. */
+  offset?: number;
+  /** Maximum number of records to return. Omit to return the remaining records. */
+  limit?: number;
+  /** Defaults to chronological order. */
+  order?: "oldest-first" | "newest-first";
+}
+
+export interface DevtoolsTransactionPage {
+  readonly records: readonly TransactionRecord[];
+  readonly total: number;
+  readonly offset: number;
+  readonly hasMore: boolean;
+}
+
+/**
+ * Short-lived dispatch payload delivered to subscribers after the synchronous
+ * editor update. The store never puts these EditorState objects in history.
+ */
+export interface DevtoolsDispatchEvent {
+  readonly instanceId: string;
+  readonly sessionId: string;
+  readonly record: TransactionRecord;
+  readonly transaction: Transaction;
+  readonly beforeState: EditorState;
+  readonly stateAfter: EditorState;
+  readonly appliedTransactions: readonly Transaction[] | undefined;
+}
+
+export type DevtoolsDispatchListener = (events: readonly DevtoolsDispatchEvent[]) => void;
+
 export type DevtoolsStoreReader = Readonly<{
   getSnapshot: () => DevtoolsSnapshot;
   subscribe: (listener: () => void) => () => void;
@@ -202,6 +248,9 @@ export type DevtoolsStoreReader = Readonly<{
   subscribeInstanceDescriptors: (listener: () => void) => () => void;
   getInstance: (id: string) => RegisteredProseMirrorInstance | undefined;
   subscribeInstance: (id: string, listener: () => void) => () => void;
+  getTransactions: (id: string, query?: DevtoolsTransactionQuery) => DevtoolsTransactionPage;
+  getTransactionCount: (id: string) => number;
+  subscribeDispatch: (listener: DevtoolsDispatchListener) => () => void;
 }>;
 
 export type DevtoolsInstanceManager = Readonly<{
@@ -209,6 +258,10 @@ export type DevtoolsInstanceManager = Readonly<{
   unregister: (id: string, view?: EditorView) => void;
   setActiveInstance: (id: string) => void;
   clearTransactions: (id: string) => void;
+  /** Delivers queued subscription batches synchronously. */
+  flush: () => void;
+  /** Closes buffered instrumentation owned by a private lifecycle namespace. */
+  closeSession: (instanceId: string, sessionId: string) => void;
 }>;
 
 export type DevtoolsTransactionRecorder = Readonly<{
@@ -218,6 +271,7 @@ export type DevtoolsTransactionRecorder = Readonly<{
     beforeState: EditorState,
     performanceMarks?: boolean,
     performanceExtension?: boolean | DevtoolsPerformanceExtensionOptions,
+    sessionId?: string,
   ) => TransactionMeasurement;
   recordPhase: (
     measurement: TransactionMeasurement,
@@ -238,6 +292,7 @@ export type DevtoolsPluginTimingRecorder = Readonly<{
     pluginLabel: string,
     hook: PluginHook,
     run: () => T,
+    sessionId?: string,
   ) => T;
 }>;
 

@@ -3,6 +3,7 @@ import type { EditorView } from "prosemirror-view";
 
 import { createProseMirrorDispatchRecorder } from "../core/attach";
 import { instrumentProseMirrorPlugins } from "../core/instrument";
+import { createDevtoolsSessionId } from "../core/session-id";
 import { prosemirrorDevtoolsStore } from "../core/store/create-devtools-store";
 import type { AttachProseMirrorDevtoolsOptions } from "../core/types";
 
@@ -49,6 +50,8 @@ function findPropertyDescriptor(target: object, property: PropertyKey): Property
 function installPluginInstrumentation(
   editor: TiptapDevtoolsEditor,
   options: TiptapDevtoolsOptions,
+  sessionId: string,
+  isActive: () => boolean,
   onPluginsCreated: () => void,
 ): () => void {
   const manager = editor.extensionManager;
@@ -74,6 +77,8 @@ function installPluginInstrumentation(
 
   const instrumentationOptions = {
     instanceId: options.id,
+    sessionId,
+    isActive,
     ...(options.store ? { store: options.store } : {}),
     ...(options.getPluginLabel ? { getPluginLabel: options.getPluginLabel } : {}),
   };
@@ -148,6 +153,8 @@ function createTiptapIntegration(
   editor: TiptapDevtoolsEditor,
   options: TiptapDevtoolsOptions,
 ): TiptapIntegration {
+  const sessionId = options.sessionId ?? createDevtoolsSessionId("tiptap");
+  let active = true;
   let recorder: DispatchRecorder | null = null;
   let registering = false;
   let restorePluginGetter = (): void => {};
@@ -170,6 +177,7 @@ function createTiptapIntegration(
       const registrationOptions = {
         id: options.id,
         view,
+        sessionId,
         ...(options.label === undefined ? {} : { label: options.label }),
         ...(options.transactionLimit === undefined
           ? {}
@@ -209,7 +217,13 @@ function createTiptapIntegration(
     options,
     setup() {
       if (options.instrumentPlugins !== false) {
-        restorePluginGetter = installPluginInstrumentation(editor, options, registerWhenReady);
+        restorePluginGetter = installPluginInstrumentation(
+          editor,
+          options,
+          sessionId,
+          () => active,
+          registerWhenReady,
+        );
       }
       registerWhenReady();
     },
@@ -222,12 +236,15 @@ function createTiptapIntegration(
       );
     },
     detach() {
+      active = false;
       try {
+        (options.store ?? prosemirrorDevtoolsStore).flush();
         unregister?.();
       } finally {
         recorder = null;
         unregister = null;
         registeredView = null;
+        (options.store ?? prosemirrorDevtoolsStore).closeSession(options.id, sessionId);
         restorePluginGetter();
       }
     },

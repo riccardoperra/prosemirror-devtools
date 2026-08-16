@@ -127,7 +127,7 @@ describe("performance panel", () => {
       expect(container.querySelector(".pm-duration-scale-note")).toBeNull();
       expect(container.querySelector(".pm-chart-axis-unit")).toBeNull();
       expect(dispatchChart?.textContent).not.toContain("Dispatch time (ms)");
-      expect(dispatchChart?.textContent).toContain("Recent dispatches");
+      expect(dispatchChart?.textContent).toContain("recent dispatches");
       const dispatchChartContainer = container.querySelector<HTMLElement>(".pm-dispatch-chart");
       expect(Number(dispatchChartContainer?.dataset.frameBudgetMs)).toBeCloseTo(1000 / 60);
       expect(dispatchChartContainer?.dataset.detailThresholdMode).toBe("auto");

@@ -1,3 +1,4 @@
+import type { Node as ProseMirrorNode } from "prosemirror-model";
 import type { EditorState, Transaction } from "prosemirror-state";
 
 import { serializeDocument, serializeValue } from "../serialize";
@@ -10,10 +11,39 @@ import type {
   TransactionRecord,
 } from "../types";
 
-type TransactionRecordDetails = Pick<
-  TransactionRecord,
-  "transactions" | "selectionBefore" | "selectionAfter" | "docBefore" | "docAfter"
->;
+type DocumentRecordDetails = Pick<TransactionRecord, "docBefore" | "docAfter">;
+
+function withLazyDocuments<T extends object>(
+  record: T,
+  initialBeforeDoc: ProseMirrorNode,
+  initialAfterDoc: ProseMirrorNode,
+): T & DocumentRecordDetails {
+  let beforeDoc: ProseMirrorNode | null = initialBeforeDoc;
+  let afterDoc: ProseMirrorNode | null = initialAfterDoc;
+  let documentDetails: DocumentRecordDetails | null = null;
+  const readDocuments = (): DocumentRecordDetails => {
+    if (documentDetails) return documentDetails;
+    const docBefore = serializeDocument(beforeDoc as ProseMirrorNode);
+    documentDetails = {
+      docBefore,
+      docAfter: beforeDoc === afterDoc ? docBefore : serializeDocument(afterDoc as ProseMirrorNode),
+    };
+    beforeDoc = null;
+    afterDoc = null;
+    return documentDetails;
+  };
+  Object.defineProperties(record, {
+    docBefore: {
+      enumerable: true,
+      get: () => readDocuments().docBefore,
+    },
+    docAfter: {
+      enumerable: true,
+      get: () => readDocuments().docAfter,
+    },
+  });
+  return record as T & DocumentRecordDetails;
+}
 
 function formatError(error: unknown): string | null {
   if (error == null) return null;
@@ -43,6 +73,7 @@ function readTransaction(transaction: Transaction, index: number): AppliedTransa
 export function createTransactionRecord({
   id,
   instanceId,
+  sessionId,
   timestamp,
   totalDuration,
   beforeState,
@@ -58,6 +89,7 @@ export function createTransactionRecord({
 }: {
   id: number;
   instanceId: string;
+  sessionId: string;
   timestamp: number;
   totalDuration: number;
   beforeState: EditorState;
@@ -78,24 +110,14 @@ export function createTransactionRecord({
   const applicationKnown = appliedTransactions !== undefined;
   const applied = appliedTransactions ? Array.from(appliedTransactions) : [];
   const observedTransactions = applicationKnown ? applied : [rootTransaction];
-  let details: TransactionRecordDetails | undefined;
+  const transactionDetails = observedTransactions.map(readTransaction);
+  const selectionBefore = serializeValue(beforeState.selection.toJSON());
+  const selectionAfter = serializeValue(stateAfter.selection.toJSON());
 
-  const readDetails = (): TransactionRecordDetails => {
-    if (details) return details;
-    const docBefore = serializeDocument(beforeState.doc);
-    details = {
-      transactions: observedTransactions.map(readTransaction),
-      selectionBefore: serializeValue(beforeState.selection.toJSON()),
-      selectionAfter: serializeValue(stateAfter.selection.toJSON()),
-      docBefore,
-      docAfter: beforeState.doc === stateAfter.doc ? docBefore : serializeDocument(stateAfter.doc),
-    };
-    return details;
-  };
-
-  return {
+  const record: Omit<TransactionRecord, "docBefore" | "docAfter"> = {
     id,
     instanceId,
+    sessionId,
     timestamp,
     totalDuration,
     applyDuration: phases.apply,
@@ -117,24 +139,14 @@ export function createTransactionRecord({
       (count, transaction) => count + transaction.steps.length,
       0,
     ),
-    get transactions() {
-      return readDetails().transactions;
-    },
-    get selectionBefore() {
-      return readDetails().selectionBefore;
-    },
-    get selectionAfter() {
-      return readDetails().selectionAfter;
-    },
-    get docBefore() {
-      return readDetails().docBefore;
-    },
-    get docAfter() {
-      return readDetails().docAfter;
-    },
+    transactions: transactionDetails,
+    selectionBefore,
+    selectionAfter,
     timings,
     markers,
     measureName,
     error: formatError(error),
   };
+  // Complete EditorState objects are no longer reachable after this call.
+  return withLazyDocuments(record, beforeState.doc, stateAfter.doc);
 }
