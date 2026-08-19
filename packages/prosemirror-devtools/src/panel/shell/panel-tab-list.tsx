@@ -1,18 +1,17 @@
 import type { ReactElement } from "react";
 
 import { useTabList } from "../hooks/use-tab-list";
-import { PANEL_TABS } from "../panel.constants";
 import { usePanelMeta, usePanelNavigation } from "../panel-provider";
 import { useActiveInstance } from "../store/selectors";
 
 export function PanelTabList(): ReactElement {
-  const { activeTab, selectTab } = usePanelNavigation();
-  const { panelId, tabPanelId } = usePanelMeta();
+  const { activePanel, panels, selectPanel } = usePanelNavigation();
+  const { tabId, tabPanelId } = usePanelMeta();
   const activeInstance = useActiveInstance();
   const { handleKeyDown, registerTab } = useTabList({
-    activeTab,
-    onSelect: selectTab,
-    tabs: PANEL_TABS,
+    activePanel,
+    onSelect: selectPanel,
+    tabs: panels,
   });
   const transactionCount = activeInstance?.transactions.length ?? 0;
 
@@ -23,21 +22,21 @@ export function PanelTabList(): ReactElement {
       onKeyDown={handleKeyDown}
       role="tablist"
     >
-      {PANEL_TABS.map((item, index) => (
+      {panels.map((item, index) => (
         <button
           aria-controls={tabPanelId}
-          aria-selected={activeTab === item.id}
+          aria-selected={activePanel === item.id}
           className="pm-tab"
-          id={`${panelId}-tab-${item.id}`}
+          id={tabId(item.id)}
           key={item.id}
-          onClick={() => selectTab(item.id)}
+          onClick={() => selectPanel(item.id)}
           ref={(element) => registerTab(index, element)}
           role="tab"
-          tabIndex={activeTab === item.id ? 0 : -1}
+          tabIndex={activePanel === item.id ? 0 : -1}
           type="button"
         >
-          {item.label}
-          {item.id === "history" || item.id === "performance" ? (
+          {item.title}
+          {item.badge === "transactions" ? (
             <span className="pm-tab-count">{transactionCount}</span>
           ) : null}
         </button>

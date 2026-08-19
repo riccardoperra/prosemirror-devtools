@@ -1,10 +1,10 @@
 import type { ReactElement } from "react";
 
-import { usePanelAppearance, usePanelStore } from "../panel-provider";
+import { usePanelAppearance, usePanelDataAccess } from "../panel-provider";
 import { useActiveInstanceId, useInstanceDescriptors } from "../store/selectors";
 
 export function PanelToolbar(): ReactElement {
-  const store = usePanelStore();
+  const { actions } = usePanelDataAccess();
   const activeInstanceId = useActiveInstanceId();
   const instances = useInstanceDescriptors();
   const { density, themeChoice, resolvedTheme, toggleDensity, cycleTheme } = usePanelAppearance();
@@ -20,7 +20,7 @@ export function PanelToolbar(): ReactElement {
         aria-label="Active ProseMirror instance"
         className="pm-instance-select"
         disabled={instances.length === 0}
-        onChange={(event) => store.setActiveInstance(event.target.value)}
+        onChange={(event) => actions.setActiveInstance(event.target.value)}
         value={activeInstanceId ?? ""}
       >
         {instances.length === 0 ? <option value="">No instances</option> : null}

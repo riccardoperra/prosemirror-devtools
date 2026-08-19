@@ -1,16 +1,14 @@
 import { useCallback, useRef } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
-import type { ProseMirrorDevtoolsTab } from "../panel.types";
-
 export function useTabList({
-  activeTab,
+  activePanel,
   onSelect,
   tabs,
 }: {
-  activeTab: ProseMirrorDevtoolsTab;
-  onSelect: (tab: ProseMirrorDevtoolsTab) => void;
-  tabs: readonly Readonly<{ id: ProseMirrorDevtoolsTab }>[];
+  activePanel: string;
+  onSelect: (panelId: string) => void;
+  tabs: readonly Readonly<{ id: string }>[];
 }): {
   handleKeyDown: (event: ReactKeyboardEvent<HTMLElement>) => void;
   registerTab: (index: number, element: HTMLButtonElement | null) => void;
@@ -25,7 +23,7 @@ export function useTabList({
     (event: ReactKeyboardEvent<HTMLElement>) => {
       const focusedIndex = tabRefs.current.findIndex((element) => element === event.target);
       const currentIndex =
-        focusedIndex >= 0 ? focusedIndex : tabs.findIndex(({ id }) => id === activeTab);
+        focusedIndex >= 0 ? focusedIndex : tabs.findIndex(({ id }) => id === activePanel);
       let nextIndex: number | null = null;
       if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % tabs.length;
       if (event.key === "ArrowLeft") {
@@ -41,7 +39,7 @@ export function useTabList({
       onSelect(nextTab.id);
       tabRefs.current[nextIndex]?.focus();
     },
-    [activeTab, onSelect, tabs],
+    [activePanel, onSelect, tabs],
   );
 
   return { handleKeyDown, registerTab };

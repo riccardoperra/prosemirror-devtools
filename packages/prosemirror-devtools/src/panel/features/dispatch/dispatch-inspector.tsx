@@ -3,7 +3,7 @@ import type { ReactElement, ReactNode } from "react";
 
 import { restoreDocument } from "../../../core/snapshots";
 import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../core/types";
-import { formatMs, formatTime } from "../../formatters";
+import { formatDateTime, formatMs, formatTime } from "../../formatters";
 import { Badge } from "../../ui/badge";
 import { CompactMetrics } from "../../ui/compact-metrics";
 import { AppliedTransactions, DispatchDocuments, DispatchMarkers } from "./dispatch-details";
@@ -81,7 +81,13 @@ function DispatchInspectorHeader(): ReactElement {
       <div className="pm-dispatch-identity">
         <span className="pm-eyebrow">Selected dispatch</span>
         <strong>#{record.id}</strong>
-        <span className="pm-row-detail">{formatTime(record.timestamp)}</span>
+        <time
+          className="pm-row-detail pm-history-timestamp"
+          dateTime={new Date(record.timestamp).toISOString()}
+          title={formatDateTime(record.timestamp)}
+        >
+          {formatTime(record.timestamp)}
+        </time>
       </div>
       <div className="pm-dispatch-badges">
         <TransactionBadges record={record} />

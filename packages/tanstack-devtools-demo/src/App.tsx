@@ -1,19 +1,18 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { prosemirrorDevtoolsStore } from "prosemirror-devtools";
 import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/tanstack";
+import { playgroundDevtoolsExtension } from "./DevtoolsIntegrationExtension";
 import { ProseMirrorEditor } from "./ProseMirrorEditor";
+
+const prosemirrorPlugin = createProseMirrorDevtoolsPlugin({
+  defaultPanel: "playground-integration",
+  extensions: [playgroundDevtoolsExtension],
+  store: prosemirrorDevtoolsStore,
+});
 
 export function App() {
   const [latencyEnabled, setLatencyEnabled] = useState(false);
-
-  const prosemirrorPlugin = useMemo(
-    () =>
-      createProseMirrorDevtoolsPlugin({
-        store: prosemirrorDevtoolsStore,
-      }),
-    [],
-  );
 
   return (
     <main className="playground">

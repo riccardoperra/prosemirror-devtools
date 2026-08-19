@@ -14,7 +14,7 @@ export type CustomDispatchObservation = Readonly<{
   appliedTransactions: readonly Transaction[] | undefined;
 }>;
 
-type CustomDispatchFrame = {
+type CustomDispatchContext = {
   rootTransaction: Transaction;
   beforeState: EditorState;
   applyDepth: number;
@@ -75,12 +75,13 @@ export function createCustomDispatchObserver(view: EditorView): Readonly<{
     beforeState: EditorState,
   ) => Readonly<{ finish: () => CustomDispatchObservation }>;
 }> {
-  const frames: CustomDispatchFrame[] = [];
+  // Nested custom dispatches temporarily become the context observed by patched methods.
+  const activeDispatches: CustomDispatchContext[] = [];
   let attemptedStates = new WeakSet<EditorState>();
   let stateRestorers: RestoreMethod[] = [];
   let viewRestorers: RestoreMethod[] = [];
 
-  const currentFrame = (): CustomDispatchFrame | undefined => frames.at(-1);
+  const currentDispatch = (): CustomDispatchContext | undefined => activeDispatches.at(-1);
 
   const patchState = (state: EditorState): void => {
     if (attemptedStates.has(state)) return;
@@ -91,26 +92,26 @@ export function createCustomDispatchObserver(view: EditorView): Readonly<{
       state,
       "applyTransaction",
       function observedApplyTransaction(this: EditorState, transaction: Transaction) {
-        const frame = currentFrame();
-        if (!frame) return originalApplyTransaction.call(this, transaction);
-        const outermost = frame.applyDepth === 0;
+        const dispatch = currentDispatch();
+        if (!dispatch) return originalApplyTransaction.call(this, transaction);
+        const outermost = dispatch.applyDepth === 0;
         const startedAt = monotonicNow();
-        frame.applyDepth += 1;
+        dispatch.applyDepth += 1;
         let result: ReturnType<EditorState["applyTransaction"]>;
         try {
           result = originalApplyTransaction.call(this, transaction);
         } finally {
-          frame.applyDepth -= 1;
+          dispatch.applyDepth -= 1;
           if (outermost) {
-            frame.applyTimings.push({
+            dispatch.applyTimings.push({
               startedAt,
               duration: Math.max(0, monotonicNow() - startedAt),
             });
           }
         }
         patchState(result.state);
-        if (this === frame.beforeState && transaction === frame.rootTransaction) {
-          frame.rootResult = result;
+        if (this === dispatch.beforeState && transaction === dispatch.rootTransaction) {
+          dispatch.rootResult = result;
         }
         return result;
       },
@@ -130,26 +131,26 @@ export function createCustomDispatchObserver(view: EditorView): Readonly<{
   };
 
   const observeViewUpdate = <T>(
-    frame: CustomDispatchFrame,
+    dispatch: CustomDispatchContext,
     state: EditorState,
     update: () => T,
   ): T => {
-    const outermost = frame.viewUpdateDepth === 0;
+    const outermost = dispatch.viewUpdateDepth === 0;
     const startedAt = monotonicNow();
-    frame.viewUpdateDepth += 1;
+    dispatch.viewUpdateDepth += 1;
     let succeeded = false;
     try {
       const result = update();
       succeeded = true;
       return result;
     } finally {
-      frame.viewUpdateDepth -= 1;
+      dispatch.viewUpdateDepth -= 1;
       if (outermost) {
-        frame.viewUpdateTimings.push({
+        dispatch.viewUpdateTimings.push({
           startedAt,
           duration: Math.max(0, monotonicNow() - startedAt),
         });
-        if (succeeded) frame.successfulUpdates.add(state);
+        if (succeeded) dispatch.successfulUpdates.add(state);
       }
     }
   };
@@ -160,10 +161,10 @@ export function createCustomDispatchObserver(view: EditorView): Readonly<{
       view,
       "updateState",
       function observedUpdateState(this: EditorView, state: EditorState) {
-        const frame = currentFrame();
-        if (!frame) return originalUpdateState.call(this, state);
+        const dispatch = currentDispatch();
+        if (!dispatch) return originalUpdateState.call(this, state);
         patchState(state);
-        return observeViewUpdate(frame, state, () => originalUpdateState.call(this, state));
+        return observeViewUpdate(dispatch, state, () => originalUpdateState.call(this, state));
       },
     );
     if (restoreUpdateState) viewRestorers.push(restoreUpdateState);
@@ -173,10 +174,10 @@ export function createCustomDispatchObserver(view: EditorView): Readonly<{
       view,
       "update",
       function observedUpdate(this: EditorView, props: DirectEditorProps) {
-        const frame = currentFrame();
-        if (!frame) return originalUpdate.call(this, props);
+        const dispatch = currentDispatch();
+        if (!dispatch) return originalUpdate.call(this, props);
         patchState(props.state);
-        return observeViewUpdate(frame, props.state, () => originalUpdate.call(this, props));
+        return observeViewUpdate(dispatch, props.state, () => originalUpdate.call(this, props));
       },
     );
     if (restoreUpdate) viewRestorers.push(restoreUpdate);
@@ -191,7 +192,7 @@ export function createCustomDispatchObserver(view: EditorView): Readonly<{
 
   return {
     begin(rootTransaction, beforeState) {
-      const frame: CustomDispatchFrame = {
+      const dispatch: CustomDispatchContext = {
         rootTransaction,
         beforeState,
         applyDepth: 0,
@@ -203,30 +204,32 @@ export function createCustomDispatchObserver(view: EditorView): Readonly<{
         finished: false,
         observation: null,
       };
-      const outermost = frames.length === 0;
-      frames.push(frame);
+      const outermost = activeDispatches.length === 0;
+      activeDispatches.push(dispatch);
       if (outermost) patchView();
       patchState(beforeState);
 
       return {
         finish() {
-          if (frame.finished) return frame.observation as CustomDispatchObservation;
-          frame.finished = true;
-          const rootCommitted = Boolean(
-            frame.rootResult &&
-            frame.successfulUpdates.has(frame.rootResult.state) &&
-            view.state === frame.rootResult.state,
+          if (dispatch.finished) return dispatch.observation as CustomDispatchObservation;
+          dispatch.finished = true;
+          const rootCommitted = !!(
+            dispatch.rootResult &&
+            dispatch.successfulUpdates.has(dispatch.rootResult.state) &&
+            view.state === dispatch.rootResult.state
           );
-          frame.observation = {
-            applyTimings: frame.applyTimings,
-            viewUpdateTimings: frame.viewUpdateTimings,
-            appliedTransactions: rootCommitted ? (frame.rootResult?.transactions ?? []) : undefined,
+          dispatch.observation = {
+            applyTimings: dispatch.applyTimings,
+            viewUpdateTimings: dispatch.viewUpdateTimings,
+            appliedTransactions: rootCommitted
+              ? (dispatch.rootResult?.transactions ?? [])
+              : undefined,
           };
 
-          const index = frames.lastIndexOf(frame);
-          if (index >= 0) frames.splice(index, 1);
-          if (frames.length === 0) restoreMethods();
-          return frame.observation;
+          const index = activeDispatches.lastIndexOf(dispatch);
+          if (index >= 0) activeDispatches.splice(index, 1);
+          if (activeDispatches.length === 0) restoreMethods();
+          return dispatch.observation;
         },
       };
     },

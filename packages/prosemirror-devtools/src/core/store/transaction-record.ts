@@ -1,31 +1,25 @@
+import type { Node as ProseMirrorNode } from "prosemirror-model";
 import type { EditorState, Transaction } from "prosemirror-state";
 
-import { serializeDocument, serializeValue } from "../serialize";
+import { serializeDocument } from "../serialize";
 import type {
   AppliedTransactionRecord,
   DevtoolsMarker,
   DispatchPhaseTiming,
   PluginTiming,
-  SerializedValue,
   TransactionRecord,
 } from "../types";
 
-type TransactionRecordDetails = Pick<
-  TransactionRecord,
-  "transactions" | "selectionBefore" | "selectionAfter" | "docBefore" | "docAfter"
->;
+type SerializedDocuments = Pick<TransactionRecord, "docBefore" | "docAfter">;
 
 function formatError(error: unknown): string | null {
   if (error == null) return null;
   return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 }
 
-function readMeta(transaction: Transaction): Record<string, SerializedValue> {
-  const output: Record<string, SerializedValue> = {};
+function readMeta(transaction: Transaction): Record<string, unknown> {
   const meta = (transaction as unknown as { meta?: Record<string, unknown> }).meta;
-  if (!meta) return output;
-  for (const [key, value] of Object.entries(meta)) output[key] = serializeValue(value);
-  return output;
+  return meta ? { ...meta } : {};
 }
 
 function readTransaction(transaction: Transaction, index: number): AppliedTransactionRecord {
@@ -35,7 +29,7 @@ function readTransaction(transaction: Transaction, index: number): AppliedTransa
     docChanged: transaction.docChanged,
     selectionSet: transaction.selectionSet,
     storedMarksSet: transaction.storedMarksSet,
-    steps: transaction.steps.map((step) => serializeValue(step.toJSON())),
+    steps: transaction.steps.map((step) => step.toJSON()),
     meta: readMeta(transaction),
   };
 }
@@ -43,6 +37,7 @@ function readTransaction(transaction: Transaction, index: number): AppliedTransa
 export function createTransactionRecord({
   id,
   instanceId,
+  sessionId,
   timestamp,
   totalDuration,
   beforeState,
@@ -58,6 +53,7 @@ export function createTransactionRecord({
 }: {
   id: number;
   instanceId: string;
+  sessionId: string;
   timestamp: number;
   totalDuration: number;
   beforeState: EditorState;
@@ -78,24 +74,31 @@ export function createTransactionRecord({
   const applicationKnown = appliedTransactions !== undefined;
   const applied = appliedTransactions ? Array.from(appliedTransactions) : [];
   const observedTransactions = applicationKnown ? applied : [rootTransaction];
-  let details: TransactionRecordDetails | undefined;
+  // Capture the small ProseMirror JSON payloads now; only full documents stay lazy.
+  const transactionDetails = observedTransactions.map(readTransaction);
+  const selectionBefore = beforeState.selection.toJSON();
+  const selectionAfter = stateAfter.selection.toJSON();
+  let beforeDoc: ProseMirrorNode | null = beforeState.doc;
+  let afterDoc: ProseMirrorNode | null = stateAfter.doc;
+  let documents: SerializedDocuments | null = null;
 
-  const readDetails = (): TransactionRecordDetails => {
-    if (details) return details;
-    const docBefore = serializeDocument(beforeState.doc);
-    details = {
-      transactions: observedTransactions.map(readTransaction),
-      selectionBefore: serializeValue(beforeState.selection.toJSON()),
-      selectionAfter: serializeValue(stateAfter.selection.toJSON()),
+  const readDocuments = (): SerializedDocuments => {
+    if (documents) return documents;
+    const docBefore = serializeDocument(beforeDoc as ProseMirrorNode);
+    documents = {
       docBefore,
-      docAfter: beforeState.doc === stateAfter.doc ? docBefore : serializeDocument(stateAfter.doc),
+      docAfter: beforeDoc === afterDoc ? docBefore : serializeDocument(afterDoc as ProseMirrorNode),
     };
-    return details;
+    // The serialized values replace the raw document roots after the first read.
+    beforeDoc = null;
+    afterDoc = null;
+    return documents;
   };
 
   return {
     id,
     instanceId,
+    sessionId,
     timestamp,
     totalDuration,
     applyDuration: phases.apply,
@@ -117,20 +120,14 @@ export function createTransactionRecord({
       (count, transaction) => count + transaction.steps.length,
       0,
     ),
-    get transactions() {
-      return readDetails().transactions;
-    },
-    get selectionBefore() {
-      return readDetails().selectionBefore;
-    },
-    get selectionAfter() {
-      return readDetails().selectionAfter;
-    },
+    transactions: transactionDetails,
+    selectionBefore,
+    selectionAfter,
     get docBefore() {
-      return readDetails().docBefore;
+      return readDocuments().docBefore;
     },
     get docAfter() {
-      return readDetails().docAfter;
+      return readDocuments().docAfter;
     },
     timings,
     markers,

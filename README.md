@@ -163,8 +163,10 @@ export function App() {
 ```
 
 The root export also provides `ProseMirrorDevtoolsPanel` for mounting the panel in any React host.
-See the [package guide](./packages/prosemirror-devtools/README.md) for isolated stores and panel
-options.
+Its per-host `extensions` registry accepts framework-neutral DOM mounts plus a React adapter, with
+controlled or uncontrolled tab navigation. See the
+[package guide](./packages/prosemirror-devtools/README.md) for isolated stores, data subscriptions,
+and extension examples.
 
 ## Multiple editor instances
 
@@ -174,8 +176,9 @@ disappear as views attach and detach, and the active editor can be changed witho
 panel.
 
 For isolation, call `createProseMirrorDevtoolsStore()` and pass the result to instrumentation,
-attachment, and the panel/TanStack adapter. A store entry keeps 10,000 transaction records by
-default; set `transactionLimit` while attaching to change that bound.
+attachment, and the panel/TanStack adapter. History is unbounded by default; `transactionLimit` is
+an optional explicit cap. The recommended `createProseMirrorDevtoolsSession()` API adds a private
+lifecycle id so same-id editors in separate stores or later attachments remain isolated.
 
 ## Panel capabilities
 
@@ -205,8 +208,8 @@ through `EditorState.applyTransaction` and `EditorView.updateState`:
 - **Applied** and **appended** counts are distinct from the root dispatch count.
 
 By default, each retained dispatch also creates a User Timing measure named
-`prosemirror-devtools:<instance>:dispatch:<number>`. Set `performanceMarks: false` when attaching if
-you do not want those measures.
+`prosemirror-devtools:<session>:<instance>:dispatch:<number>`. Set `performanceMarks: false` when
+attaching if you do not want those measures.
 
 Set `performanceExtension: true` to opt into Chrome DevTools Performance custom tracks. A recording
 then nests the full dispatch, exact State apply/View update phases, and individual plugin hooks on a
@@ -236,8 +239,10 @@ performed after the callback returns is outside the recorded duration. Applied/a
 reported only when the exact dispatched transaction result is successfully installed as the final
 view state.
 
-History records serialize complete before/after documents, selections, steps, metadata, and changed
-ranges. Keep the transaction limit proportionate to document size. Direct calls to
+History records normalize selections, steps, and metadata without retaining complete
+`EditorState` objects. Persistent before/after document nodes are serialized lazily. Long-running
+unbounded sessions still consume memory, so applications can clear history, opt into a cap, or use
+the ordered dispatch subscription to persist/window data in a custom host. Direct calls to
 `view.updateState`, or replacing `dispatchTransaction` after attachment, bypass the dispatch
 wrapper.
 

@@ -1,13 +1,13 @@
 export const panelTokens = String.raw`
 .pm-devtools {
-  --pm-bg: #f7f8fa;
+  --pm-bg: #f6f6f5;
   --pm-panel: #ffffff;
-  --pm-panel-2: #f0f2f5;
-  --pm-border: #dfe3e8;
-  --pm-border-strong: #c8ced6;
-  --pm-text: #20242b;
-  --pm-muted: #68717d;
-  --pm-faint: #8e97a2;
+  --pm-panel-2: #f0f0ef;
+  --pm-border: #dededc;
+  --pm-border-strong: #c8c8c5;
+  --pm-text: #242424;
+  --pm-muted: #6f6f6c;
+  --pm-faint: #92928e;
   --pm-accent: #6758d7;
   --pm-accent-soft: #eceafd;
   --pm-green: #158f69;
@@ -31,27 +31,28 @@ export const panelTokens = String.raw`
   min-block-size: 360px;
   overflow: hidden;
   font: 500 12px/1.45 Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
   letter-spacing: -.005em;
 }
 .pm-devtools[data-theme="dark"] {
-  --pm-bg: #111318;
-  --pm-panel: #171a20;
-  --pm-panel-2: #20242c;
-  --pm-border: #2a303a;
-  --pm-border-strong: #3a424f;
-  --pm-text: #edf0f4;
-  --pm-muted: #a4abb5;
-  --pm-faint: #747d89;
-  --pm-accent: #a99cf8;
-  --pm-accent-soft: #2b2848;
+  --pm-bg: #121212;
+  --pm-panel: #181818;
+  --pm-panel-2: #212121;
+  --pm-border: #303030;
+  --pm-border-strong: #444444;
+  --pm-text: #f0f0f0;
+  --pm-muted: #a8a8a8;
+  --pm-faint: #777777;
+  --pm-accent: #aea2f5;
+  --pm-accent-soft: #2e2a43;
   --pm-green: #5bd1a5;
-  --pm-green-soft: #183a31;
+  --pm-green-soft: #19342b;
   --pm-yellow: #f2b55a;
-  --pm-yellow-soft: #3b2d18;
+  --pm-yellow-soft: #362a19;
   --pm-red: #ff8393;
-  --pm-red-soft: #40232a;
-  --pm-blue: #73b7ff;
-  --pm-blue-soft: #1d3045;
+  --pm-red-soft: #392126;
+  --pm-blue: #7ab8ef;
+  --pm-blue-soft: #1d2c38;
   --pm-shadow: 0 1px 2px rgba(0, 0, 0, .3);
   color-scheme: dark;
 }

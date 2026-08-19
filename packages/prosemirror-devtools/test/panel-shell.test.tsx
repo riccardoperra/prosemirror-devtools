@@ -1,9 +1,9 @@
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ProseMirrorDevtoolsPanel } from "../src";
-import { createProseMirrorDevtoolsStore } from "../src/core";
+import { createReactDevtoolsExtension, ProseMirrorDevtoolsPanel } from "../src";
+import { createProseMirrorDevtoolsStore, type DevtoolsExtension } from "../src/core";
 import { appendTextTransaction, createTestState, createTestView } from "./helpers";
 
 const reactTestEnvironment = globalThis as typeof globalThis & {
@@ -95,5 +95,175 @@ describe("devtools panel shell", () => {
       unregister();
       view.destroy();
     }
+  });
+
+  it("mounts framework-neutral extensions with reactive data and deterministic cleanup", async () => {
+    const store = createProseMirrorDevtoolsStore();
+    const cleanup = vi.fn();
+    const extension: DevtoolsExtension = {
+      id: "example",
+      panels: [
+        {
+          id: "live-state",
+          title: "Live state",
+          requiresInstance: false,
+          mount(container, context) {
+            const update = (): void => {
+              const instance = context.data.activeInstance.getSnapshot();
+              container.textContent = instance
+                ? `Editor ${instance.id}: ${instance.view.state.doc.textContent}`
+                : "No active editor";
+            };
+            update();
+            const unsubscribe = context.data.activeInstance.subscribe(update);
+            return () => {
+              unsubscribe();
+              cleanup();
+            };
+          },
+        },
+      ],
+    };
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    const view = createTestView(createTestState());
+    let unregister = (): void => {};
+
+    try {
+      await act(async () => {
+        root.render(
+          <ProseMirrorDevtoolsPanel
+            defaultPanel="live-state"
+            extensions={[extension]}
+            store={store}
+          />,
+        );
+      });
+      expect(container.querySelectorAll('[role="tab"]')).toHaveLength(7);
+      expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("No active editor");
+
+      await act(async () => {
+        unregister = store.register({ id: "editor", view });
+      });
+      expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("Editor editor: ");
+
+      await act(async () => {
+        const transaction = appendTextTransaction(view.state, "x");
+        const measurement = store.beginTransaction("editor", transaction, view.state, false);
+        const applied = view.state.applyTransaction(transaction);
+        view.updateState(applied.state);
+        store.finishTransaction(measurement, {
+          stateAfter: applied.state,
+          appliedTransactions: applied.transactions,
+        });
+        store.flush();
+      });
+      expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("Editor editor: x");
+
+      await act(async () => {
+        Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
+          .find((tab) => tab.textContent === "State")
+          ?.click();
+      });
+      expect(cleanup).toHaveBeenCalledOnce();
+      expect(container.querySelector(".pm-extension-panel")).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+      unregister();
+      view.destroy();
+    }
+  });
+
+  it("supports controlled extension navigation and the React adapter", async () => {
+    const onActivePanelChange = vi.fn();
+    const extension = createReactDevtoolsExtension({
+      id: "react-example",
+      panels: [
+        {
+          id: "react-panel",
+          title: "React panel",
+          requiresInstance: false,
+          render: () => <div data-testid="react-extension">React extension content</div>,
+        },
+      ],
+    });
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+
+    try {
+      await act(async () => {
+        root.render(
+          <ProseMirrorDevtoolsPanel
+            activePanel="react-panel"
+            extensions={[extension]}
+            onActivePanelChange={onActivePanelChange}
+          />,
+        );
+      });
+      expect(container.querySelector('[data-testid="react-extension"]')?.textContent).toBe(
+        "React extension content",
+      );
+
+      await act(async () => {
+        Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
+          .find((tab) => tab.textContent === "State")
+          ?.click();
+      });
+      expect(onActivePanelChange).toHaveBeenCalledWith("state");
+      expect(container.querySelector('[data-testid="react-extension"]')).not.toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it("keeps React extension lifecycle signals active under Strict Mode", async () => {
+    const renderedSignals: AbortSignal[] = [];
+    const extension = createReactDevtoolsExtension({
+      id: "strict-react-example",
+      panels: [
+        {
+          id: "strict-react-panel",
+          title: "Strict React panel",
+          requiresInstance: false,
+          render: (context) => {
+            renderedSignals.push(context.host.signal);
+            return (
+              <div data-testid="strict-react-extension">
+                {context.host.signal.aborted ? "disposed" : "mounted"}
+              </div>
+            );
+          },
+        },
+      ],
+    });
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    let activeSignal: AbortSignal | undefined;
+
+    try {
+      await act(async () => {
+        root.render(
+          <StrictMode>
+            <ProseMirrorDevtoolsPanel defaultPanel="strict-react-panel" extensions={[extension]} />
+          </StrictMode>,
+        );
+      });
+
+      expect(container.querySelector('[data-testid="strict-react-extension"]')?.textContent).toBe(
+        "mounted",
+      );
+      activeSignal = renderedSignals.at(-1);
+      expect(activeSignal?.aborted).toBe(false);
+    } finally {
+      await act(async () => root.unmount());
+    }
+
+    expect(activeSignal?.aborted).toBe(true);
   });
 });

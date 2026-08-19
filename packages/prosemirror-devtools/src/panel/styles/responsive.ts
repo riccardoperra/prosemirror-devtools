@@ -10,11 +10,12 @@ export const responsiveStyles = String.raw`
   .pm-instance-select { min-inline-size: 0; max-inline-size: none; flex: 1; }
   .pm-toolbar > .pm-spacer { display: none; }
   .pm-body { overflow: auto; }
-  .pm-split, .pm-history-layout { block-size: auto; min-block-size: 100%; grid-template-columns: 1fr; overflow: visible; }
-  .pm-split > .pm-pane, .pm-history-layout > * { overflow: visible; }
+  .pm-split { block-size: auto; min-block-size: 100%; grid-template-columns: 1fr; overflow: visible; }
+  .pm-split > .pm-pane { overflow: visible; }
+  .pm-history-layout { block-size: auto; min-block-size: 100%; grid-template-columns: 1fr; overflow: visible; }
   .pm-pane + .pm-pane { border-inline-start: 0; border-block-start: 1px solid var(--pm-border); }
-  .pm-history-list { border-inline-end: 0; border-block-end: 1px solid var(--pm-border); }
-  .pm-history-layout > .pm-dispatch-inspector { block-size: auto; }
+  .pm-history-list { block-size: clamp(180px, 42vh, 320px); overflow: auto; border-inline-end: 0; border-block-end: 1px solid var(--pm-border); }
+  .pm-history-layout > .pm-dispatch-inspector { block-size: auto; overflow: visible; scrollbar-gutter: auto; }
   .pm-transaction-payload, .pm-detail-columns { grid-template-columns: 1fr; }
   .pm-transaction-payload > * + *, .pm-detail-columns > * + * { border-inline-start: 0; border-block-start: 1px solid var(--pm-border); }
   .pm-plugin-timing-columns { display: none; }

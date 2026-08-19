@@ -5,6 +5,7 @@ import {
   createProseMirrorDispatchRecorder,
   recordDefaultDispatch,
 } from "./dispatch/record-dispatch";
+import { createDevtoolsSessionId } from "./session-id";
 import { prosemirrorDevtoolsStore } from "./store/create-devtools-store";
 import type {
   AttachedProseMirrorDevtools,
@@ -14,6 +15,7 @@ import type {
 
 type InternalAttachment = {
   id: string;
+  sessionId: string;
   store: DevtoolsStore;
   handle: AttachedProseMirrorDevtools;
 };
@@ -35,14 +37,23 @@ export function attachProseMirrorDevtools(
     if (previousAttachment.store !== store) {
       throw new Error("This EditorView is already attached to a different devtools store.");
     }
+    if (options.sessionId && previousAttachment.sessionId !== options.sessionId) {
+      throw new Error("This EditorView is already attached to a different devtools session.");
+    }
     return previousAttachment.handle;
   }
 
-  const unregister = store.register(options);
+  const sessionId = options.sessionId ?? createDevtoolsSessionId("attachment");
+  const attachmentOptions: AttachProseMirrorDevtoolsOptions = {
+    ...options,
+    store,
+    sessionId,
+  };
+  const unregister = store.register(attachmentOptions);
   const originalDispatch = options.view.props.dispatchTransaction;
   const view = options.view;
   const customDispatchRecorder = originalDispatch
-    ? createProseMirrorDispatchRecorder(options)
+    ? createProseMirrorDispatchRecorder(attachmentOptions)
     : null;
   let detached = false;
 
@@ -54,26 +65,51 @@ export function attachProseMirrorDevtools(
       );
       return;
     }
-    recordDefaultDispatch({ options, store, view: activeView, transaction });
+    recordDefaultDispatch({ options: attachmentOptions, store, view: activeView, transaction });
   }
 
-  view.setProps({ dispatchTransaction });
-
-  const handle: AttachedProseMirrorDevtools = {
-    id: options.id,
-    view,
-    detach() {
-      if (detached) return;
-      detached = true;
+  try {
+    view.setProps({ dispatchTransaction });
+  } catch (error) {
+    try {
       if (view.props.dispatchTransaction === dispatchTransaction) {
         view.setProps({ dispatchTransaction: originalDispatch } as unknown as Parameters<
           EditorView["setProps"]
         >[0]);
       }
+    } catch (restoreError) {
+      console.error(
+        "[prosemirror-devtools] Could not restore dispatch after attachment failed.",
+        restoreError,
+      );
+    } finally {
       unregister();
-      attachments.delete(view);
+      store.closeSession(options.id, sessionId);
+    }
+    throw error;
+  }
+
+  const handle: AttachedProseMirrorDevtools = {
+    id: options.id,
+    sessionId,
+    view,
+    detach() {
+      if (detached) return;
+      detached = true;
+      try {
+        if (view.props.dispatchTransaction === dispatchTransaction) {
+          view.setProps({ dispatchTransaction: originalDispatch } as unknown as Parameters<
+            EditorView["setProps"]
+          >[0]);
+        }
+      } finally {
+        store.flush();
+        unregister();
+        store.closeSession(options.id, sessionId);
+        attachments.delete(view);
+      }
     },
   };
-  attachments.set(view, { id: options.id, store, handle });
+  attachments.set(view, { id: options.id, sessionId, store, handle });
   return handle;
 }

@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type { RegisteredProseMirrorInstance } from "../src/core";
 import { StateView } from "../src/panel/features/state/state-view";
+import { JsonTree } from "../src/panel/json-tree";
 import { createTestState, createTestView } from "./helpers";
 
 const reactTestEnvironment = globalThis as typeof globalThis & {
@@ -158,5 +159,23 @@ describe("State panel", () => {
     } finally {
       await cleanup(root, view);
     }
+  });
+});
+
+describe("JsonTree", () => {
+  it("renders raw circular values without preprocessing", async () => {
+    const value: { label: string; self?: unknown } = { label: "root" };
+    value.self = value;
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    await act(async () => {
+      root.render(<JsonTree defaultExpandedDepth={2} value={value} />);
+    });
+
+    expect(container.textContent).toContain("[Circular]");
+    await act(async () => root.unmount());
   });
 });

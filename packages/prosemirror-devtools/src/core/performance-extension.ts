@@ -4,9 +4,11 @@ import type {
   DevtoolsMarkerTone,
   DevtoolsPerformanceExtensionOptions,
   PluginHook,
-  SerializedValue,
   TransactionRecord,
 } from "./types";
+import { findCustomCodeTimings } from "../performance/phase-timings";
+
+export { findCustomCodeTimings } from "../performance/phase-timings";
 
 type DevToolsColor =
   | "primary"
@@ -60,15 +62,25 @@ export function resolvePerformanceExtensionOptions(
   };
 }
 
-function text(value: SerializedValue): string {
+function text(value: unknown): string {
   if (typeof value === "string") return value;
-  const serialized = JSON.stringify(value);
-  return serialized.length > 500 ? `${serialized.slice(0, 497)}…` : serialized;
+  let output: string;
+  try {
+    output = JSON.stringify(value) ?? String(value);
+  } catch {
+    try {
+      output = String(value);
+    } catch {
+      output = "[unprintable]";
+    }
+  }
+  return output.length > 500 ? `${output.slice(0, 497)}…` : output;
 }
 
 function markerProperties(marker: DevtoolsMarker, record: TransactionRecord): [string, string][] {
   const properties: [string, string][] = [
     ["Editor", record.instanceId],
+    ["Session", record.sessionId],
     ["Dispatch", `#${record.id}`],
   ];
   if (marker.category) properties.push(["Category", marker.category]);
@@ -125,46 +137,6 @@ function hookTrack(hook: PluginHook): string {
     : "View update";
 }
 
-interface CustomCodeTiming {
-  startOffset: number;
-  duration: number;
-}
-
-/** Return exact gaps in custom-dispatch intervals not covered by observed apply/view calls. */
-export function findCustomCodeTimings(
-  phaseTimings: readonly PerformancePhaseTiming[],
-): CustomCodeTiming[] {
-  const covered = phaseTimings
-    .filter((timing) => timing.phase === "apply" || timing.phase === "viewUpdate")
-    .map((timing) => ({
-      start: timing.startOffset,
-      end: timing.startOffset + timing.duration,
-    }));
-  const gaps: CustomCodeTiming[] = [];
-
-  for (const custom of phaseTimings.filter((timing) => timing.phase === "customDispatch")) {
-    const customStart = custom.startOffset;
-    const customEnd = custom.startOffset + custom.duration;
-    const clipped = covered
-      .map((interval) => ({
-        start: Math.max(customStart, interval.start),
-        end: Math.min(customEnd, interval.end),
-      }))
-      .filter((interval) => interval.end > interval.start)
-      .sort((a, b) => a.start - b.start || a.end - b.end);
-    let cursor = customStart;
-    for (const interval of clipped) {
-      if (interval.start > cursor) {
-        gaps.push({ startOffset: cursor, duration: interval.start - cursor });
-      }
-      cursor = Math.max(cursor, interval.end);
-    }
-    if (cursor < customEnd) gaps.push({ startOffset: cursor, duration: customEnd - cursor });
-  }
-
-  return gaps;
-}
-
 function trackDetail(
   track: string,
   trackGroup: string,
@@ -217,7 +189,8 @@ export function emitPerformanceExtensionEntries(
   }
 
   const references: PerformanceExtensionEntryReference[] = [];
-  const suffix = `${record.instanceId} #${record.id}`;
+  const sessionLabel = record.sessionId;
+  const suffix = `${record.instanceId} #${record.id} [${sessionLabel}]`;
   const measure = (name: string, start: number, duration: number, detail: unknown): void => {
     try {
       performance.measure(name, {
@@ -235,6 +208,7 @@ export function emitPerformanceExtensionEntries(
     const dispatcher = record.customDispatchDuration == null ? "default" : "custom";
     const dispatchProperties: [string, string][] = [
       ["Editor", record.instanceId],
+      ["Session", record.sessionId],
       ["Dispatcher", dispatcher],
       ["Status", record.applicationStatus],
       ["Steps", String(record.stepCount)],
@@ -249,7 +223,7 @@ export function emitPerformanceExtensionEntries(
       ]);
     }
     measure(
-      `Dispatch #${record.id} · ${record.instanceId}`,
+      `Dispatch #${record.id} · ${record.instanceId} · ${sessionLabel}`,
       clockStartedAt,
       record.totalDuration,
       trackDetail(

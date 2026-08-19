@@ -2,7 +2,7 @@ import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { Selection } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 
-import { serializeDocument, serializeValue } from "./serialize";
+import { serializeDocument } from "./serialize";
 import type { SavedSnapshot, SerializedValue } from "./types";
 
 const STORAGE_VERSION = 1;
@@ -148,7 +148,7 @@ export function createSnapshot(
     name,
     createdAt: Date.now(),
     doc: serializeDocument(view.state.doc),
-    selection: serializeValue(view.state.selection.toJSON()),
+    selection: view.state.selection.toJSON(),
   };
 }
 

@@ -3,6 +3,12 @@ const timeFormatter = new Intl.DateTimeFormat(undefined, {
   minute: "2-digit",
   second: "2-digit",
   fractionalSecondDigits: 3,
+  hourCycle: "h23",
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "medium",
 });
 
 export function formatMs(value: number | null): string {
@@ -14,4 +20,8 @@ export function formatMs(value: number | null): string {
 
 export function formatTime(timestamp: number): string {
   return timeFormatter.format(timestamp);
+}
+
+export function formatDateTime(timestamp: number): string {
+  return dateTimeFormatter.format(timestamp);
 }

@@ -1,34 +1,65 @@
 import { memo, useMemo, useState } from "react";
 
-import type { SerializedValue } from "../core/types";
-
 export interface JsonTreeProps {
-  value: SerializedValue;
+  value: unknown;
   name?: string;
   defaultExpandedDepth?: number;
 }
 
-function copyValue(value: SerializedValue): void {
-  const text = JSON.stringify(value, null, 2);
-  void globalThis.navigator?.clipboard?.writeText(text);
+const NO_ANCESTORS: readonly object[] = [];
+
+function text(value: unknown, space?: number): string {
+  try {
+    const json = JSON.stringify(value, null, space);
+    if (json !== undefined) return json;
+  } catch {
+    // Fall back to the value's string representation.
+  }
+  try {
+    return String(value);
+  } catch {
+    return "[unprintable]";
+  }
 }
 
-function primitive(value: SerializedValue): React.ReactNode {
+function copyValue(value: unknown): void {
+  void globalThis.navigator?.clipboard?.writeText(text(value, 2));
+}
+
+function primitive(value: unknown): React.ReactNode {
   if (value === null) return <span className="pm-json-null">null</span>;
   if (typeof value === "string") {
     return <span className="pm-json-string">{JSON.stringify(value)}</span>;
   }
-  if (typeof value === "number") {
+  if (typeof value === "number" || typeof value === "bigint") {
     return <span className="pm-json-number">{String(value)}</span>;
   }
-  return <span className="pm-json-boolean">{String(value)}</span>;
+  if (typeof value === "boolean") {
+    return <span className="pm-json-boolean">{String(value)}</span>;
+  }
+  return <span className="pm-json-string">{text(value)}</span>;
 }
 
-function summary(value: SerializedValue): string {
+function entries(value: unknown): [string, unknown][] {
+  if (value === null || typeof value !== "object") return [];
+  try {
+    return Object.entries(value);
+  } catch {
+    return [];
+  }
+}
+
+function summary(value: unknown): string {
   if (Array.isArray(value)) return `Array(${value.length})`;
   if (value && typeof value === "object") {
-    const type = typeof value.type === "string" ? ` · ${value.type}` : "";
-    return `{${Object.keys(value).length}}${type}`;
+    let type = "";
+    try {
+      const candidate = (value as { type?: unknown }).type;
+      if (typeof candidate === "string") type = ` · ${candidate}`;
+    } catch {
+      // A proxy may reject property access.
+    }
+    return `{${entries(value).length}}${type}`;
   }
   return "";
 }
@@ -38,15 +69,23 @@ const JsonNode = memo(function JsonNode({
   value,
   depth,
   defaultExpandedDepth,
+  ancestors,
 }: {
   name?: string;
-  value: SerializedValue;
+  value: unknown;
   depth: number;
   defaultExpandedDepth: number;
+  ancestors: readonly object[];
 }): React.ReactElement {
-  const expandable = value !== null && typeof value === "object";
+  const isObject = value !== null && typeof value === "object";
+  const circular = isObject && ancestors.includes(value);
+  const expandable = isObject && !circular;
   const [expanded, setExpanded] = useState(depth < defaultExpandedDepth);
-  const entries = useMemo(() => (expandable ? Object.entries(value) : []), [expandable, value]);
+  const children = useMemo(() => (expandable ? entries(value) : []), [expandable, value]);
+  const childAncestors = useMemo(
+    () => (isObject ? [...ancestors, value] : ancestors),
+    [ancestors, isObject, value],
+  );
 
   return (
     <div className="pm-json-node">
@@ -65,7 +104,13 @@ const JsonNode = memo(function JsonNode({
         )}
         {name === undefined ? null : <span className="pm-json-key">{name}</span>}
         {name === undefined ? null : <span className="pm-muted">:</span>}
-        {expandable ? <span className="pm-json-summary">{summary(value)}</span> : primitive(value)}
+        {expandable ? (
+          <span className="pm-json-summary">{summary(value)}</span>
+        ) : circular ? (
+          <span className="pm-json-string">[Circular]</span>
+        ) : (
+          primitive(value)
+        )}
         <button
           aria-label="Copy value"
           className="pm-json-toggle pm-json-actions"
@@ -77,8 +122,9 @@ const JsonNode = memo(function JsonNode({
         </button>
       </div>
       {expandable && expanded
-        ? entries.map(([key, child]) => (
+        ? children.map(([key, child]) => (
             <JsonNode
+              ancestors={childAncestors}
               defaultExpandedDepth={defaultExpandedDepth}
               depth={depth + 1}
               key={key}
@@ -99,6 +145,7 @@ export function JsonTree({
   return (
     <div className="pm-json">
       <JsonNode
+        ancestors={NO_ANCESTORS}
         defaultExpandedDepth={defaultExpandedDepth}
         depth={0}
         {...(name === undefined ? {} : { name })}

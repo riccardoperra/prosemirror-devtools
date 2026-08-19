@@ -12,53 +12,56 @@ Devtools.
 pnpm add -D prosemirror-devtools
 ```
 
-The package expects ProseMirror, React 19 or newer, and—only when using the adapter—
-`@tanstack/react-devtools` in the host application.
+The core entrypoint expects ProseMirror only. React 19 and React DOM are optional peers used by the
+standalone panel; `@tanstack/react-devtools` is needed only by the TanStack adapter.
 
 ## Quick start
 
 The setup order is important:
 
-1. Create the raw plugins.
-2. Instrument them before `EditorState.create`.
+1. Create one devtools session for the editor lifecycle.
+2. Optionally instrument raw plugins before `EditorState.create`.
 3. Create the `EditorState` and `EditorView`.
-4. Attach the completed view.
-5. Detach before destroying the view.
+4. Attach the completed view through the session.
+5. Dispose the session before destroying the view.
 
 ```ts
 import { EditorState, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { attachProseMirrorDevtools, instrumentProseMirrorPlugins } from "prosemirror-devtools/core";
+import { createProseMirrorDevtoolsSession } from "prosemirror-devtools/core";
 
-const instanceId = "main-editor";
-const rawPlugins = [new Plugin({})];
-
-const plugins = instrumentProseMirrorPlugins(rawPlugins, {
-  instanceId,
+const devtools = createProseMirrorDevtoolsSession({
+  id: "main-editor",
+  label: "Main editor",
+  performanceMarks: true,
+  performanceExtension: true,
   getPluginLabel(plugin, index) {
     return `Plugin ${index + 1}`;
   },
 });
+const rawPlugins = [new Plugin({})];
+const plugins = devtools.instrumentPlugins(rawPlugins); // Explicitly opt into hook timings.
 
 const state = EditorState.create({ schema, plugins });
 const view = new EditorView(document.querySelector("#editor")!, { state });
 
-const devtools = attachProseMirrorDevtools({
-  id: instanceId,
-  label: "Main editor",
-  view,
-  transactionLimit: 10_000,
-  performanceMarks: true,
-  performanceExtension: true,
-});
+devtools.attach(view);
 
 // On teardown:
-devtools.detach();
+devtools.dispose();
 view.destroy();
 ```
 
-Use the same `instanceId`/`id` for instrumentation and attachment. Hook measurements are routed by
-that id. Never include both a raw plugin and its wrapped replacement in the same state.
+The session owns a private timing namespace in addition to the public editor id, so an old plugin
+view cannot leak samples into a later same-id editor. `attachProseMirrorDevtools` and
+`instrumentProseMirrorPlugins` remain available as lower-level APIs; when using them together,
+provide the same `sessionId` if lifecycle isolation is required. Never include both a raw plugin and
+its wrapped replacement in the same state.
+
+Framework adapters that already own dispatch middleware can call
+`session.createDispatchRecorder(view)` and wrap their native `next(transaction)` call with
+`recorder.record(transaction, next)` instead of replacing the view dispatcher. The Tiptap adapter
+uses the same lifecycle/session boundaries.
 
 ## Tiptap integration
 
@@ -134,13 +137,17 @@ registered dynamically later with `editor.registerPlugin` are not automatically 
 - node-view creation plus `update`, selection, mutation, event, and destroy methods
 - plugin-view creation, update, and destroy
 
+`state.init` and plugin-view creation happen before an `EditorView` can be attached, so those two
+startup timings are carried into the instance's initial plugin summary. Other hooks are recorded
+only while that instance is registered.
+
 The panel presents `props.decorations` as **Decoration change**. That timing covers the plugin callback
 that produces a `DecorationSet`; later decoration mapping and DOM reconciliation cannot be
 attributed to that callback safely and remain part of the surrounding view-update duration.
 
 Return values and thrown errors are preserved. Wrappers are cached for the same original plugin,
-instance id, and store. Runtime plugin keys are kept stable so plugin state lookup continues to
-work, including for plugins without an explicit `PluginKey`.
+private session, instance id, and store. Runtime plugin keys are kept stable so plugin state lookup
+continues to work, including for plugins without an explicit `PluginKey`.
 
 The wrapper is still a different `Plugin` object. Code that compares a plugin with strict object
 identity can observe that difference; prefer `PluginKey` lookups for integrations that need stable
@@ -192,14 +199,24 @@ const store = createProseMirrorDevtoolsStore();
 
 // Pass `store` to instrumentProseMirrorPlugins and attachProseMirrorDevtools too.
 export function EditorDiagnostics() {
-  return <ProseMirrorDevtoolsPanel store={store} defaultTab="performance" />;
+  return <ProseMirrorDevtoolsPanel store={store} defaultPanel="performance" />;
 }
 ```
 
-For custom hosts, `subscribe` and `getSnapshot` expose the complete state. Narrow consumers can use
-the matching active-instance, descriptor-list, and per-instance reader/subscription pairs so an
-update in one editor does not rerender unrelated UI. Store actions include registration, active
-instance selection, transaction clearing, recording, plugin timing, and custom markers.
+For custom hosts, `getSnapshot` includes each live `EditorView`, so
+`instance.view.state` is always the complete current editor state. Historical records deliberately
+do not retain complete `EditorState` objects. Use `createDevtoolsDataAccess(store)` for a smaller
+framework-neutral surface with:
+
+- active-instance, descriptor, and per-instance readables;
+- `subscribeDispatch`, which receives ordered batches containing short-lived before/after
+  `EditorState` objects and the recorded transaction;
+- separate safe actions for active-instance selection, clearing, and flushing.
+
+Normal dispatch notifications are coalesced into one microtask batch without dropping records.
+Call `store.flush()` before a custom teardown boundary; the built-in attachment and session APIs do
+this automatically. A persistence extension can write each dispatch batch to IndexedDB or another
+store without coupling durable storage to the recorder.
 
 ## Custom performance markers
 
@@ -272,7 +289,7 @@ import { ProseMirrorDevtoolsPanel } from "prosemirror-devtools";
 export function Diagnostics() {
   return (
     <ProseMirrorDevtoolsPanel
-      defaultTab="state"
+      defaultPanel="state"
       theme="system"
       performanceFrameBudgetMs={1000 / 60}
       className="my-devtools"
@@ -297,6 +314,74 @@ visible dispatches and uses four times that value as the detail threshold, cappe
 the frame budget. The adaptive zone can use up to 42 chart pixels and gives every positive dispatch
 at least six painted pixels. Tooltips keep the exact values. Pass a number for a fixed threshold or
 `0` for a fully linear Y scale.
+
+## Panel extensions and framework hosts
+
+`ProseMirrorDevtoolsPanel` has a per-host `extensions` registry. Built-in and extension panels
+share one keyboard-accessible tab host, and navigation can be uncontrolled with `defaultPanel` or
+controlled with `activePanel`/`onActivePanelChange`. Panel ids must be unique within that host.
+
+The canonical extension contract is DOM-based, so Vue, Angular, Svelte, Web Components, or plain
+JavaScript can mount and clean up their own UI without importing React:
+
+```ts
+import type { DevtoolsExtension } from "prosemirror-devtools/core";
+
+export const collaborationExtension: DevtoolsExtension = {
+  id: "collaboration",
+  panels: [
+    {
+      id: "collaboration-status",
+      title: "Collaboration",
+      requiresInstance: false,
+      mount(container, { data }) {
+        const render = () => {
+          const instance = data.activeInstance.getSnapshot();
+          container.textContent = instance
+            ? `Active editor: ${instance.id} (${instance.view.state.doc.content.size} positions)`
+            : "No active editor";
+        };
+        render();
+        const unsubscribe = data.activeInstance.subscribe(render);
+        return unsubscribe;
+      },
+    },
+  ],
+};
+```
+
+```tsx
+<ProseMirrorDevtoolsPanel
+  extensions={[collaborationExtension]}
+  defaultPanel="collaboration-status"
+/>
+```
+
+The context intentionally separates `data`, `actions`, and `host`. Extensions can read the live
+view/state, subscribe to only the data they need, query history in windows, observe raw dispatch
+batches, and invoke a small set of host-safe actions. They do not receive transaction-recorder
+internals. `host` supplies the owning document, resolved theme, density, panel navigation, and an
+abort signal.
+
+React panels can use the adapter, which the React host composes into its existing tree:
+
+```tsx
+import { createReactDevtoolsExtension } from "prosemirror-devtools";
+
+const diagnosticsExtension = createReactDevtoolsExtension({
+  id: "diagnostics",
+  panels: [
+    {
+      id: "diagnostics-overview",
+      title: "Diagnostics",
+      render: ({ data }) => <Diagnostics data={data} />,
+    },
+  ],
+});
+```
+
+Other framework conveniences can implement the same `mount(container, context) => cleanup`
+contract without changes to the recorder or panel host.
 
 ## Panel reference
 
@@ -366,26 +451,34 @@ cost is the duration covered by the union of all its hook intervals. This includ
 Different plugin rows remain inclusive and can overlap, so they must not be added together. Full
 sync is observed plugin callback time, not the entire editor render phase.
 
-The same UI-independent calculation is available from the performance feature entrypoint:
+The UI-independent calculations are available from the performance feature entrypoint:
 
 ```ts
-import { groupPluginTimings } from "prosemirror-devtools/performance";
+import {
+  buildDispatchPhaseBreakdown,
+  buildPerformanceSummary,
+  groupPluginTimings,
+} from "prosemirror-devtools/performance";
 
 const groups = groupPluginTimings(transactionRecord.timings);
+const phases = buildDispatchPhaseBreakdown(transactionRecord);
 ```
 
-The entrypoint also exports `PluginTiming`, `PluginHook`, `PluginTimingGroup`, and
-`PluginHookTimingGroup` as TypeScript types. It does not import React or the panel's chart
-dependencies, so it can be used by custom reporters and non-React integrations.
+That entrypoint also exports interval union/coverage, exact custom-code gaps, dispatch-cost
+coverage, phase/plugin timeline models, ranking visibility, and their TypeScript types. It imports
+neither React nor chart dependencies, so custom reporters and non-React integrations can reuse the
+same semantics as the built-in panel.
 
 One root call to `view.dispatch` produces one `TransactionRecord`. Its
 `appliedTransactionCount` includes accepted appended transactions, while
 `appendedTransactionCount` excludes the root. A rejected root transaction has zero applied
 transactions and is marked as filtered.
 
-The default retention limit is 10,000 records and is configurable through `transactionLimit`.
-Headline average/p95/max values use retained records, while the chart navigates them in windows of 60. Plugin hook aggregates cover calls since attachment or the last `clearTransactions` call,
-including calls older than the retained transaction window.
+History is unbounded by default; there is no automatic record eviction. An explicit
+`transactionLimit` remains as an opt-in escape hatch and `null` removes a previously configured
+cap. Headline average/p95/max values use in-memory records, while the built-in chart navigates them
+in windows of 60 and History renders the newest 200 rows before offering older pages. Plugin hook
+aggregates cover calls since attachment or the last `clearTransactions` call.
 
 ### User Timing measures
 
@@ -393,12 +486,14 @@ including calls older than the retained transaction window.
 with this shape:
 
 ```text
-prosemirror-devtools:<sanitized-instance-id>:dispatch:<sequence>
+prosemirror-devtools:<encoded-session-id>:<encoded-instance-id>:dispatch:<sequence>
 ```
 
-Start/end marks are cleared after measuring. Measures are cleared when their records are evicted or
-when transaction history is cleared. The measure covers the same dispatch interval as
-`totalDuration`; record serialization and subscriber notification happen afterward. Pass
+The private session namespace prevents same-id editors in isolated stores or later lifecycles from
+colliding in the browser buffer. The measure is created directly from a monotonic start and
+duration, so no temporary start/end marks are needed. Measures are cleared when their records are
+explicitly removed or history is cleared. The measure covers the same dispatch interval as
+`totalDuration`; record normalization and subscriber notification happen afterward. Pass
 `performanceMarks: false` to disable measures.
 
 ### Chrome Performance extension tracks
@@ -510,10 +605,15 @@ update, framework commit, browser layout, and paint are not included.
 - Nested hook timings are inclusive. The grouped panel merges their intervals for full synchronous
   cost; raw timing durations must not be summed as though they were exclusive phases.
 - Hook calls outside an active dispatch update aggregates, but do not appear in a selected
-  dispatch's span list. Initialization and plugin-view creation samples are buffered by instance id
-  until the matching view attaches to the same store.
-- Each transaction record serializes complete before/after documents, selection, steps, metadata,
-  and changed ranges. Large documents make a conservative `transactionLimit` important.
+  dispatch's span list. Initialization and plugin-view creation samples are buffered by private
+  session plus instance id until the matching view attaches to the same store.
+- Historical records normalize transactions, selection, metadata, and steps without retaining the
+  full before/after `EditorState` (and therefore arbitrary plugin state). Persistent ProseMirror
+  document nodes are held until their JSON is requested, then released by the record. Unbounded
+  history still consumes memory over a long session; clear it explicitly or opt into a cap when
+  that tradeoff matters.
+- Raw dispatch subscribers receive complete before/after states only in the next ordered microtask
+  batch. They must copy or persist anything they want to retain.
 - Synchronous errors are recorded and then rethrown; instrumentation does not swallow application
   failures.
 
@@ -546,22 +646,20 @@ required. An invalid/stale selection is ignored if the document itself is valid.
 The core entry also exports:
 
 - `inspectState`, `inspectPlugins`, and `inspectSchema`
-- `serializeDocument` and bounded, circular-safe `serializeValue`
+- `serializeDocument`
 - `restoreDocument`
 - store, transaction, timing, inspection, and snapshot types
 
-`serializeValue` accepts `maxDepth`, `maxEntries`, and `maxStringLength` limits and replaces DOM
-elements, functions, symbols, errors, maps, sets, circular references, and truncated data with safe
-serialized representations.
-
 ## Package exports
 
-| Export                              | Contents                                                                                                           |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `prosemirror-devtools`              | All core APIs and types plus `ProseMirrorDevtoolsPanel`                                                            |
-| `prosemirror-devtools/core`         | Store, attachment, instrumentation, serialization, inspection, and snapshot APIs without importing the React panel |
-| `prosemirror-devtools/tanstack`     | `createProseMirrorDevtoolsPlugin`, panel component, and panel types                                                |
-| `prosemirror-devtools/package.json` | Package metadata                                                                                                   |
+| Export                              | Contents                                                                                                                  |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `prosemirror-devtools`              | All core APIs and types plus the React panel and React extension adapter                                                  |
+| `prosemirror-devtools/core`         | Store, session, data/extension contracts, instrumentation, serialization, inspection, and snapshots without React imports |
+| `prosemirror-devtools/performance`  | Pure interval, attribution, grouping, summary, ranking, and timeline models                                               |
+| `prosemirror-devtools/tanstack`     | `createProseMirrorDevtoolsPlugin`, panel component, and panel types                                                       |
+| `prosemirror-devtools/tiptap`       | Tiptap 3 lifecycle and native dispatch-middleware adapter                                                                 |
+| `prosemirror-devtools/package.json` | Package metadata                                                                                                          |
 
 ## Development
 

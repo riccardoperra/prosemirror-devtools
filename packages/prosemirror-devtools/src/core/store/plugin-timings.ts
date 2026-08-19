@@ -19,7 +19,7 @@ export function recordPluginTiming(
   hook: PluginHook,
   duration: number,
 ): void {
-  const aggregateKey = `${pluginKey}\u0000${hook}`;
+  const aggregateKey = JSON.stringify([pluginKey, hook]);
   const aggregate = aggregates.get(aggregateKey) ?? {
     pluginKey,
     pluginLabel,

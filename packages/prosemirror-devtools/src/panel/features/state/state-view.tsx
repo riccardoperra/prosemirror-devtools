@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { ReactElement } from "react";
 
-import { inspectState, serializeValue } from "../../../core/serialize";
+import { inspectState } from "../../../core/serialize";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
@@ -24,10 +24,7 @@ export function StateView({ instance }: { instance: RegisteredProseMirrorInstanc
     }),
     [state.selection.empty, state.selection.from, state.selection.to],
   );
-  const selectedNodeJson = useMemo(
-    () => serializeValue(selected.node.toJSON(), { maxDepth: 20 }),
-    [selected.node],
-  );
+  const selectedNodeJson = useMemo(() => selected.node.toJSON(), [selected.node]);
   const selectionJson = useMemo(
     () => ({
       selection: inspection.selection,

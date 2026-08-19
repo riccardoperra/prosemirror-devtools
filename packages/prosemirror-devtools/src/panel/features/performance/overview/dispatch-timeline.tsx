@@ -8,24 +8,28 @@ import type { ScaleLinear } from "d3-scale";
 import { useMemo, useState } from "react";
 import type { ReactElement } from "react";
 
-import type { TransactionRecord } from "../../../../core/types";
-import { formatMs } from "../../../formatters";
+import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../../core/types";
+import { buildDispatchPhaseBreakdown } from "../../../../performance/phase-timings";
+import { formatDateTime, formatMs } from "../../../formatters";
 import { DEFAULT_PERFORMANCE_FRAME_BUDGET_MS } from "../../../panel.constants";
 import { buildPerformanceSummary } from "./metrics";
 
 type DispatchBarDatum = {
   key: string;
-  dispatchKey: string;
-  dispatchId: number;
-  phase: "State apply" | "View update" | "Custom code" | "Other sync work";
+  timelineKey: string;
+  kind: "initialization" | "dispatch";
+  dispatchId: number | null;
+  phase: "Initialization" | "State apply" | "View update" | "Custom code" | "Other sync work";
   duration: number;
   totalDuration: number;
   y1: number;
   y2: number;
   fill: string;
+  initialization: InitializationTimelineEntry | null;
 };
 
 const phaseColors: Record<DispatchBarDatum["phase"], string> = {
+  Initialization: "var(--pm-yellow)",
   "State apply": "var(--pm-accent)",
   "View update": "var(--pm-green)",
   "Custom code": "var(--pm-blue)",
@@ -33,6 +37,7 @@ const phaseColors: Record<DispatchBarDatum["phase"], string> = {
 };
 
 const legend = [
+  ["Initialization", "var(--pm-yellow)"],
   ["State apply", "var(--pm-accent)"],
   ["View update", "var(--pm-green)"],
   ["Custom code", "var(--pm-blue)"],
@@ -50,6 +55,19 @@ const adaptiveDetailMultiplier = 4;
 const adaptiveDetailBudgetFraction = 0.25;
 const dispatchWindowSize = 60;
 const dispatchSlotWidth = 26;
+const minimumVisibleDurationMs = 0.01;
+const initializationKey = "initialization";
+
+export interface InitializationTimelineEntry {
+  instanceId: string;
+  instanceLabel: string;
+  registeredAt: number;
+  duration: number;
+  stateInitDuration: number;
+  viewCreateDuration: number;
+  pluginCount: number;
+  hookCount: number;
+}
 
 export interface DispatchTimelineScale {
   frameBudgetMs: number;
@@ -229,6 +247,47 @@ function formatAxisDuration(value: number): string {
   return value < 10 ? value.toFixed(1) : String(Math.round(value));
 }
 
+export function buildInitializationTimelineEntry(
+  instance: Pick<RegisteredProseMirrorInstance, "id" | "label" | "registeredAt" | "pluginTimings">,
+): InitializationTimelineEntry | null {
+  let stateInitDuration = 0;
+  let viewCreateDuration = 0;
+  let hookCount = 0;
+  const pluginKeys = new Set<string>();
+
+  for (const timing of instance.pluginTimings) {
+    if (timing.hook === "state.init") stateInitDuration += timing.total;
+    else if (timing.hook === "view.create") viewCreateDuration += timing.total;
+    else continue;
+    hookCount += timing.count;
+    pluginKeys.add(timing.pluginKey);
+  }
+
+  if (hookCount === 0) return null;
+  return {
+    instanceId: instance.id,
+    instanceLabel: instance.label,
+    registeredAt: instance.registeredAt,
+    duration: stateInitDuration + viewCreateDuration,
+    stateInitDuration,
+    viewCreateDuration,
+    pluginCount: pluginKeys.size,
+    hookCount,
+  };
+}
+
+function timelineDomain(
+  records: readonly TransactionRecord[],
+  hasInitialization: boolean,
+): string[] {
+  const emptySlotCount = Math.max(0, dispatchWindowSize - records.length);
+  return [
+    ...(hasInitialization ? [initializationKey] : []),
+    ...records.map((record) => String(record.id)),
+    ...Array.from({ length: emptySlotCount }, (_, index) => `empty:${index}`),
+  ];
+}
+
 function durationAxisTicks(maximum: number, detailThresholdMs: number): number[] {
   const ticks = scaleLinear().domain([0, maximum]).ticks(3);
   return [...new Set([0, ...(detailThresholdMs > 0 ? [detailThresholdMs] : []), ...ticks])]
@@ -248,15 +307,12 @@ function dispatchRows(
     plotHeight,
   ]);
   for (const record of records) {
-    const apply = Math.max(0, record.applyDuration ?? 0);
-    const view = Math.max(0, record.viewUpdateDuration ?? 0);
-    const custom = Math.max(0, (record.customDispatchDuration ?? 0) - apply - view);
-    const other = Math.max(0, record.totalDuration - apply - view - custom);
+    const breakdown = buildDispatchPhaseBreakdown(record);
     const phases: Array<[DispatchBarDatum["phase"], number]> = [
-      ["State apply", apply],
-      ["View update", view],
-      ["Custom code", custom],
-      ["Other sync work", other],
+      ["State apply", breakdown.applyDuration],
+      ["View update", breakdown.viewUpdateDuration],
+      ["Custom code", breakdown.customCodeDuration],
+      ["Other sync work", breakdown.otherDuration],
     ];
     const phaseTotal = phases.reduce((total, [, duration]) => total + duration, 0);
     const paintedTotal = durationScale(record.totalDuration);
@@ -269,7 +325,8 @@ function dispatchRows(
       cursor += duration;
       rows.push({
         key: `${record.id}:${phase}`,
-        dispatchKey: String(record.id),
+        timelineKey: String(record.id),
+        kind: "dispatch",
         dispatchId: record.id,
         phase,
         duration,
@@ -280,14 +337,32 @@ function dispatchRows(
           record.id === selectedId
             ? phaseColors[phase]
             : `color-mix(in srgb, ${phaseColors[phase]} 72%, transparent)`,
+        initialization: null,
       });
     }
   }
   return rows;
 }
 
+function initializationRow(initialization: InitializationTimelineEntry): DispatchBarDatum {
+  return {
+    key: initializationKey,
+    timelineKey: initializationKey,
+    kind: "initialization",
+    dispatchId: null,
+    phase: "Initialization",
+    duration: initialization.duration,
+    totalDuration: initialization.duration,
+    y1: 0,
+    y2: Math.max(initialization.duration, minimumVisibleDurationMs),
+    fill: phaseColors.Initialization,
+    initialization,
+  };
+}
+
 export function DispatchTimeline({
   records,
+  initialization,
   dispatchCount,
   selectedId,
   onSelect,
@@ -295,6 +370,7 @@ export function DispatchTimeline({
   frameBudgetMs,
 }: {
   records: readonly TransactionRecord[];
+  initialization: InitializationTimelineEntry | null;
   dispatchCount: number;
   selectedId: number;
   onSelect: (id: number) => void;
@@ -310,17 +386,24 @@ export function DispatchTimeline({
   const adaptiveDetail = useMemo(
     () =>
       resolveAdaptiveDetailThreshold(
-        visible.map((record) => record.totalDuration),
+        [
+          ...(initialization ? [Math.max(initialization.duration, minimumVisibleDurationMs)] : []),
+          ...visible.map((record) => record.totalDuration),
+        ],
         frameBudgetMs,
       ),
-    [frameBudgetMs, visible],
+    [frameBudgetMs, initialization, visible],
   );
   const fixedDetailThresholdMs =
     detailThresholdMs !== undefined && Number.isFinite(detailThresholdMs) && detailThresholdMs >= 0
       ? detailThresholdMs
       : null;
   const requestedDetailThresholdMs = fixedDetailThresholdMs ?? adaptiveDetail.thresholdMs;
-  const measuredMaximum = Math.max(...visible.map((record) => record.totalDuration), 0);
+  const measuredMaximum = Math.max(
+    initialization ? Math.max(initialization.duration, minimumVisibleDurationMs) : 0,
+    ...visible.map((record) => record.totalDuration),
+    0,
+  );
   const scale = useMemo(
     () => resolveDispatchTimelineScale(measuredMaximum, frameBudgetMs, requestedDetailThresholdMs),
     [frameBudgetMs, measuredMaximum, requestedDetailThresholdMs],
@@ -334,10 +417,13 @@ export function DispatchTimeline({
     maximum,
   } = scale;
   const definition = useMemo(() => {
-    const rows = dispatchRows(visible, selectedId, maximum, resolvedDetailThresholdMs);
-    const domain = visible.map((record) => String(record.id));
+    const rows = [
+      ...(initialization ? [initializationRow(initialization)] : []),
+      ...dispatchRows(visible, selectedId, maximum, resolvedDetailThresholdMs),
+    ];
+    const domain = timelineDomain(visible, initialization !== null);
     const mark = barY(rows, {
-      x: "dispatchKey",
+      x: "timelineKey",
       y1: "y1",
       y2: "y2",
       key: "key",
@@ -381,21 +467,43 @@ export function DispatchTimeline({
         placement: ["right", "left", "top", "bottom"],
         content(points) {
           const datum = points[0]?.datum;
-          return datum
-            ? {
-                title: `Dispatch #${datum.dispatchId}`,
-                color: datum.fill,
-                rows: [
-                  { label: "Segment", value: datum.phase, color: datum.fill },
-                  { label: "Segment duration", value: `${datum.duration.toFixed(2)} ms` },
-                  { label: "Full dispatch", value: `${datum.totalDuration.toFixed(2)} ms` },
-                ],
-              }
-            : { rows: [] };
+          if (!datum) return { rows: [] };
+          if (datum.kind === "initialization" && datum.initialization) {
+            const metadata = datum.initialization;
+            return {
+              title: "Editor initialization",
+              color: datum.fill,
+              rows: [
+                {
+                  label: "Instance",
+                  value: `${metadata.instanceLabel} (${metadata.instanceId})`,
+                  color: datum.fill,
+                },
+                { label: "Measured hooks", value: formatMs(metadata.duration) },
+                { label: "state.init", value: formatMs(metadata.stateInitDuration) },
+                { label: "view.create", value: formatMs(metadata.viewCreateDuration) },
+                { label: "Hook calls", value: String(metadata.hookCount) },
+                { label: "Plugins", value: String(metadata.pluginCount) },
+                {
+                  label: "Registered",
+                  value: formatDateTime(metadata.registeredAt),
+                },
+              ],
+            };
+          }
+          return {
+            title: `Dispatch #${datum.dispatchId}`,
+            color: datum.fill,
+            rows: [
+              { label: "Segment", value: datum.phase, color: datum.fill },
+              { label: "Segment duration", value: `${datum.duration.toFixed(2)} ms` },
+              { label: "Full dispatch", value: `${datum.totalDuration.toFixed(2)} ms` },
+            ],
+          };
         },
       },
     });
-  }, [maximum, resolvedDetailThresholdMs, selectedId, visible]);
+  }, [initialization, maximum, resolvedDetailThresholdMs, selectedId, visible]);
   const hasPrevious = selectedIndex > 0;
   const hasNext = selectedIndex >= 0 && selectedIndex < records.length - 1;
   const selectionLabel = `${Math.max(0, selectedIndex + 1)} / ${records.length}`;
@@ -415,10 +523,8 @@ export function DispatchTimeline({
     onSelect(target.id);
   };
 
-  const width = Math.max(
-    240,
-    visible.length * dispatchSlotWidth + chartMargin.left + chartMargin.right,
-  );
+  const slotCount = dispatchWindowSize + (initialization ? 1 : 0);
+  const initialWidth = slotCount * dispatchSlotWidth + chartMargin.left + chartMargin.right;
   const budgetLabel = `Frame budget: ${formatBudgetMs(resolvedFrameBudgetMs)} ms (${frameRate} FPS target)`;
   const scaleDescription =
     resolvedDetailThresholdMs > 0
@@ -491,8 +597,10 @@ export function DispatchTimeline({
         data-detail-threshold-mode={fixedDetailThresholdMs === null ? "auto" : "fixed"}
         data-detail-threshold-ms={resolvedDetailThresholdMs}
         data-frame-budget-ms={resolvedFrameBudgetMs}
+        data-has-initialization={initialization !== null}
         data-scale-maximum-ms={maximum}
         data-selected-id={selectedId}
+        data-slot-count={slotCount}
         data-window-end-id={visible.at(-1)?.id}
         data-window-start-id={visible.at(0)?.id}
       >
@@ -519,15 +627,17 @@ export function DispatchTimeline({
         >
           <span className="pm-frame-budget-label">{budgetLabel}</span>
         </span>
-        <div className="pm-dispatch-chart-plot" style={{ inlineSize: `${width}px` }}>
+        <div className="pm-dispatch-chart-plot">
           <Chart
-            ariaDescription={`Stacked state apply, view update, custom code, and other synchronous duration for recent dispatches. The dashed line marks the ${budgetLabel}. ${scaleDescription} This is a dispatch-time budget, not measured browser frame rate.`}
+            ariaDescription={`${initialization ? "The first yellow bar summarizes measured state initialization and view creation plugin hooks. " : ""}Stacked state apply, view update, custom code, and other synchronous duration for recent dispatches. The dashed line marks the ${budgetLabel}. ${scaleDescription} This is a dispatch-time budget, not measured browser frame rate.`}
             ariaLabel="Dispatch duration bar chart"
             definition={definition}
             height={chartHeight}
-            initialWidth={width}
+            initialWidth={initialWidth}
             onSelect={(point) => {
-              if (!point) return;
+              if (!point || point.datum.kind !== "dispatch" || point.datum.dispatchId === null) {
+                return;
+              }
               selectAtIndex(records.findIndex((record) => record.id === point.datum.dispatchId));
             }}
           />
