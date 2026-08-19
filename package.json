@@ -13,13 +13,14 @@
   },
   "scripts": {
     "build": "pnpm --recursive --if-present run build",
-    "check": "pnpm lint && pnpm format:check && pnpm build && pnpm typecheck && pnpm test",
+    "check": "pnpm build && pnpm test",
     "changeset": "changeset",
     "changeset:status": "changeset status --since=main",
     "dev": "pnpm --filter prosemirror-devtools run build && pnpm --parallel --filter prosemirror-devtools --filter @prosemirror-devtools/tanstack-demo run dev",
-    "format": "prettier . --write",
-    "format:check": "prettier . --check",
-    "lint": "eslint . --max-warnings=0",
+    "format": "oxfmt .",
+    "format:check": "oxfmt . --check",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint . --fix",
     "release": "pnpm build && changeset publish",
     "test": "pnpm --recursive --if-present run test",
     "typecheck": "pnpm --filter prosemirror-devtools run build && pnpm --recursive --if-present run typecheck",
@@ -27,15 +28,9 @@
   },
   "devDependencies": {
     "@changesets/cli": "catalog:",
-    "@eslint/js": "catalog:",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "eslint-config-prettier": "catalog:",
-    "eslint-plugin-react-hooks": "catalog:",
-    "eslint-plugin-react-refresh": "catalog:",
-    "globals": "catalog:",
-    "prettier": "catalog:",
-    "typescript": "catalog:",
-    "typescript-eslint": "catalog:"
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "typescript": "catalog:"
   }
 }

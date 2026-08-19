@@ -4,7 +4,12 @@ import type { EditorView } from "prosemirror-view";
 export type DevtoolsTheme = "light" | "dark" | "system";
 
 export type SerializedValue =
-  null | boolean | number | string | SerializedValue[] | { [key: string]: SerializedValue };
+  | null
+  | boolean
+  | number
+  | string
+  | SerializedValue[]
+  | { [key: string]: SerializedValue };
 
 export type PluginHook =
   | "state.init"

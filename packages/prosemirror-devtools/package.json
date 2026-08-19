@@ -40,7 +40,7 @@
     "dev": "tsdown --watch",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src test",
+    "lint": "oxlint src test",
     "publint": "publint"
   },
   "keywords": [

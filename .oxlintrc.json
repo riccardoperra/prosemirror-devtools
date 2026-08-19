@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react"],
+  "ignorePatterns": [".agents/**", "**/.vite/**", "**/coverage/**", "**/dist/**", "**/*.min.*"],
+  "options": {
+    "maxWarnings": 0,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "rules": {
+    "react/exhaustive-deps": "warn",
+    "react/rules-of-hooks": "error"
+  },
+  "overrides": [
+    {
+      "files": ["packages/tanstack-devtools-demo/**/*.{ts,tsx}"],
+      "rules": {
+        "react/only-export-components": ["warn", { "allowConstantExport": true }]
+      }
+    }
+  ]
+}

@@ -8,7 +8,11 @@ import {
 import { hookFamily, hookLabel, type PluginHookFamily } from "../plugin-timing-formatters";
 
 export type PluginTimelineColor =
-  "dispatch" | "apply" | "viewUpdate" | "customDispatch" | PluginHookFamily;
+  | "dispatch"
+  | "apply"
+  | "viewUpdate"
+  | "customDispatch"
+  | PluginHookFamily;
 
 interface TimelineLaneBase {
   id: string;

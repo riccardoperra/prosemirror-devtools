@@ -255,16 +255,17 @@ A stale saved selection is ignored rather than preventing a valid document resto
 
 ## Workspace commands
 
-| Command             | Purpose                                                  |
-| ------------------- | -------------------------------------------------------- |
-| `pnpm dev`          | Start the private TanStack demo                          |
-| `pnpm build`        | Build all workspace packages in dependency order         |
-| `pnpm test`         | Run package test suites                                  |
-| `pnpm typecheck`    | Type-check every package                                 |
-| `pnpm lint`         | Lint the complete workspace                              |
-| `pnpm format:check` | Verify Prettier formatting                               |
-| `pnpm check`        | Run formatting, linting, build, type-checking, and tests |
-| `pnpm changeset`    | Add a release note and semantic version intent           |
+| Command             | Purpose                                          |
+| ------------------- | ------------------------------------------------ |
+| `pnpm dev`          | Start the private TanStack demo                  |
+| `pnpm build`        | Build all workspace packages in dependency order |
+| `pnpm test`         | Run package test suites                          |
+| `pnpm typecheck`    | Type-check every package                         |
+| `pnpm lint`         | Lint the complete workspace with Oxlint          |
+| `pnpm format`       | Format the workspace with Oxfmt                  |
+| `pnpm format:check` | Verify Oxfmt formatting                          |
+| `pnpm check`        | Run the CI build and tests                       |
+| `pnpm changeset`    | Add a release note and semantic version intent   |
 
 The Changesets release workflow versions and publishes `prosemirror-devtools`; the demo remains
 private.
