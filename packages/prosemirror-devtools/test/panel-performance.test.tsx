@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProseMirrorDevtoolsPanel } from "../src";
 import { createProseMirrorDevtoolsStore } from "../src/core";
 import {
+  buildInitializationTimelineEntry,
   calculateFrameRate,
   createDispatchDurationScale,
   resolveAdaptiveDetailThreshold,
@@ -54,6 +55,103 @@ describe("performance panel", () => {
     expect(detailScale(0.1)).toBeGreaterThan(6);
     expect(detailScale(0.2)).toBeGreaterThan(detailScale(0.1));
     expect(detailScale(0.5)).toBeCloseTo(42);
+  });
+
+  it("shows initialization before the first dispatch and keeps sparse timeline entries packed", async () => {
+    let clock = 100;
+    vi.spyOn(performance, "now").mockImplementation(() => clock);
+    const store = createProseMirrorDevtoolsStore();
+    const view = createTestView(createTestState());
+
+    store.measurePluginHook("editor", "startup$", "Startup plugin", "state.init", () => {
+      clock += 3;
+    });
+    store.measurePluginHook("editor", "startup$", "Startup plugin", "view.create", () => {
+      clock += 2;
+    });
+    const unregister = store.register({ id: "editor", label: "Editor", view });
+    const instance = store.getInstance("editor");
+    if (!instance) throw new Error("Expected the editor to be registered");
+    expect(buildInitializationTimelineEntry(instance)).toMatchObject({
+      instanceId: "editor",
+      instanceLabel: "Editor",
+      duration: 5,
+      stateInitDuration: 3,
+      viewCreateDuration: 2,
+      pluginCount: 1,
+      hookCount: 2,
+    });
+
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+
+    try {
+      await act(async () => {
+        root.render(
+          <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+        );
+      });
+      await act(async () => {
+        await import("../src/panel/features/performance/performance-view");
+      });
+
+      const chartContainer = container.querySelector<HTMLElement>(".pm-dispatch-chart");
+      const chart = container.querySelector<SVGElement>(
+        'svg[aria-label="Dispatch duration bar chart"]',
+      );
+      expect(container.querySelector(".pm-empty")).toBeNull();
+      expect(chart).not.toBeNull();
+      expect(chart?.textContent).toContain("first yellow bar");
+      expect(chartContainer?.dataset.hasInitialization).toBe("true");
+      expect(chartContainer?.dataset.slotCount).toBe("61");
+      expect(container.querySelector(".pm-chart-legend")?.textContent).toContain("initialization");
+      expect(container.querySelector('[aria-label="Dispatch selection"] output')?.textContent).toBe(
+        "0 / 0",
+      );
+
+      await act(async () => {
+        const transaction = appendTextTransaction(view.state, "x");
+        const measurement = store.beginTransaction("editor", transaction, view.state, false);
+        clock += 1;
+        const applied = view.state.applyTransaction(transaction);
+        view.updateState(applied.state);
+        store.finishTransaction(measurement, {
+          stateAfter: applied.state,
+          appliedTransactions: applied.transactions,
+        });
+        store.flush();
+      });
+
+      const updatedChart = container.querySelector<SVGElement>(
+        'svg[aria-label="Dispatch duration bar chart"]',
+      );
+      const barPositions = [
+        ...new Set(
+          Array.from(updatedChart?.querySelectorAll(".ts-chart__bar-y > rect") ?? [], (rect) =>
+            Number(rect.getAttribute("x")),
+          ),
+        ),
+      ].sort((left, right) => left - right);
+      expect(barPositions).toHaveLength(2);
+      expect((barPositions[1] ?? 0) - (barPositions[0] ?? 0)).toBeLessThan(40);
+
+      const widestHorizontalLine = Math.max(
+        ...Array.from(updatedChart?.querySelectorAll("line") ?? [], (line) => {
+          if (line.getAttribute("y1") !== line.getAttribute("y2")) return 0;
+          return Math.abs(Number(line.getAttribute("x2")) - Number(line.getAttribute("x1")));
+        }),
+        0,
+      );
+      expect(widestHorizontalLine).toBeGreaterThan(1_500);
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      unregister();
+      view.destroy();
+    }
   });
 
   it("renders the selected dispatch grouped by slowest synchronous plugin cost", async () => {
@@ -118,9 +216,6 @@ describe("performance panel", () => {
       );
       expect(dispatchChart).not.toBeNull();
       expect(dispatchChart?.getAttribute("tabindex")).toBe("0");
-      expect(
-        container.querySelector<HTMLElement>(".pm-dispatch-chart-plot")?.style.inlineSize,
-      ).toBe("240px");
       expect(container.querySelector(".pm-frame-budget-label")?.textContent).toBe(
         "Frame budget: 16.7 ms (60 FPS target)",
       );

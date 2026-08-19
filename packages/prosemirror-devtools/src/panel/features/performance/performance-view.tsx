@@ -4,7 +4,7 @@ import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { useSelectedTransaction } from "../../hooks/use-selected-transaction";
 import { PluginPerformanceTable } from "./cumulative/plugin-performance-table";
 import { PerformanceDispatchInspector } from "./performance-dispatch-inspector";
-import { DispatchTimeline } from "./overview/dispatch-timeline";
+import { buildInitializationTimelineEntry, DispatchTimeline } from "./overview/dispatch-timeline";
 
 export function PerformanceView({
   instance,
@@ -17,8 +17,9 @@ export function PerformanceView({
 }): ReactElement {
   const records = instance.transactions;
   const { record: selected, selectedId, select } = useSelectedTransaction(records);
+  const initialization = buildInitializationTimelineEntry(instance);
 
-  if (records.length === 0) {
+  if (records.length === 0 && !initialization) {
     return <div className="pm-empty">Dispatch a transaction to render performance bars.</div>;
   }
 
@@ -28,6 +29,7 @@ export function PerformanceView({
         detailThresholdMs={detailThresholdMs}
         dispatchCount={instance.dispatchCount}
         frameBudgetMs={frameBudgetMs}
+        initialization={initialization}
         records={records}
         selectedId={selectedId}
         onSelect={select}

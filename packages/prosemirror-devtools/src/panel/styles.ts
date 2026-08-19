@@ -180,7 +180,7 @@ const styles = String.raw`${panelTokens}
 .pm-tanstack-chart svg:focus { outline: none; }
 .pm-tanstack-chart svg:focus-visible { outline: 1px solid var(--pm-accent); outline-offset: -1px; border-radius: 4px; }
 .pm-dispatch-chart { padding: 4px 8px 2px; }
-.pm-dispatch-chart-plot { position: relative; z-index: 1; max-inline-size: 100%; }
+.pm-dispatch-chart-plot { position: relative; z-index: 1; inline-size: 100%; max-inline-size: 100%; }
 .pm-duration-detail-zone { position: absolute; z-index: 2; border-block-start: 1px dotted color-mix(in srgb, var(--pm-blue) 65%, var(--pm-border)); background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--pm-blue-soft) 34%, transparent)); pointer-events: none; }
 .pm-frame-budget-reference { position: absolute; z-index: 3; border-block-start: 1px dashed var(--pm-red); pointer-events: none; }
 .pm-frame-budget-label { position: absolute; inset-inline-start: 5px; inset-block-start: -4px; transform: translateY(-100%); padding: 2px 5px; border-radius: 4px; color: var(--pm-red); background: color-mix(in srgb, var(--pm-panel) 94%, transparent); font: 700 9px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
