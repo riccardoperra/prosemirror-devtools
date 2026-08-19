@@ -15,14 +15,7 @@ export {
   createProseMirrorDevtoolsStore,
   prosemirrorDevtoolsStore,
 } from "./core/store/create-devtools-store";
-export {
-  inspectPlugins,
-  inspectSchema,
-  inspectState,
-  serializeDocument,
-  serializeValue,
-} from "./core/serialize";
-export type { SerializeOptions } from "./core/serialize";
+export { inspectPlugins, inspectSchema, inspectState, serializeDocument } from "./core/serialize";
 export {
   createSnapshot,
   loadSnapshots,

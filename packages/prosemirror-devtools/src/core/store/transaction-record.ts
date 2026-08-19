@@ -1,61 +1,25 @@
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import type { EditorState, Transaction } from "prosemirror-state";
 
-import { serializeDocument, serializeValue } from "../serialize";
+import { serializeDocument } from "../serialize";
 import type {
   AppliedTransactionRecord,
   DevtoolsMarker,
   DispatchPhaseTiming,
   PluginTiming,
-  SerializedValue,
   TransactionRecord,
 } from "../types";
 
-type DocumentRecordDetails = Pick<TransactionRecord, "docBefore" | "docAfter">;
-
-function withLazyDocuments<T extends object>(
-  record: T,
-  initialBeforeDoc: ProseMirrorNode,
-  initialAfterDoc: ProseMirrorNode,
-): T & DocumentRecordDetails {
-  let beforeDoc: ProseMirrorNode | null = initialBeforeDoc;
-  let afterDoc: ProseMirrorNode | null = initialAfterDoc;
-  let documentDetails: DocumentRecordDetails | null = null;
-  const readDocuments = (): DocumentRecordDetails => {
-    if (documentDetails) return documentDetails;
-    const docBefore = serializeDocument(beforeDoc as ProseMirrorNode);
-    documentDetails = {
-      docBefore,
-      docAfter: beforeDoc === afterDoc ? docBefore : serializeDocument(afterDoc as ProseMirrorNode),
-    };
-    beforeDoc = null;
-    afterDoc = null;
-    return documentDetails;
-  };
-  Object.defineProperties(record, {
-    docBefore: {
-      enumerable: true,
-      get: () => readDocuments().docBefore,
-    },
-    docAfter: {
-      enumerable: true,
-      get: () => readDocuments().docAfter,
-    },
-  });
-  return record as T & DocumentRecordDetails;
-}
+type SerializedDocuments = Pick<TransactionRecord, "docBefore" | "docAfter">;
 
 function formatError(error: unknown): string | null {
   if (error == null) return null;
   return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 }
 
-function readMeta(transaction: Transaction): Record<string, SerializedValue> {
-  const output: Record<string, SerializedValue> = {};
+function readMeta(transaction: Transaction): Record<string, unknown> {
   const meta = (transaction as unknown as { meta?: Record<string, unknown> }).meta;
-  if (!meta) return output;
-  for (const [key, value] of Object.entries(meta)) output[key] = serializeValue(value);
-  return output;
+  return meta ? { ...meta } : {};
 }
 
 function readTransaction(transaction: Transaction, index: number): AppliedTransactionRecord {
@@ -65,7 +29,7 @@ function readTransaction(transaction: Transaction, index: number): AppliedTransa
     docChanged: transaction.docChanged,
     selectionSet: transaction.selectionSet,
     storedMarksSet: transaction.storedMarksSet,
-    steps: transaction.steps.map((step) => serializeValue(step.toJSON())),
+    steps: transaction.steps.map((step) => step.toJSON()),
     meta: readMeta(transaction),
   };
 }
@@ -110,11 +74,28 @@ export function createTransactionRecord({
   const applicationKnown = appliedTransactions !== undefined;
   const applied = appliedTransactions ? Array.from(appliedTransactions) : [];
   const observedTransactions = applicationKnown ? applied : [rootTransaction];
+  // Capture the small ProseMirror JSON payloads now; only full documents stay lazy.
   const transactionDetails = observedTransactions.map(readTransaction);
-  const selectionBefore = serializeValue(beforeState.selection.toJSON());
-  const selectionAfter = serializeValue(stateAfter.selection.toJSON());
+  const selectionBefore = beforeState.selection.toJSON();
+  const selectionAfter = stateAfter.selection.toJSON();
+  let beforeDoc: ProseMirrorNode | null = beforeState.doc;
+  let afterDoc: ProseMirrorNode | null = stateAfter.doc;
+  let documents: SerializedDocuments | null = null;
 
-  const record: Omit<TransactionRecord, "docBefore" | "docAfter"> = {
+  const readDocuments = (): SerializedDocuments => {
+    if (documents) return documents;
+    const docBefore = serializeDocument(beforeDoc as ProseMirrorNode);
+    documents = {
+      docBefore,
+      docAfter: beforeDoc === afterDoc ? docBefore : serializeDocument(afterDoc as ProseMirrorNode),
+    };
+    // The serialized values replace the raw document roots after the first read.
+    beforeDoc = null;
+    afterDoc = null;
+    return documents;
+  };
+
+  return {
     id,
     instanceId,
     sessionId,
@@ -142,11 +123,15 @@ export function createTransactionRecord({
     transactions: transactionDetails,
     selectionBefore,
     selectionAfter,
+    get docBefore() {
+      return readDocuments().docBefore;
+    },
+    get docAfter() {
+      return readDocuments().docAfter;
+    },
     timings,
     markers,
     measureName,
     error: formatError(error),
   };
-  // Complete EditorState objects are no longer reachable after this call.
-  return withLazyDocuments(record, beforeState.doc, stateAfter.doc);
 }

@@ -4,7 +4,6 @@ import type {
   DevtoolsMarkerTone,
   DevtoolsPerformanceExtensionOptions,
   PluginHook,
-  SerializedValue,
   TransactionRecord,
 } from "./types";
 import { findCustomCodeTimings } from "../performance/phase-timings";
@@ -63,10 +62,19 @@ export function resolvePerformanceExtensionOptions(
   };
 }
 
-function text(value: SerializedValue): string {
+function text(value: unknown): string {
   if (typeof value === "string") return value;
-  const serialized = JSON.stringify(value);
-  return serialized.length > 500 ? `${serialized.slice(0, 497)}…` : serialized;
+  let output: string;
+  try {
+    output = JSON.stringify(value) ?? String(value);
+  } catch {
+    try {
+      output = String(value);
+    } catch {
+      output = "[unprintable]";
+    }
+  }
+  return output.length > 500 ? `${output.slice(0, 497)}…` : output;
 }
 
 function markerProperties(marker: DevtoolsMarker, record: TransactionRecord): [string, string][] {

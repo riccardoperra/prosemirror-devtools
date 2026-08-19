@@ -1,7 +1,6 @@
 import type { EditorState, Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 
-import { serializeValue } from "../serialize";
 import type {
   DevtoolsDispatchEvent,
   DevtoolsDispatchListener,
@@ -21,6 +20,7 @@ import type {
   TransactionRecord,
 } from "../types";
 import { createDevtoolsSessionId } from "../session-id";
+import { normalizeTransactionQuery } from "../transaction-query";
 import { createPerformanceEntryStore } from "./performance-entries";
 import {
   readPluginTimingSummaries,
@@ -309,8 +309,8 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
     }
   };
 
-  const timingScopeKey = (instanceId: string, sessionId: string): string => {
-    return `${instanceId}\u0000${sessionId}`;
+  const timingScopeKey = (instanceId: string, sessionId?: string): string => {
+    return JSON.stringify([instanceId, sessionId ?? null]);
   };
 
   const register = (options: RegisterProseMirrorInstanceOptions): (() => void) => {
@@ -356,9 +356,9 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
     } else {
       const sessionId = options.sessionId ?? createDevtoolsSessionId("registration");
       const pendingKey = timingScopeKey(options.id, sessionId);
-      const wildcardPendingKey = timingScopeKey(options.id, "*");
+      const unscopedPendingKey = timingScopeKey(options.id);
       const pluginTimings = mergePluginTimingAggregates([
-        pendingPluginTimings.get(wildcardPendingKey),
+        pendingPluginTimings.get(unscopedPendingKey),
         pendingPluginTimings.get(pendingKey),
       ]);
       closedTimingScopes.delete(pendingKey);
@@ -381,7 +381,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       };
       instances.set(options.id, entry);
       pendingPluginTimings.delete(pendingKey);
-      pendingPluginTimings.delete(wildcardPendingKey);
+      pendingPluginTimings.delete(unscopedPendingKey);
     }
     refreshInstanceSnapshot(entry);
 
@@ -576,7 +576,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       const duration = Math.max(0, monotonicNow() - startedAt);
       const registered = instances.get(instanceId);
       const entry = !sessionId || registered?.sessionId === sessionId ? registered : undefined;
-      const pendingKey = timingScopeKey(instanceId, sessionId ?? "*");
+      const pendingKey = timingScopeKey(instanceId, sessionId);
       const timingScopeOpen = !sessionId || !closedTimingScopes.has(pendingKey);
       if (timingScopeOpen && (!registered || entry)) {
         const aggregates =
@@ -626,7 +626,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       tone: options.tone ?? "neutral",
       startOffset: Math.max(0, monotonicNow() - frame.clockStartedAt),
       duration: null,
-      ...(options.data === undefined ? {} : { data: serializeValue(options.data) }),
+      ...(options.data === undefined ? {} : { data: options.data }),
     });
     return true;
   };
@@ -646,7 +646,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       tone: options.tone ?? "neutral",
       startOffset: Math.max(0, startedAt - frame.clockStartedAt),
       duration: 0,
-      ...(options.data === undefined ? {} : { data: serializeValue(options.data) }),
+      ...(options.data === undefined ? {} : { data: options.data }),
     };
     frame.markers.push(marker);
     try {
@@ -672,19 +672,11 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
   ): DevtoolsTransactionPage => {
     const source = instances.get(id)?.transactions ?? [];
     const total = source.length;
-    const requestedOffset = query.offset ?? 0;
-    const offset = Number.isFinite(requestedOffset)
-      ? Math.min(total, Math.max(0, Math.floor(requestedOffset)))
-      : 0;
-    const requestedLimit = query.limit;
-    const limit =
-      requestedLimit === undefined || requestedLimit === Number.POSITIVE_INFINITY
-        ? total - offset
-        : Number.isFinite(requestedLimit)
-          ? Math.max(0, Math.floor(requestedLimit))
-          : 0;
+    const normalizedQuery = normalizeTransactionQuery(query);
+    const offset = Math.min(total, normalizedQuery.offset);
+    const limit = normalizedQuery.limit ?? total - offset;
     const records =
-      query.order === "newest-first"
+      normalizedQuery.order === "newest-first"
         ? source.slice(Math.max(0, total - offset - limit), total - offset).reverse()
         : source.slice(offset, offset + limit);
     return {

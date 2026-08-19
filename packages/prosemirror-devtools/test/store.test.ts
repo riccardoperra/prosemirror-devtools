@@ -189,6 +189,20 @@ describe("createProseMirrorDevtoolsStore", () => {
     });
   });
 
+  it("keeps unscoped timings separate from a literal star session id", () => {
+    const store = createProseMirrorDevtoolsStore();
+    store.measurePluginHook("editor", "unscoped$", "Unscoped", "state.init", () => undefined);
+    store.measurePluginHook("editor", "scoped$", "Scoped", "state.init", () => undefined, "*");
+    store.register({ id: "editor", sessionId: "*", view: viewForState() });
+
+    expect(store.getInstance("editor")?.pluginTimings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ pluginKey: "unscoped$", count: 1 }),
+        expect.objectContaining({ pluginKey: "scoped$", count: 1 }),
+      ]),
+    );
+  });
+
   it("notifies only the subscriptions affected by a store update", () => {
     const store = createProseMirrorDevtoolsStore();
     let firstState = createTestState();
@@ -293,7 +307,7 @@ describe("createProseMirrorDevtoolsStore", () => {
     expect(store.getSnapshot().instances[0]?.transactions).toHaveLength(3);
   });
 
-  it("serializes transaction details lazily and caches the result", () => {
+  it("serializes documents lazily and caches the result", () => {
     const store = createProseMirrorDevtoolsStore();
     const state = createTestState();
     const view = viewForState(state);
@@ -325,6 +339,65 @@ describe("createProseMirrorDevtoolsStore", () => {
     void record?.selectionAfter;
     expect(beforeToJSON).toHaveBeenCalledOnce();
     expect(afterToJSON).toHaveBeenCalledOnce();
+    expect(Object.keys(record ?? {})).toEqual(expect.arrayContaining(["docBefore", "docAfter"]));
+  });
+
+  it("serializes an unchanged document only once", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const state = createTestState();
+    const view = viewForState(state);
+    store.register({ id: "editor", view });
+    const transaction = state.tr;
+    const applied = state.applyTransaction(transaction);
+    const toJSON = vi.spyOn(state.doc, "toJSON");
+    const measurement = store.beginTransaction("editor", transaction, state, false);
+
+    const record = store.finishTransaction(measurement, {
+      stateAfter: applied.state,
+      appliedTransactions: applied.transactions,
+    });
+
+    expect(toJSON).not.toHaveBeenCalled();
+    expect(record?.docBefore).toBe(record?.docAfter);
+    expect(toJSON).toHaveBeenCalledOnce();
+  });
+
+  it("keeps ProseMirror step JSON lossless", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const state = createTestState();
+    const view = viewForState(state);
+    store.register({ id: "editor", view });
+    const text = "x".repeat(20_001);
+    const transaction = appendTextTransaction(state, text);
+    const applied = state.applyTransaction(transaction);
+    const measurement = store.beginTransaction("editor", transaction, state, false);
+
+    const record = store.finishTransaction(measurement, {
+      stateAfter: applied.state,
+      appliedTransactions: applied.transactions,
+    });
+
+    expect(record?.transactions[0]?.steps[0]).toMatchObject({
+      slice: { content: [{ text }] },
+    });
+  });
+
+  it("keeps transaction metadata as provided", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const state = createTestState();
+    const view = viewForState(state);
+    store.register({ id: "editor", view });
+    const metadata = { source: "test" };
+    const transaction = state.tr.setMeta("payload", metadata);
+    const applied = state.applyTransaction(transaction);
+    const measurement = store.beginTransaction("editor", transaction, state, false);
+
+    const record = store.finishTransaction(measurement, {
+      stateAfter: applied.state,
+      appliedTransactions: applied.transactions,
+    });
+
+    expect(record?.transactions[0]?.meta.payload).toBe(metadata);
   });
 
   it("records point markers and measured custom spans on the active dispatch", () => {

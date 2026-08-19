@@ -644,13 +644,9 @@ required. An invalid/stale selection is ignored if the document itself is valid.
 The core entry also exports:
 
 - `inspectState`, `inspectPlugins`, and `inspectSchema`
-- `serializeDocument` and bounded, circular-safe `serializeValue`
+- `serializeDocument`
 - `restoreDocument`
 - store, transaction, timing, inspection, and snapshot types
-
-`serializeValue` accepts `maxDepth`, `maxEntries`, and `maxStringLength` limits and replaces DOM
-elements, functions, symbols, errors, maps, sets, circular references, and truncated data with safe
-serialized representations.
 
 ## Package exports
 

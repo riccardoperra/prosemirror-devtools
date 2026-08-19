@@ -7,7 +7,6 @@ import {
   persistSnapshots,
   restoreDocument,
   restoreSnapshot,
-  serializeValue,
 } from "../src/core";
 import { createTestState, createTestView } from "./helpers";
 
@@ -41,60 +40,6 @@ class MemoryStorage implements Storage {
 
 afterEach(() => {
   if (typeof document !== "undefined") document.body.replaceChildren();
-});
-
-describe("serializeValue", () => {
-  it("preserves JSON primitives and stringifies only non-finite numbers", () => {
-    expect(serializeValue({ enabled: true, disabled: false, count: 2, invalid: Infinity })).toEqual(
-      {
-        enabled: true,
-        disabled: false,
-        count: 2,
-        invalid: "Infinity",
-      },
-    );
-  });
-
-  it("serializes circular objects and arrays without losing their constructor context", () => {
-    class Payload {
-      label = "root";
-      self: Payload = this;
-    }
-    const payload = new Payload();
-    const array: unknown[] = [payload];
-    array.push(array);
-
-    expect(serializeValue({ payload, array })).toEqual({
-      payload: {
-        label: "root",
-        self: "[Circular Payload]",
-      },
-      array: [
-        {
-          label: "root",
-          self: "[Circular Payload]",
-        },
-        "[Circular Array]",
-      ],
-    });
-  });
-
-  it("honors entry, depth, and string limits", () => {
-    expect(
-      serializeValue(
-        {
-          first: "abcdef",
-          second: { nested: true },
-          third: 3,
-        },
-        { maxEntries: 2, maxDepth: 1, maxStringLength: 3 },
-      ),
-    ).toEqual({
-      first: "abc…",
-      second: "[Object]",
-      "…": "[+1 more]",
-    });
-  });
 });
 
 describe("snapshots", () => {

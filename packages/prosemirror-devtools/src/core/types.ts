@@ -56,7 +56,7 @@ export interface DevtoolsMarker {
   tone: DevtoolsMarkerTone;
   startOffset: number;
   duration: number | null;
-  data?: SerializedValue;
+  data?: unknown;
 }
 
 export interface DevtoolsPerformanceExtensionOptions {
@@ -89,7 +89,7 @@ export interface AppliedTransactionRecord {
   selectionSet: boolean;
   storedMarksSet: boolean;
   steps: SerializedValue[];
-  meta: Record<string, SerializedValue>;
+  meta: Record<string, unknown>;
 }
 
 export interface TransactionRecord {
@@ -328,12 +328,12 @@ export interface PluginInspection {
   key: string;
   index: number;
   hasState: boolean;
-  state: SerializedValue;
+  state: unknown;
   props: readonly string[];
 }
 
 export interface SchemaInspection {
-  nodes: SerializedValue;
-  marks: SerializedValue;
+  nodes: Record<string, unknown>;
+  marks: Record<string, unknown>;
   topNodeType: string;
 }

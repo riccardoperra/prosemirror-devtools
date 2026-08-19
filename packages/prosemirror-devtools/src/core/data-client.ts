@@ -6,6 +6,7 @@ import type {
   DevtoolsTransactionQuery,
   RegisteredProseMirrorInstance,
 } from "./types";
+import { normalizeTransactionQuery } from "./transaction-query";
 
 export interface DevtoolsReadable<T> {
   getSnapshot(): T;
@@ -141,12 +142,14 @@ export function createDevtoolsDataAccess(store: DevtoolsStore): DevtoolsDataAcce
     id: string,
     query: DevtoolsTransactionQuery = {},
   ): DevtoolsReadable<DevtoolsTransactionPage> => {
-    const normalizedQuery: DevtoolsTransactionQuery = {
-      offset: query.offset ?? 0,
-      order: query.order ?? "oldest-first",
-      ...(query.limit === undefined ? {} : { limit: query.limit }),
-    };
-    const key = `${id}\u0000${normalizedQuery.offset}\u0000${normalizedQuery.limit ?? "all"}\u0000${normalizedQuery.order}`;
+    const normalizedQuery = normalizeTransactionQuery(query);
+    // Reuse readables so external-store snapshots stay stable across equivalent calls.
+    const key = JSON.stringify([
+      id,
+      normalizedQuery.offset,
+      normalizedQuery.limit ?? null,
+      normalizedQuery.order,
+    ]);
     const existing = transactionReadables.get(key);
     if (existing) return existing;
     const readable = selectedReadable(
