@@ -120,7 +120,6 @@ describe("createProseMirrorDevtoolsStore", () => {
       (view as { state: typeof state }).state = state;
     }
 
-    store.flush();
     expect(store.getSnapshot().instances[0]?.transactions).toHaveLength(1);
     expect(store.getSnapshot().instances[0]?.transactions[0]?.docAfter).toMatchObject({
       content: [{ content: [{ text: "ab" }] }],
@@ -166,7 +165,6 @@ describe("createProseMirrorDevtoolsStore", () => {
       });
     }
 
-    store.flush();
     const instance = store.getSnapshot().instances[0];
     expect(instance?.dispatchCount).toBe(3);
     expect(instance?.transactions.map((record) => record.id)).toEqual([2, 3]);
@@ -242,8 +240,6 @@ describe("createProseMirrorDevtoolsStore", () => {
     });
     firstState = applied.state;
     (firstView as { state: typeof firstState }).state = firstState;
-    store.flush();
-
     expect(all).toHaveBeenCalledOnce();
     expect(first).toHaveBeenCalledOnce();
     expect(active).not.toHaveBeenCalled();
@@ -258,7 +254,52 @@ describe("createProseMirrorDevtoolsStore", () => {
     expect(second).not.toHaveBeenCalled();
   });
 
-  it("keeps history unbounded by default and publishes lossless dispatch batches", () => {
+  it("publishes nested transaction signals and events at the outermost boundary", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const state = createTestState();
+    const view = viewForState(state);
+    store.register({ id: "editor", view });
+    const storeListener = vi.fn();
+    const instanceListener = vi.fn();
+    const dispatchListener = vi.fn();
+    store.subscribe(storeListener);
+    store.subscribeInstance("editor", instanceListener);
+    store.subscribeDispatch(dispatchListener);
+
+    const outerTransaction = appendTextTransaction(state, "o");
+    const innerTransaction = appendTextTransaction(state, "i");
+    const outer = store.beginTransaction("editor", outerTransaction, state, false);
+    const inner = store.beginTransaction("editor", innerTransaction, state, false);
+    const innerApplied = state.applyTransaction(innerTransaction);
+
+    store.finishTransaction(inner, {
+      stateAfter: innerApplied.state,
+      appliedTransactions: innerApplied.transactions,
+    });
+
+    expect(store.getInstance("editor")?.transactions.map(({ id }) => id)).toEqual([2]);
+    expect(storeListener).not.toHaveBeenCalled();
+    expect(instanceListener).not.toHaveBeenCalled();
+    expect(dispatchListener).not.toHaveBeenCalled();
+
+    const outerApplied = state.applyTransaction(outerTransaction);
+    store.finishTransaction(outer, {
+      stateAfter: outerApplied.state,
+      appliedTransactions: outerApplied.transactions,
+    });
+
+    expect(store.getInstance("editor")?.transactions.map(({ id }) => id)).toEqual([1, 2]);
+    expect(storeListener).toHaveBeenCalledOnce();
+    expect(instanceListener).toHaveBeenCalledOnce();
+    expect(dispatchListener).toHaveBeenCalledOnce();
+    expect(
+      dispatchListener.mock.calls[0]?.[0].map(
+        ({ record }: { record: { id: number } }) => record.id,
+      ),
+    ).toEqual([1, 2]);
+  });
+
+  it("keeps history unbounded and publishes every completed outer dispatch", () => {
     const store = createProseMirrorDevtoolsStore();
     let state = createTestState();
     const view = viewForState(state);
@@ -286,18 +327,11 @@ describe("createProseMirrorDevtoolsStore", () => {
 
     expect(store.getInstance("editor")?.transactions.map(({ id }) => id)).toEqual([1, 2, 3]);
     expect(store.getInstance("editor")?.transactionLimit).toBeNull();
-    expect(storeListener).not.toHaveBeenCalled();
-    expect(instanceListener).not.toHaveBeenCalled();
-    expect(dispatchListener).not.toHaveBeenCalled();
-
-    store.flush();
-
-    expect(storeListener).toHaveBeenCalledOnce();
-    expect(instanceListener).toHaveBeenCalledOnce();
-    expect(dispatchListener).toHaveBeenCalledOnce();
-    const events = dispatchListener.mock.calls[0]?.[0];
-    expect(events).toHaveLength(3);
-    expect(events.map(({ record }: { record: { id: number } }) => record.id)).toEqual([1, 2, 3]);
+    expect(storeListener).toHaveBeenCalledTimes(3);
+    expect(instanceListener).toHaveBeenCalledTimes(3);
+    expect(dispatchListener).toHaveBeenCalledTimes(3);
+    const events = dispatchListener.mock.calls.flatMap(([batch]) => batch);
+    expect(events.map(({ record }) => record.id)).toEqual([1, 2, 3]);
     expect(events[0]).toMatchObject({
       instanceId: "editor",
       beforeState: expect.any(Object),
@@ -518,8 +552,6 @@ describe("createProseMirrorDevtoolsStore", () => {
         stateAfter: applied.state,
         appliedTransactions: applied.transactions,
       });
-      store.flush();
-
       expect(measure).toHaveBeenCalledTimes(8);
       expect(measure.mock.calls.some(([name]) => String(name).startsWith("Fast plugin ·"))).toBe(
         false,

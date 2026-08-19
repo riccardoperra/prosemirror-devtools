@@ -10,7 +10,7 @@ afterEach(() => {
 });
 
 describe("createProseMirrorDevtoolsSession", () => {
-  it("owns plugin timing, attachment, flush, and stale-hook teardown", () => {
+  it("owns plugin timing, attachment, and stale-hook teardown", () => {
     let clock = 10;
     vi.spyOn(performance, "now").mockImplementation(() => clock);
     const destroy = vi.fn(() => {
@@ -43,7 +43,6 @@ describe("createProseMirrorDevtoolsSession", () => {
     session.attach(view);
 
     view.dispatch(appendTextTransaction(view.state, "x"));
-    session.flush();
     expect(store.getInstance("editor")?.pluginTimings).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ hook: "state.init", count: 1 }),
@@ -98,8 +97,6 @@ describe("createProseMirrorDevtoolsSession", () => {
 
       firstView.dispatch(appendTextTransaction(firstView.state, "a"));
       secondView.dispatch(appendTextTransaction(secondView.state, "b"));
-      first.flush();
-      second.flush();
 
       expect(measure).toHaveBeenCalledWith(
         "prosemirror-devtools:alpha:editor:dispatch:1",
@@ -163,7 +160,6 @@ describe("createProseMirrorDevtoolsSession", () => {
       const applied = view.state.applyTransaction(transaction);
       view.updateState(applied.state);
     });
-    session.flush();
 
     expect(view.props.dispatchTransaction).toBe(originalDispatch);
     expect(store.getInstance("editor")?.transactions).toEqual([

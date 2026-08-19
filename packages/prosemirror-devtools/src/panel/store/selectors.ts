@@ -5,7 +5,9 @@ import type { DevtoolsInstanceDescriptor, RegisteredProseMirrorInstance } from "
 import { usePanelDataAccess } from "../panel-provider";
 
 function useReadable<T>(readable: DevtoolsReadable<T>): T {
-  return useSyncExternalStore(readable.subscribe, readable.getSnapshot, readable.getSnapshot);
+  // Core already makes related writes atomic. This hook only bridges the committed external value
+  // into React; an expensive view may apply useDeferredValue to the returned value independently.
+  return useSyncExternalStore(readable.subscribe, readable, readable);
 }
 
 export function useActiveInstanceId(): string | null {

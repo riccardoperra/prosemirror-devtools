@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProseMirrorDevtoolsPanel } from "../src";
-import { createProseMirrorDevtoolsStore } from "../src/core";
+import { attachProseMirrorDevtools, createProseMirrorDevtoolsStore } from "../src/core";
 import {
   buildInitializationTimelineEntry,
   calculateFrameRate,
@@ -55,6 +55,132 @@ describe("performance panel", () => {
     expect(detailScale(0.1)).toBeGreaterThan(6);
     expect(detailScale(0.2)).toBeGreaterThan(detailScale(0.1));
     expect(detailScale(0.5)).toBeCloseTo(42);
+  });
+
+  it("shows dispatches below timer resolution and keeps bars tightly packed", async () => {
+    vi.spyOn(performance, "now").mockReturnValue(100);
+    const store = createProseMirrorDevtoolsStore();
+    const view = createTestView(createTestState());
+    const attachment = attachProseMirrorDevtools({
+      id: "editor",
+      performanceMarks: false,
+      store,
+      view,
+    });
+
+    // Real state application and view update work occurs, but a quantized clock can return the
+    // same value at every boundary.
+    view.dispatch(appendTextTransaction(view.state, "x"));
+    expect(store.getInstance("editor")?.transactions[0]).toMatchObject({
+      totalDuration: 0,
+      applyDuration: 0,
+      viewUpdateDuration: 0,
+    });
+
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+
+    try {
+      await act(async () => {
+        root.render(
+          <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+        );
+      });
+      await act(async () => {
+        await import("../src/panel/features/performance/performance-view");
+      });
+
+      const chart = container.querySelector<SVGElement>(
+        'svg[aria-label="Dispatch duration bar chart"]',
+      );
+      const markers = Array.from(
+        chart?.querySelectorAll<SVGRectElement>(".ts-chart__bar-y > rect") ?? [],
+      );
+
+      // State application and view update are both present in one unified stack even though their
+      // individual clock deltas are zero.
+      expect(markers).toHaveLength(2);
+      expect(markers.map((marker) => marker.getAttribute("fill"))).toEqual([
+        "var(--pm-accent)",
+        "var(--pm-green)",
+      ]);
+      expect(
+        markers.reduce((height, marker) => height + Number(marker.getAttribute("height")), 0),
+      ).toBeGreaterThanOrEqual(5.9);
+      // The band itself controls width. A fixed 22px cap previously created large gaps as the
+      // panel widened while bars stayed narrow.
+      expect(markers.every((marker) => Number(marker.getAttribute("width")) > 22)).toBe(true);
+      expect(chart?.textContent).toContain("below the browser timer resolution");
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      attachment.detach();
+      view.destroy();
+    }
+  });
+
+  it("follows newly recorded dispatches until the user selects history", async () => {
+    const store = createProseMirrorDevtoolsStore();
+    const view = createTestView(createTestState());
+    const attachment = attachProseMirrorDevtools({
+      id: "editor",
+      performanceMarks: false,
+      store,
+      view,
+    });
+    view.dispatch(appendTextTransaction(view.state, "a"));
+
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+
+    try {
+      await act(async () => {
+        root.render(
+          <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+        );
+      });
+      await act(async () => {
+        await import("../src/panel/features/performance/performance-view");
+      });
+
+      const selection = () =>
+        container.querySelector<HTMLOutputElement>('[aria-label="Dispatch selection"] output');
+      const chart = () => container.querySelector<HTMLElement>(".pm-dispatch-chart");
+      expect(selection()?.textContent).toBe("1 / 1");
+      expect(chart()?.dataset.selectedId).toBe("1");
+
+      await act(async () => {
+        view.dispatch(appendTextTransaction(view.state, "b"));
+      });
+      expect(selection()?.textContent).toBe("2 / 2");
+      expect(chart()?.dataset.selectedId).toBe("2");
+
+      // An explicit historical selection is sticky, so live recording does not pull the user's
+      // inspection away. Returning to the newest item resumes follow mode.
+      await act(async () => {
+        container
+          .querySelector<HTMLButtonElement>('[aria-label="Select previous dispatch"]')
+          ?.click();
+      });
+      expect(selection()?.textContent).toBe("1 / 2");
+
+      await act(async () => {
+        view.dispatch(appendTextTransaction(view.state, "c"));
+      });
+      expect(selection()?.textContent).toBe("1 / 3");
+      expect(chart()?.dataset.selectedId).toBe("1");
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      attachment.detach();
+      view.destroy();
+    }
   });
 
   it("shows initialization before the first dispatch and keeps sparse timeline entries packed", async () => {
@@ -121,7 +247,6 @@ describe("performance panel", () => {
           stateAfter: applied.state,
           appliedTransactions: applied.transactions,
         });
-        store.flush();
       });
 
       const updatedChart = container.querySelector<SVGElement>(
@@ -412,14 +537,15 @@ describe("performance panel", () => {
       const nextButton = container.querySelector<HTMLButtonElement>(
         '[aria-label="Select next dispatch"]',
       );
-      expect(previousButton?.disabled).toBe(true);
-      expect(nextButton?.disabled).toBe(false);
-      expect(dispatchSelection?.querySelector("output")?.textContent).toBe("1 / 2");
-      await act(async () => {
-        nextButton?.click();
-      });
+      expect(previousButton?.disabled).toBe(false);
+      expect(nextButton?.disabled).toBe(true);
       expect(dispatchSelection?.querySelector("output")?.textContent).toBe("2 / 2");
       expect(container.querySelector('[aria-label="Dispatch 2 inspector"]')).not.toBeNull();
+      await act(async () => {
+        previousButton?.click();
+      });
+      expect(dispatchSelection?.querySelector("output")?.textContent).toBe("1 / 2");
+      expect(container.querySelector('[aria-label="Dispatch 1 inspector"]')).not.toBeNull();
     } finally {
       await act(async () => {
         root.unmount();

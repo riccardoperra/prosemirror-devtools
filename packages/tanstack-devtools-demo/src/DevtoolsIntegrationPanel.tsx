@@ -17,7 +17,7 @@ type LatestDispatch = {
 };
 
 function useDevtoolsReadable<T>(readable: DevtoolsReadable<T>): T {
-  return useSyncExternalStore(readable.subscribe, readable.getSnapshot, readable.getSnapshot);
+  return useSyncExternalStore(readable.subscribe, readable, readable);
 }
 
 function formatSelection(instance: RegisteredProseMirrorInstance): string {

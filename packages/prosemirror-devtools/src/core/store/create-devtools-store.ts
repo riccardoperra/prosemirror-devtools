@@ -7,7 +7,13 @@ import { createPerformanceEntryStore } from "./performance-entries";
 import { createPluginTimingRecorder } from "./plugin-timing-recorder";
 import { createTransactionRecorder } from "./transaction-recorder";
 
-/** Composes one instance store with independent transaction, timing, and marker recorders. */
+/**
+ * Composes one instance store with independent transaction, timing, and marker recorders.
+ *
+ * The transaction recorder owns the paired notification batch because it knows the true nested
+ * begin/finish lifecycle. The instance store owns immediate values and committed delivery. This
+ * split keeps flushing internal: consumers only subscribe and always receive coherent updates.
+ */
 export function createProseMirrorDevtoolsStore(): DevtoolsStore {
   const activeMeasurements = createActiveTransactionMeasurements();
   const performanceEntries = createPerformanceEntryStore();
@@ -39,7 +45,6 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
   };
 
   const closeSession = (instanceId: string, sessionId: string): void => {
-    instanceStore.flush();
     pluginTimingRecorder.clearStartupTimings(instanceId, sessionId);
     if (instanceStore.getEntry(instanceId)?.sessionId !== sessionId) {
       activeMeasurements.clearSession(instanceId, sessionId);
@@ -60,7 +65,6 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
     unregister: instanceStore.unregister,
     setActiveInstance: instanceStore.setActiveInstance,
     clearTransactions: instanceStore.clearTransactions,
-    flush: instanceStore.flush,
     closeSession,
     beginTransaction: transactionRecorder.beginTransaction,
     recordPhase: transactionRecorder.recordPhase,

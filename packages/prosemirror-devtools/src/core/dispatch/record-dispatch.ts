@@ -10,8 +10,38 @@ import type {
 } from "../types";
 import { createCustomDispatchObserver } from "./observe-custom-dispatch";
 
+/**
+ * Receives the exact transactions returned by the root `applyTransaction` call. `undefined`
+ * represents an unknown outcome; an empty array represents a transaction that was filtered out.
+ */
 type CaptureAppliedTransactions = (transactions: readonly Transaction[] | undefined) => void;
 
+type RecordSynchronousDispatchOptions = {
+  /** Store that owns the transaction measurement and resulting record. */
+  store: DevtoolsStore;
+  /** Attachment identity and optional performance settings. */
+  options: AttachProseMirrorDevtoolsOptions;
+  /** Root transaction handed to the dispatcher. */
+  transaction: Transaction;
+  /** Editor state captured immediately before dispatch begins. */
+  beforeState: EditorState;
+  /** Reads the editor state again after dispatch succeeds or throws. */
+  getState: () => EditorState;
+  /** Performs the dispatch and records any phases visible to its implementation. */
+  run: (
+    measurement: TransactionMeasurement,
+    captureAppliedTransactions: CaptureAppliedTransactions,
+  ) => void;
+};
+
+/**
+ * Runs one synchronous dispatch inside the common transaction-recording lifecycle.
+ *
+ * Both default and custom dispatchers use this boundary so they produce records with identical
+ * before/after-state and error semantics. A thrown value is captured for the record and then
+ * rethrown unchanged; `finishTransaction` always runs so failed editor work is visible in the
+ * devtools as well.
+ */
 export function recordSynchronousDispatch({
   store,
   options,
@@ -19,17 +49,7 @@ export function recordSynchronousDispatch({
   beforeState,
   getState,
   run,
-}: {
-  store: DevtoolsStore;
-  options: AttachProseMirrorDevtoolsOptions;
-  transaction: Transaction;
-  beforeState: EditorState;
-  getState: () => EditorState;
-  run: (
-    measurement: TransactionMeasurement,
-    captureAppliedTransactions: CaptureAppliedTransactions,
-  ) => void;
-}): void {
+}: RecordSynchronousDispatchOptions): void {
   const measurement = store.beginTransaction(
     options.id,
     transaction,
@@ -38,8 +58,11 @@ export function recordSynchronousDispatch({
     options.performanceExtension,
     options.sessionId,
   );
+  // Keep `undefined` distinct from `[]`: only the latter proves that ProseMirror filtered the
+  // transaction. Custom dispatchers may not expose enough information to know either way.
   let appliedTransactions: readonly Transaction[] | undefined;
   let error: unknown;
+  // A separate flag is required because JavaScript permits `throw undefined`.
   let didThrow = false;
 
   try {
@@ -49,8 +72,10 @@ export function recordSynchronousDispatch({
   } catch (caught) {
     error = caught;
     didThrow = true;
+    // Instrumentation observes failures but must preserve the dispatcher's control flow.
     throw caught;
   } finally {
+    // Read the live state even after an exception: a dispatcher may update the view and then throw.
     store.finishTransaction(measurement, {
       stateAfter: getState(),
       ...(appliedTransactions === undefined ? {} : { appliedTransactions }),
@@ -59,11 +84,17 @@ export function recordSynchronousDispatch({
   }
 }
 
+/** Records a transaction while allowing the caller's dispatcher to retain control of execution. */
 export type ProseMirrorDispatchRecorder = Readonly<{
+  /** Runs `dispatch` synchronously and records all state/view work that can be observed. */
   record: (transaction: Transaction, dispatch: () => void) => void;
 }>;
 
-/** Records native framework dispatch middleware without replacing its dispatcher. */
+/**
+ * Creates an adapter for framework dispatch middleware without replacing the framework's own
+ * dispatcher. Public EditorState and EditorView methods are observed only for the duration of each
+ * synchronous `record` call; deferred work remains unattributed.
+ */
 export function createProseMirrorDispatchRecorder(
   options: AttachProseMirrorDevtoolsOptions,
 ): ProseMirrorDispatchRecorder {
@@ -73,20 +104,26 @@ export function createProseMirrorDispatchRecorder(
 
   return {
     record(transaction, dispatch) {
+      // Use one state identity throughout the measurement. This is also the state against which the
+      // observer recognizes the root applyTransaction call.
+      const beforeState = view.state;
       recordSynchronousDispatch({
         store,
         options,
         transaction,
-        beforeState: view.state,
+        beforeState,
         getState: () => view.state,
         run(measurement, captureAppliedTransactions) {
-          const session = observer.begin(transaction, view.state);
+          const session = observer.begin(transaction, beforeState);
           const startedAt = monotonicNow();
           try {
             dispatch();
           } finally {
-            store.recordPhase(measurement, "customDispatch", monotonicNow() - startedAt, startedAt);
+            const duration = monotonicNow() - startedAt;
+            // Finish first so temporary method shadows are restored even if recording a phase were
+            // ever to fail. `finish` is also safe when the dispatcher itself threw.
             const observation = session.finish();
+            store.recordPhase(measurement, "customDispatch", duration, startedAt);
             for (const timing of observation.applyTimings) {
               store.recordPhase(measurement, "apply", timing.duration, timing.startedAt);
             }
@@ -101,6 +138,10 @@ export function createProseMirrorDispatchRecorder(
   };
 }
 
+/**
+ * Implements ProseMirror's default dispatch algorithm while recording its two explicit phases:
+ * apply the transaction to the current state, then commit the resulting state to the view.
+ */
 export function recordDefaultDispatch({
   options,
   store,
@@ -112,22 +153,30 @@ export function recordDefaultDispatch({
   view: EditorView;
   transaction: Transaction;
 }): void {
+  const beforeState = view.state;
   recordSynchronousDispatch({
     store,
     options,
     transaction,
-    beforeState: view.state,
+    beforeState,
     getState: () => view.state,
     run(measurement, captureAppliedTransactions) {
       const applyStartedAt = monotonicNow();
-      const applied = view.state.applyTransaction(transaction);
-      store.recordPhase(measurement, "apply", monotonicNow() - applyStartedAt, applyStartedAt);
+      let applied: ReturnType<EditorState["applyTransaction"]>;
+      try {
+        applied = beforeState.applyTransaction(transaction);
+      } finally {
+        // A plugin may throw from filterTransaction or appendTransaction; that work still belongs to
+        // the apply phase even though no result is available.
+        store.recordPhase(measurement, "apply", monotonicNow() - applyStartedAt, applyStartedAt);
+      }
       captureAppliedTransactions(applied.transactions);
 
       const updateStartedAt = monotonicNow();
       try {
         view.updateState(applied.state);
       } finally {
+        // View/plugin update failures are timed and then rethrown through the common boundary.
         store.recordPhase(
           measurement,
           "viewUpdate",
