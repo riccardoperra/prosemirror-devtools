@@ -203,6 +203,17 @@ describe("createProseMirrorDevtoolsStore", () => {
     );
   });
 
+  it("buffers startup hooks only before an instance registers", () => {
+    const store = createProseMirrorDevtoolsStore();
+    store.measurePluginHook("editor", "startup$", "Startup", "state.init", () => undefined);
+    store.measurePluginHook("editor", "runtime$", "Runtime", "state.apply", () => undefined);
+    store.register({ id: "editor", view: viewForState() });
+
+    expect(store.getInstance("editor")?.pluginTimings).toEqual([
+      expect.objectContaining({ pluginKey: "startup$", hook: "state.init", count: 1 }),
+    ]);
+  });
+
   it("notifies only the subscriptions affected by a store update", () => {
     const store = createProseMirrorDevtoolsStore();
     let firstState = createTestState();
@@ -273,18 +284,7 @@ describe("createProseMirrorDevtoolsStore", () => {
       expect(measurement.beforeState).toBe(beforeState);
     }
 
-    expect(store.getTransactionCount("editor")).toBe(3);
-    expect(
-      store
-        .getTransactions("editor", { limit: 2, order: "newest-first" })
-        .records.map(({ id }) => id),
-    ).toEqual([3, 2]);
-    expect(store.getTransactions("editor", { offset: 2, limit: 2 })).toMatchObject({
-      total: 3,
-      offset: 2,
-      hasMore: false,
-      records: [expect.objectContaining({ id: 3 })],
-    });
+    expect(store.getInstance("editor")?.transactions.map(({ id }) => id)).toEqual([1, 2, 3]);
     expect(store.getInstance("editor")?.transactionLimit).toBeNull();
     expect(storeListener).not.toHaveBeenCalled();
     expect(instanceListener).not.toHaveBeenCalled();

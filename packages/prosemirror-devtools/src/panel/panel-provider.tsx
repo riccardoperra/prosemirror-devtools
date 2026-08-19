@@ -29,7 +29,6 @@ type PanelMeta = Readonly<{
   tabId: (panelId: string) => string;
 }>;
 
-const PanelStoreContext = createContext<DevtoolsStore | null>(null);
 const PanelNavigationContext = createContext<PanelNavigation | null>(null);
 const PanelAppearanceContext = createContext<PanelAppearance | null>(null);
 const PanelMetaContext = createContext<PanelMeta | null>(null);
@@ -125,25 +124,19 @@ export function PanelProvider({
   );
 
   return (
-    <PanelStoreContext value={store}>
-      <PanelDataContext value={dataAccess}>
-        <PanelNavigationContext value={navigation}>
-          <PanelAppearanceContext value={appearance}>
-            <PanelMetaContext value={meta}>{children}</PanelMetaContext>
-          </PanelAppearanceContext>
-        </PanelNavigationContext>
-      </PanelDataContext>
-    </PanelStoreContext>
+    <PanelDataContext value={dataAccess}>
+      <PanelNavigationContext value={navigation}>
+        <PanelAppearanceContext value={appearance}>
+          <PanelMetaContext value={meta}>{children}</PanelMetaContext>
+        </PanelAppearanceContext>
+      </PanelNavigationContext>
+    </PanelDataContext>
   );
 }
 
 function requiredContext<T>(value: T | null): T {
   if (value === null) throw new Error("Panel components must be rendered inside PanelProvider.");
   return value;
-}
-
-export function usePanelStore(): DevtoolsStore {
-  return requiredContext(use(PanelStoreContext));
 }
 
 export function usePanelDataAccess(): DevtoolsDataAccess {

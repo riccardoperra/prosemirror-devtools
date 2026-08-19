@@ -137,6 +137,10 @@ registered dynamically later with `editor.registerPlugin` are not automatically 
 - node-view creation plus `update`, selection, mutation, event, and destroy methods
 - plugin-view creation, update, and destroy
 
+`state.init` and plugin-view creation happen before an `EditorView` can be attached, so those two
+startup timings are carried into the instance's initial plugin summary. Other hooks are recorded
+only while that instance is registered.
+
 The panel presents `props.decorations` as **Decoration change**. That timing covers the plugin callback
 that produces a `DecorationSet`; later decoration mapping and DOM reconciliation cannot be
 attributed to that callback safely and remain part of the surrounding view-update duration.
@@ -204,9 +208,9 @@ For custom hosts, `getSnapshot` includes each live `EditorView`, so
 do not retain complete `EditorState` objects. Use `createDevtoolsDataAccess(store)` for a smaller
 framework-neutral surface with:
 
-- active-instance, descriptor, per-instance, selector, and paged-history readables;
+- active-instance, descriptor, and per-instance readables;
 - `subscribeDispatch`, which receives ordered batches containing short-lived before/after
-  `EditorState` objects and the normalized record;
+  `EditorState` objects and the recorded transaction;
 - separate safe actions for active-instance selection, clearing, and flushing.
 
 Normal dispatch notifications are coalesced into one microtask batch without dropping records.
@@ -472,11 +476,9 @@ transactions and is marked as filtered.
 
 History is unbounded by default; there is no automatic record eviction. An explicit
 `transactionLimit` remains as an opt-in escape hatch and `null` removes a previously configured
-cap. `getTransactions(id, { offset, limit, order })` supports windowed consumers without reversing
-or copying the entire history. Headline average/p95/max values use in-memory records, while the
-built-in chart navigates them in windows of 60 and History renders the newest 200 rows before
-offering older pages. Plugin hook aggregates cover calls since attachment or the last
-`clearTransactions` call.
+cap. Headline average/p95/max values use in-memory records, while the built-in chart navigates them
+in windows of 60 and History renders the newest 200 rows before offering older pages. Plugin hook
+aggregates cover calls since attachment or the last `clearTransactions` call.
 
 ### User Timing measures
 

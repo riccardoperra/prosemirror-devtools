@@ -11,7 +11,7 @@ export function TransactionBadges({ record }: { record: TransactionRecord }): Re
       {record.appendedTransactionCount != null && record.appendedTransactionCount > 0 ? (
         <Badge tone="yellow">+{record.appendedTransactionCount}</Badge>
       ) : null}
-      {record.filtered === true ? <Badge tone="red">filtered</Badge> : null}
+      {record.filtered ? <Badge tone="red">filtered</Badge> : null}
       {record.applicationStatus === "unknown" ? <Badge tone="yellow">custom</Badge> : null}
       {record.error ? <Badge tone="red">error</Badge> : null}
     </>

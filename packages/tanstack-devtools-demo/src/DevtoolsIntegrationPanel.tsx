@@ -86,7 +86,7 @@ export function DevtoolsIntegrationPanel({ context }: { context: DevtoolsExtensi
     >
       <header className="playground-extension__command-bar">
         <div className="playground-extension__identity">
-          <span className="playground-extension__status" data-connected={Boolean(instance)}>
+          <span className="playground-extension__status" data-connected={!!instance}>
             <span aria-hidden="true" />
             {instance ? "Live" : "Offline"}
           </span>

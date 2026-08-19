@@ -10,8 +10,6 @@ import type {
   DevtoolsPerformanceExtensionOptions,
   DevtoolsSnapshot,
   DevtoolsStore,
-  DevtoolsTransactionPage,
-  DevtoolsTransactionQuery,
   FinishTransactionMeasurement,
   PluginHook,
   RegisterProseMirrorInstanceOptions,
@@ -20,7 +18,6 @@ import type {
   TransactionRecord,
 } from "../types";
 import { createDevtoolsSessionId } from "../session-id";
-import { normalizeTransactionQuery } from "../transaction-query";
 import { createPerformanceEntryStore } from "./performance-entries";
 import {
   readPluginTimingSummaries,
@@ -85,13 +82,12 @@ function notifyDispatch(
   }
 }
 
-function normalizeTransactionLimit(
+function resolveTransactionLimit(
   value: number | null | undefined,
   fallback: number | null,
 ): number | null {
   if (value === undefined) return fallback;
-  if (value === null || value === Number.POSITIVE_INFINITY) return null;
-  if (!Number.isFinite(value)) return 1;
+  if (value === null || !Number.isFinite(value)) return null;
   return Math.max(1, Math.floor(value));
 }
 
@@ -104,7 +100,7 @@ function createInstanceSnapshot(entry: InternalInstanceState): RegisteredProseMi
     updatedAt: entry.updatedAt,
     dispatchCount: entry.dispatchCount,
     transactionLimit: entry.transactionLimit,
-    transactions: [...entry.transactions],
+    transactions: entry.transactions,
     pluginTimings: readPluginTimingSummaries(entry.pluginTimings),
   };
 }
@@ -135,14 +131,17 @@ function mergePluginTimingAggregates(
   return merged;
 }
 
+function isStartupPluginHook(hook: PluginHook): boolean {
+  return hook === "state.init" || hook === "view.create";
+}
+
 /**
  * Creates an isolated devtools store. Runtime state stays private to this
  * closure; integrations depend only on the small capabilities in DevtoolsStore.
  */
 export function createProseMirrorDevtoolsStore(): DevtoolsStore {
   const instances = new Map<string, InternalInstance>();
-  const pendingPluginTimings = new Map<string, PluginTimingAggregates>();
-  const closedTimingScopes = new Set<string>();
+  const startupPluginTimings = new Map<string, Map<string | undefined, PluginTimingAggregates>>();
   const frames = new Map<string, InternalTransactionMeasurement[]>();
   const listeners = new Set<Listener>();
   const activeInstanceListeners = new Set<Listener>();
@@ -150,7 +149,6 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
   const instanceListeners = new Map<string, Set<Listener>>();
   const dispatchListeners = new Set<DevtoolsDispatchListener>();
   const performanceEntries = createPerformanceEntryStore();
-  const discardedPerformanceRecords = new WeakSet<TransactionRecord>();
 
   let activeInstanceId: string | null = null;
   let captureSequence = 0;
@@ -158,16 +156,10 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
   let snapshot: DevtoolsSnapshot = EMPTY_SNAPSHOT;
   let descriptors: readonly DevtoolsInstanceDescriptor[] = [];
   let notificationScheduled = false;
-  let snapshotNeedsRebuild = false;
-  let pendingGlobalNotification = false;
-  let pendingActiveNotification = false;
-  let pendingDescriptorNotification = false;
-  const pendingInstanceNotifications = new Set<string>();
-  const dirtyInstanceSnapshots = new Set<string>();
-  const pendingDispatches: Array<{
+  const changedInstanceIds = new Set<string>();
+  const queuedDispatches: Array<{
     sequence: number;
     event: DevtoolsDispatchEvent;
-    measurement: InternalTransactionMeasurement;
   }> = [];
 
   const rebuildSnapshot = (): void => {
@@ -183,70 +175,21 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
     descriptors = Array.from(instances.values(), ({ id, label }) => ({ id, label }));
   };
 
-  const notifyImmediately = ({
-    instanceId,
-    descriptorsChanged = false,
-    activeInstanceChanged = false,
-  }: {
-    instanceId?: string;
-    descriptorsChanged?: boolean;
-    activeInstanceChanged?: boolean;
-  } = {}): void => {
-    notify(listeners);
-    if (descriptorsChanged) notify(descriptorListeners);
-    if (activeInstanceChanged) notify(activeInstanceListeners);
-    const subscriptions = instanceId ? instanceListeners.get(instanceId) : undefined;
-    if (subscriptions) notify(subscriptions);
-  };
-
-  const materializePendingSnapshots = (): void => {
-    for (const instanceId of dirtyInstanceSnapshots) {
-      const entry = instances.get(instanceId);
-      if (entry) refreshInstanceSnapshot(entry);
-    }
-    dirtyInstanceSnapshots.clear();
-    if (snapshotNeedsRebuild) {
-      rebuildSnapshot();
-      snapshotNeedsRebuild = false;
-    }
+  const refreshInstanceSnapshot = (entry: InternalInstance): void => {
+    entry.snapshot = createInstanceSnapshot(entry);
   };
 
   const flush = (): void => {
-    if (
-      !pendingGlobalNotification &&
-      !pendingActiveNotification &&
-      !pendingDescriptorNotification &&
-      pendingInstanceNotifications.size === 0 &&
-      pendingDispatches.length === 0
-    ) {
-      notificationScheduled = false;
-      return;
-    }
+    if (!notificationScheduled) return;
 
     notificationScheduled = false;
-    const dispatches = pendingDispatches.splice(0).sort((left, right) => {
+    const dispatches = queuedDispatches.splice(0).sort((left, right) => {
       return left.sequence - right.sequence;
     });
-    const instanceIds = Array.from(pendingInstanceNotifications);
-    pendingInstanceNotifications.clear();
-    const notifyGlobal = pendingGlobalNotification;
-    const notifyActive = pendingActiveNotification;
-    const notifyDescriptors = pendingDescriptorNotification;
-    pendingGlobalNotification = false;
-    pendingActiveNotification = false;
-    pendingDescriptorNotification = false;
+    const instanceIds = Array.from(changedInstanceIds);
+    changedInstanceIds.clear();
 
-    if (notifyDescriptors) rebuildDescriptors();
-    if (notifyGlobal) materializePendingSnapshots();
-
-    for (const pending of dispatches) {
-      if (!discardedPerformanceRecords.has(pending.event.record)) {
-        performanceEntries.emit(pending.event.record, pending.measurement);
-      }
-    }
-    if (notifyGlobal) notify(listeners);
-    if (notifyDescriptors) notify(descriptorListeners);
-    if (notifyActive) notify(activeInstanceListeners);
+    notify(listeners);
     for (const instanceId of instanceIds) {
       const subscriptions = instanceListeners.get(instanceId);
       if (subscriptions) notify(subscriptions);
@@ -269,48 +212,40 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
     instanceId,
     descriptorsChanged = false,
     activeInstanceChanged = false,
-    scheduled = false,
   }: {
     instanceId?: string;
     descriptorsChanged?: boolean;
     activeInstanceChanged?: boolean;
-    scheduled?: boolean;
   } = {}): void => {
-    if (scheduled) {
-      pendingGlobalNotification = true;
-      snapshotNeedsRebuild = true;
-      pendingDescriptorNotification ||= descriptorsChanged;
-      pendingActiveNotification ||= activeInstanceChanged;
-      if (instanceId) {
-        pendingInstanceNotifications.add(instanceId);
-        dirtyInstanceSnapshots.add(instanceId);
-      }
-      scheduleFlush();
-      return;
-    }
     if (descriptorsChanged) rebuildDescriptors();
     rebuildSnapshot();
-    snapshotNeedsRebuild = false;
-    notifyImmediately({
-      ...(instanceId === undefined ? {} : { instanceId }),
-      descriptorsChanged,
-      activeInstanceChanged,
-    });
+    notify(listeners);
+    if (descriptorsChanged) notify(descriptorListeners);
+    if (activeInstanceChanged) notify(activeInstanceListeners);
+    if (instanceId !== undefined) {
+      const subscriptions = instanceListeners.get(instanceId);
+      if (subscriptions) notify(subscriptions);
+    }
   };
 
-  const refreshInstanceSnapshot = (entry: InternalInstance): void => {
-    entry.snapshot = createInstanceSnapshot(entry);
+  const scheduleInstanceUpdate = (entry: InternalInstance): void => {
+    refreshInstanceSnapshot(entry);
+    rebuildSnapshot();
+    changedInstanceIds.add(entry.id);
+    scheduleFlush();
   };
 
   const clearRecords = (records: readonly TransactionRecord[]): void => {
     for (const record of records) {
-      discardedPerformanceRecords.add(record);
       performanceEntries.clear(record);
     }
   };
 
-  const timingScopeKey = (instanceId: string, sessionId?: string): string => {
-    return JSON.stringify([instanceId, sessionId ?? null]);
+  const removeStartupTimings = (instanceId: string, sessionId?: string): void => {
+    const timingsBySession = startupPluginTimings.get(instanceId);
+    if (!timingsBySession) return;
+    timingsBySession.delete(sessionId);
+    if (timingsBySession.size === 0) startupPluginTimings.delete(instanceId);
   };
 
   const register = (options: RegisterProseMirrorInstanceOptions): (() => void) => {
@@ -324,7 +259,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
     }
 
     const registeredAt = Date.now();
-    let descriptorsChanged = existing === undefined;
+    let descriptorsChanged = !existing;
     let entry: InternalInstance;
     if (existing) {
       if (options.sessionId && options.sessionId !== existing.sessionId) {
@@ -335,7 +270,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       const nextLabel = options.label ?? existing.label;
       descriptorsChanged = nextLabel !== existing.label;
       existing.label = nextLabel;
-      existing.transactionLimit = normalizeTransactionLimit(
+      existing.transactionLimit = resolveTransactionLimit(
         options.transactionLimit,
         existing.transactionLimit,
       );
@@ -353,15 +288,14 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       }
       existing.updatedAt = registeredAt;
       entry = existing;
+      refreshInstanceSnapshot(entry);
     } else {
       const sessionId = options.sessionId ?? createDevtoolsSessionId("registration");
-      const pendingKey = timingScopeKey(options.id, sessionId);
-      const unscopedPendingKey = timingScopeKey(options.id);
+      const timingsBySession = startupPluginTimings.get(options.id);
       const pluginTimings = mergePluginTimingAggregates([
-        pendingPluginTimings.get(unscopedPendingKey),
-        pendingPluginTimings.get(pendingKey),
+        timingsBySession?.get(undefined),
+        timingsBySession?.get(sessionId),
       ]);
-      closedTimingScopes.delete(pendingKey);
       const initial: InternalInstanceState = {
         id: options.id,
         sessionId,
@@ -370,7 +304,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
         registeredAt,
         updatedAt: registeredAt,
         dispatchCount: 0,
-        transactionLimit: normalizeTransactionLimit(options.transactionLimit, null),
+        transactionLimit: resolveTransactionLimit(options.transactionLimit, null),
         registrationCount: 1,
         transactions: [],
         pluginTimings,
@@ -380,10 +314,9 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
         snapshot: createInstanceSnapshot(initial),
       };
       instances.set(options.id, entry);
-      pendingPluginTimings.delete(pendingKey);
-      pendingPluginTimings.delete(unscopedPendingKey);
+      removeStartupTimings(options.id);
+      removeStartupTimings(options.id, sessionId);
     }
-    refreshInstanceSnapshot(entry);
 
     const activeInstanceChanged = activeInstanceId === null;
     activeInstanceId ??= options.id;
@@ -401,7 +334,6 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
     const current = instances.get(id);
     if (!current || (view && current.view !== view)) return;
     clearRecords(current.transactions);
-    closedTimingScopes.add(timingScopeKey(current.id, current.sessionId));
     instances.delete(id);
     frames.delete(id);
     const activeInstanceChanged = activeInstanceId === id;
@@ -424,10 +356,8 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
 
   const closeSession = (instanceId: string, sessionId: string): void => {
     flush();
-    const key = timingScopeKey(instanceId, sessionId);
-    pendingPluginTimings.delete(key);
+    removeStartupTimings(instanceId, sessionId);
     if (instances.get(instanceId)?.sessionId === sessionId) return;
-    closedTimingScopes.add(key);
     const instanceFrames = frames.get(instanceId);
     if (!instanceFrames) return;
     const remaining = instanceFrames.filter((frame) => frame.sessionId !== sessionId);
@@ -535,18 +465,20 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       measureName: internal.measureName,
       error: result.error,
     });
-    const insertionIndex = entry.transactions.findIndex((candidate) => candidate.id > record.id);
-    if (insertionIndex < 0) entry.transactions.push(record);
-    else entry.transactions.splice(insertionIndex, 0, record);
+    performanceEntries.emit(record, internal);
+    const transactions = [...entry.transactions];
+    const insertionIndex = transactions.findIndex((candidate) => candidate.id > record.id);
+    if (insertionIndex < 0) transactions.push(record);
+    else transactions.splice(insertionIndex, 0, record);
     const overflow =
       entry.transactionLimit === null
         ? 0
-        : Math.max(0, entry.transactions.length - entry.transactionLimit);
-    if (overflow > 0) clearRecords(entry.transactions.splice(0, overflow));
+        : Math.max(0, transactions.length - entry.transactionLimit);
+    if (overflow > 0) clearRecords(transactions.splice(0, overflow));
+    entry.transactions = transactions;
     entry.updatedAt = Date.now();
-    pendingDispatches.push({
+    queuedDispatches.push({
       sequence: internal.captureSequence,
-      measurement: internal,
       event: {
         instanceId: internal.instanceId,
         sessionId: internal.sessionId,
@@ -557,7 +489,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
         appliedTransactions: result.appliedTransactions,
       },
     });
-    publish({ instanceId: entry.id, scheduled: true });
+    scheduleInstanceUpdate(entry);
     return record;
   };
 
@@ -576,13 +508,15 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       const duration = Math.max(0, monotonicNow() - startedAt);
       const registered = instances.get(instanceId);
       const entry = !sessionId || registered?.sessionId === sessionId ? registered : undefined;
-      const pendingKey = timingScopeKey(instanceId, sessionId);
-      const timingScopeOpen = !sessionId || !closedTimingScopes.has(pendingKey);
-      if (timingScopeOpen && (!registered || entry)) {
-        const aggregates =
-          entry?.pluginTimings ?? pendingPluginTimings.get(pendingKey) ?? new Map();
-        if (!entry && !pendingPluginTimings.has(pendingKey)) {
-          pendingPluginTimings.set(pendingKey, aggregates);
+      if (entry || (!registered && isStartupPluginHook(hook))) {
+        let aggregates: PluginTimingAggregates;
+        if (entry) {
+          aggregates = entry.pluginTimings;
+        } else {
+          const timingsBySession = startupPluginTimings.get(instanceId) ?? new Map();
+          aggregates = timingsBySession.get(sessionId) ?? new Map();
+          timingsBySession.set(sessionId, aggregates);
+          startupPluginTimings.set(instanceId, timingsBySession);
         }
         recordPluginTiming(aggregates, pluginKey, pluginLabel, hook, duration);
 
@@ -607,7 +541,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
           });
         } else if (entry) {
           entry.updatedAt = Date.now();
-          publish({ instanceId, scheduled: true });
+          scheduleInstanceUpdate(entry);
         }
       }
     }
@@ -666,32 +600,8 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
     };
   };
 
-  const getTransactions = (
-    id: string,
-    query: DevtoolsTransactionQuery = {},
-  ): DevtoolsTransactionPage => {
-    const source = instances.get(id)?.transactions ?? [];
-    const total = source.length;
-    const normalizedQuery = normalizeTransactionQuery(query);
-    const offset = Math.min(total, normalizedQuery.offset);
-    const limit = normalizedQuery.limit ?? total - offset;
-    const records =
-      normalizedQuery.order === "newest-first"
-        ? source.slice(Math.max(0, total - offset - limit), total - offset).reverse()
-        : source.slice(offset, offset + limit);
-    return {
-      records,
-      total,
-      offset,
-      hasMore: offset + records.length < total,
-    };
-  };
-
   return {
-    getSnapshot() {
-      materializePendingSnapshots();
-      return snapshot;
-    },
+    getSnapshot: () => snapshot,
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
@@ -706,16 +616,8 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       descriptorListeners.add(listener);
       return () => descriptorListeners.delete(listener);
     },
-    getInstance(id) {
-      if (dirtyInstanceSnapshots.delete(id)) {
-        const entry = instances.get(id);
-        if (entry) refreshInstanceSnapshot(entry);
-      }
-      return instances.get(id)?.snapshot;
-    },
+    getInstance: (id) => instances.get(id)?.snapshot,
     subscribeInstance,
-    getTransactions,
-    getTransactionCount: (id) => instances.get(id)?.transactions.length ?? 0,
     subscribeDispatch(listener) {
       dispatchListeners.add(listener);
       return () => dispatchListeners.delete(listener);

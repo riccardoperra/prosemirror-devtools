@@ -15,7 +15,6 @@ import {
   usePanelDataAccess,
   usePanelMeta,
   usePanelNavigation,
-  usePanelStore,
 } from "../panel-provider";
 import { useActiveInstance } from "../store/selectors";
 import { EmptyState } from "../ui/empty-state";
@@ -197,7 +196,7 @@ export function PanelContent({
   performanceDetailThresholdMs: number | undefined;
   performanceFrameBudgetMs: number;
 }): ReactElement {
-  const store = usePanelStore();
+  const { actions } = usePanelDataAccess();
   const activeInstance = useActiveInstance();
   const { activePanel, panels } = usePanelNavigation();
   const { tabId, tabPanelId } = usePanelMeta();
@@ -222,7 +221,7 @@ export function PanelContent({
       ) : activeInstance && definition?.kind === "builtin" ? (
         <ActivePanelView
           instance={activeInstance}
-          onClearHistory={() => store.clearTransactions(activeInstance.id)}
+          onClearHistory={() => actions.clearTransactions(activeInstance.id)}
           performanceDetailThresholdMs={performanceDetailThresholdMs}
           performanceFrameBudgetMs={performanceFrameBudgetMs}
           tab={definition.id}

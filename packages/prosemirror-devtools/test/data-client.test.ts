@@ -5,49 +5,51 @@ import { createDevtoolsDataAccess, createProseMirrorDevtoolsStore } from "../src
 import { appendTextTransaction, createTestState } from "./helpers";
 
 describe("createDevtoolsDataAccess", () => {
-  it("reuses transaction readables for equivalent queries", () => {
+  it("notifies every subscriber of an instance update", () => {
     const store = createProseMirrorDevtoolsStore();
     const { data } = createDevtoolsDataAccess(store);
-    const defaults = data.transactions("editor");
+    const instance = data.instance("editor");
+    const firstListener = vi.fn();
+    const secondListener = vi.fn();
 
-    expect(
-      data.transactions("editor", {
-        offset: -1,
-        limit: Number.POSITIVE_INFINITY,
-        order: "oldest-first",
-      }),
-    ).toBe(defaults);
-    expect(data.transactions("editor", { limit: Number.NaN })).not.toBe(defaults);
-    expect(data.transactions("editor\u0000nested")).not.toBe(defaults);
+    instance.subscribe(firstListener);
+    instance.subscribe(secondListener);
+    store.register({ id: "editor", view: { state: createTestState() } as EditorView });
+
+    expect(data.instance("editor")).toBe(instance);
+    expect(firstListener).toHaveBeenCalledOnce();
+    expect(secondListener).toHaveBeenCalledOnce();
+    expect(instance.getSnapshot()?.id).toBe("editor");
   });
 
-  it("keeps page snapshots stable until the selected instance changes", () => {
+  it("follows the active instance and its updates", () => {
     const store = createProseMirrorDevtoolsStore();
-    const state = createTestState();
-    const view = { state } as EditorView;
-    store.register({ id: "editor", view });
+    const firstView = { state: createTestState() } as EditorView;
+    const secondView = { state: createTestState() } as EditorView;
+    store.register({ id: "first", view: firstView });
+    store.register({ id: "second", view: secondView });
     const { data } = createDevtoolsDataAccess(store);
-    const transactions = data.transactions("editor", { limit: 10 });
-    const initialPage = transactions.getSnapshot();
     const listener = vi.fn();
-    const unsubscribe = transactions.subscribe(listener);
+    const unsubscribe = data.activeInstance.subscribe(listener);
 
-    expect(transactions.getSnapshot()).toBe(initialPage);
+    expect(data.activeInstance.getSnapshot()?.id).toBe("first");
 
-    const transaction = appendTextTransaction(state, "x");
-    const measurement = store.beginTransaction("editor", transaction, state, false);
-    const applied = state.applyTransaction(transaction);
+    store.setActiveInstance("second");
+    expect(data.activeInstance.getSnapshot()?.id).toBe("second");
+    expect(listener).toHaveBeenCalledOnce();
+
+    const transaction = appendTextTransaction(secondView.state, "x");
+    const measurement = store.beginTransaction("second", transaction, secondView.state, false);
+    const applied = secondView.state.applyTransaction(transaction);
+    (secondView as { state: typeof applied.state }).state = applied.state;
     store.finishTransaction(measurement, {
       stateAfter: applied.state,
       appliedTransactions: applied.transactions,
     });
     store.flush();
 
-    const nextPage = transactions.getSnapshot();
-    expect(listener).toHaveBeenCalledOnce();
-    expect(nextPage).not.toBe(initialPage);
-    expect(nextPage.records.map(({ id }) => id)).toEqual([1]);
-    expect(transactions.getSnapshot()).toBe(nextPage);
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(data.activeInstance.getSnapshot()?.transactions).toHaveLength(1);
 
     unsubscribe();
   });

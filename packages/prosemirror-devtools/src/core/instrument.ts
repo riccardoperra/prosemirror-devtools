@@ -144,7 +144,7 @@ function wrapPlugin(original: Plugin, index: number, options: InstrumentPluginsO
   const pluginLabel =
     options.getPluginLabel?.(original, index) ?? defaultPluginLabel(original, index);
   const measure = <T>(hook: PluginHook, run: () => T): T => {
-    if (options.isActive?.() === false) return run();
+    if (options.isActive && !options.isActive()) return run();
     return store.measurePluginHook(
       options.instanceId,
       pluginKey,

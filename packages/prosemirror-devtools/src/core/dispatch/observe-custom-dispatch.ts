@@ -212,10 +212,10 @@ export function createCustomDispatchObserver(view: EditorView): Readonly<{
         finish() {
           if (frame.finished) return frame.observation as CustomDispatchObservation;
           frame.finished = true;
-          const rootCommitted = Boolean(
+          const rootCommitted = !!(
             frame.rootResult &&
             frame.successfulUpdates.has(frame.rootResult.state) &&
-            view.state === frame.rootResult.state,
+            view.state === frame.rootResult.state
           );
           frame.observation = {
             applyTimings: frame.applyTimings,

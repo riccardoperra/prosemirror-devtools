@@ -207,22 +207,6 @@ export interface FinishTransactionMeasurement {
   error?: unknown;
 }
 
-export interface DevtoolsTransactionQuery {
-  /** Zero-based offset from the selected ordering edge. Defaults to `0`. */
-  offset?: number;
-  /** Maximum number of records to return. Omit to return the remaining records. */
-  limit?: number;
-  /** Defaults to chronological order. */
-  order?: "oldest-first" | "newest-first";
-}
-
-export interface DevtoolsTransactionPage {
-  readonly records: readonly TransactionRecord[];
-  readonly total: number;
-  readonly offset: number;
-  readonly hasMore: boolean;
-}
-
 /**
  * Short-lived dispatch payload delivered to subscribers after the synchronous
  * editor update. The store never puts these EditorState objects in history.
@@ -248,8 +232,6 @@ export type DevtoolsStoreReader = Readonly<{
   subscribeInstanceDescriptors: (listener: () => void) => () => void;
   getInstance: (id: string) => RegisteredProseMirrorInstance | undefined;
   subscribeInstance: (id: string, listener: () => void) => () => void;
-  getTransactions: (id: string, query?: DevtoolsTransactionQuery) => DevtoolsTransactionPage;
-  getTransactionCount: (id: string) => number;
   subscribeDispatch: (listener: DevtoolsDispatchListener) => () => void;
 }>;
 

@@ -135,7 +135,7 @@ function readyView(editor: TiptapDevtoolsEditor): EditorView | null {
     const view = editor.view;
     if (
       !view ||
-      view.isDestroyed === true ||
+      view.isDestroyed ||
       typeof view.setProps !== "function" ||
       typeof view.dispatch !== "function" ||
       !view.state

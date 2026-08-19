@@ -1,39 +1,24 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
+import type { DevtoolsReadable } from "../../core/data-client";
 import type { DevtoolsInstanceDescriptor, RegisteredProseMirrorInstance } from "../../core/types";
-import { usePanelStore } from "../panel-provider";
+import { usePanelDataAccess } from "../panel-provider";
+
+function useReadable<T>(readable: DevtoolsReadable<T>): T {
+  return useSyncExternalStore(readable.subscribe, readable.getSnapshot, readable.getSnapshot);
+}
 
 export function useActiveInstanceId(): string | null {
-  const store = usePanelStore();
-  return useSyncExternalStore(
-    store.subscribeActiveInstance,
-    store.getActiveInstanceId,
-    store.getActiveInstanceId,
-  );
+  const { data } = usePanelDataAccess();
+  return useReadable(data.activeInstanceId);
 }
 
 export function useInstanceDescriptors(): readonly DevtoolsInstanceDescriptor[] {
-  const store = usePanelStore();
-  return useSyncExternalStore(
-    store.subscribeInstanceDescriptors,
-    store.getInstanceDescriptors,
-    store.getInstanceDescriptors,
-  );
-}
-
-export function useInstance(id: string | null): RegisteredProseMirrorInstance | undefined {
-  const store = usePanelStore();
-  const subscribe = useCallback(
-    (listener: () => void) => (id === null ? () => {} : store.subscribeInstance(id, listener)),
-    [store, id],
-  );
-  const getSnapshot = useCallback(
-    () => (id === null ? undefined : store.getInstance(id)),
-    [store, id],
-  );
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const { data } = usePanelDataAccess();
+  return useReadable(data.instanceDescriptors);
 }
 
 export function useActiveInstance(): RegisteredProseMirrorInstance | undefined {
-  return useInstance(useActiveInstanceId());
+  const { data } = usePanelDataAccess();
+  return useReadable(data.activeInstance);
 }
