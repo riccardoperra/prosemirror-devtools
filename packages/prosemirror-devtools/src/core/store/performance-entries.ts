@@ -6,10 +6,12 @@ import {
 import type { TransactionRecord } from "../types";
 import type { InternalTransactionMeasurement } from "./transaction-measurement";
 
-export function createPerformanceEntryStore(): Readonly<{
-  emit: (record: TransactionRecord, measurement: InternalTransactionMeasurement) => void;
-  clear: (record: TransactionRecord) => void;
-}> {
+export interface PerformanceEntryStore {
+  emit(record: TransactionRecord, measurement: InternalTransactionMeasurement): void;
+  clear(record: TransactionRecord): void;
+}
+
+export function createPerformanceEntryStore(): PerformanceEntryStore {
   const entries = new WeakMap<TransactionRecord, PerformanceExtensionEntryReference[]>();
 
   return {
