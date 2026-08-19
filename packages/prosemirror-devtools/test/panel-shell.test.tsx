@@ -109,7 +109,7 @@ describe("devtools panel shell", () => {
           requiresInstance: false,
           mount(container, context) {
             const update = (): void => {
-              const instance = context.data.activeInstance.getSnapshot();
+              const instance = context.data.activeInstance();
               container.textContent = instance
                 ? `Editor ${instance.id}: ${instance.view.state.doc.textContent}`
                 : "No active editor";
@@ -158,7 +158,6 @@ describe("devtools panel shell", () => {
           stateAfter: applied.state,
           appliedTransactions: applied.transactions,
         });
-        store.flush();
       });
       expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("Editor editor: x");
 

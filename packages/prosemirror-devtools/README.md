@@ -211,12 +211,14 @@ framework-neutral surface with:
 - active-instance, descriptor, and per-instance readables;
 - `subscribeDispatch`, which receives ordered batches containing short-lived before/after
   `EditorState` objects and the recorded transaction;
-- separate safe actions for active-instance selection, clearing, and flushing.
+- separate safe actions for active-instance selection and clearing.
 
-Normal dispatch notifications are coalesced into one microtask batch without dropping records.
-Call `store.flush()` before a custom teardown boundary; the built-in attachment and session APIs do
-this automatically. A persistence extension can write each dispatch batch to IndexedDB or another
-store without coupling durable storage to the recorder.
+Read a value by calling it (`data.activeInstance()`) or with its equivalent `.get()` method, and
+observe changes with `.subscribe(listener)`.
+
+Signal values update immediately, while listener delivery is batched until the outermost nested
+dispatch completes. A persistence extension can write each ordered dispatch batch to IndexedDB or
+another store without coupling durable storage to the recorder.
 
 ## Custom performance markers
 
@@ -336,7 +338,7 @@ export const collaborationExtension: DevtoolsExtension = {
       requiresInstance: false,
       mount(container, { data }) {
         const render = () => {
-          const instance = data.activeInstance.getSnapshot();
+          const instance = data.activeInstance();
           container.textContent = instance
             ? `Active editor: ${instance.id} (${instance.view.state.doc.content.size} positions)`
             : "No active editor";
@@ -612,8 +614,8 @@ update, framework commit, browser layout, and paint are not included.
   document nodes are held until their JSON is requested, then released by the record. Unbounded
   history still consumes memory over a long session; clear it explicitly or opt into a cap when
   that tradeoff matters.
-- Raw dispatch subscribers receive complete before/after states only in the next ordered microtask
-  batch. They must copy or persist anything they want to retain.
+- Raw dispatch subscribers receive complete before/after states when the outermost synchronous
+  dispatch completes. They must copy or persist anything they want to retain.
 - Synchronous errors are recorded and then rethrown; instrumentation does not swallow application
   failures.
 

@@ -19,7 +19,8 @@ describe("createDevtoolsDataAccess", () => {
     expect(data.instance("editor")).toBe(instance);
     expect(firstListener).toHaveBeenCalledOnce();
     expect(secondListener).toHaveBeenCalledOnce();
-    expect(instance.getSnapshot()?.id).toBe("editor");
+    expect(instance()?.id).toBe("editor");
+    expect(instance.get()).toBe(instance());
   });
 
   it("follows the active instance and its updates", () => {
@@ -32,10 +33,10 @@ describe("createDevtoolsDataAccess", () => {
     const listener = vi.fn();
     const unsubscribe = data.activeInstance.subscribe(listener);
 
-    expect(data.activeInstance.getSnapshot()?.id).toBe("first");
+    expect(data.activeInstance()?.id).toBe("first");
 
     store.setActiveInstance("second");
-    expect(data.activeInstance.getSnapshot()?.id).toBe("second");
+    expect(data.activeInstance.get()?.id).toBe("second");
     expect(listener).toHaveBeenCalledOnce();
 
     const transaction = appendTextTransaction(secondView.state, "x");
@@ -46,10 +47,8 @@ describe("createDevtoolsDataAccess", () => {
       stateAfter: applied.state,
       appliedTransactions: applied.transactions,
     });
-    store.flush();
-
     expect(listener).toHaveBeenCalledTimes(2);
-    expect(data.activeInstance.getSnapshot()?.transactions).toHaveLength(1);
+    expect(data.activeInstance()?.transactions).toHaveLength(1);
 
     unsubscribe();
   });

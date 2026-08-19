@@ -5,8 +5,19 @@ import type {
   RegisteredProseMirrorInstance,
 } from "./types";
 
+/**
+ * A read-only live value exposed by the core store.
+ *
+ * Call the value directly or use {@link DevtoolsReadable.get | get} for the latest snapshot. Reads
+ * are always immediate. Subscriptions run synchronously after core commits a logical operation
+ * (for example, after the outermost nested dispatch completes), so consumers never need to flush
+ * the store themselves. UI adapters may still defer rendering of that committed value when useful.
+ */
 export interface DevtoolsReadable<T> {
-  getSnapshot(): T;
+  /** Returns the current value. */
+  (): T;
+  /** Returns the current value. Equivalent to calling the readable. */
+  get(): T;
   subscribe(listener: () => void): () => void;
 }
 
@@ -22,12 +33,22 @@ export interface DevtoolsDataClient {
 export interface DevtoolsDataActions {
   setActiveInstance(id: string): void;
   clearTransactions(id: string): void;
-  flush(): void;
 }
 
 export interface DevtoolsDataAccess {
   readonly data: DevtoolsDataClient;
   readonly actions: DevtoolsDataActions;
+}
+
+/** Exposes a live store value without leaking any write capability to panel integrations. */
+function readable<T>(
+  get: () => T,
+  subscribe: (listener: () => void) => () => void,
+): DevtoolsReadable<T> {
+  const value = (() => get()) as DevtoolsReadable<T>;
+  value.get = get;
+  value.subscribe = subscribe;
+  return value;
 }
 
 /**
@@ -41,20 +62,17 @@ export function createDevtoolsDataAccess(store: DevtoolsStore): DevtoolsDataAcce
     DevtoolsReadable<RegisteredProseMirrorInstance | undefined>
   >();
 
-  const activeInstanceId: DevtoolsReadable<string | null> = {
-    getSnapshot: store.getActiveInstanceId,
-    subscribe: store.subscribeActiveInstance,
-  };
-  const instanceDescriptors: DevtoolsReadable<readonly DevtoolsInstanceDescriptor[]> = {
-    getSnapshot: store.getInstanceDescriptors,
-    subscribe: store.subscribeInstanceDescriptors,
-  };
-  const activeInstance: DevtoolsReadable<RegisteredProseMirrorInstance | undefined> = {
-    getSnapshot: () => {
+  const activeInstanceId = readable(store.getActiveInstanceId, store.subscribeActiveInstance);
+  const instanceDescriptors = readable(
+    store.getInstanceDescriptors,
+    store.subscribeInstanceDescriptors,
+  );
+  const activeInstance = readable(
+    () => {
       const id = store.getActiveInstanceId();
       return id === null ? undefined : store.getInstance(id);
     },
-    subscribe(listener) {
+    (listener) => {
       let unsubscribeInstance = (): void => {};
       const subscribeToCurrentInstance = (): void => {
         unsubscribeInstance();
@@ -71,17 +89,17 @@ export function createDevtoolsDataAccess(store: DevtoolsStore): DevtoolsDataAcce
         unsubscribeInstance();
       };
     },
-  };
+  );
 
   const instance = (id: string): DevtoolsReadable<RegisteredProseMirrorInstance | undefined> => {
     const existing = instanceReadables.get(id);
     if (existing) return existing;
-    const readable: DevtoolsReadable<RegisteredProseMirrorInstance | undefined> = {
-      getSnapshot: () => store.getInstance(id),
-      subscribe: (listener) => store.subscribeInstance(id, listener),
-    };
-    instanceReadables.set(id, readable);
-    return readable;
+    const value = readable(
+      () => store.getInstance(id),
+      (listener) => store.subscribeInstance(id, listener),
+    );
+    instanceReadables.set(id, value);
+    return value;
   };
 
   const data: DevtoolsDataClient = {
@@ -94,7 +112,6 @@ export function createDevtoolsDataAccess(store: DevtoolsStore): DevtoolsDataAcce
   const actions: DevtoolsDataActions = {
     setActiveInstance: store.setActiveInstance,
     clearTransactions: store.clearTransactions,
-    flush: store.flush,
   };
   return { data, actions };
 }

@@ -10,6 +10,7 @@ import type {
   TransactionRecord,
 } from "../types";
 import { readPluginTimingSummaries, type PluginTimingAggregates } from "./plugin-timings";
+import { createSignalScheduler, createStoreSignal, type StoreSignal } from "./signal";
 
 type Listener = () => void;
 
@@ -56,7 +57,16 @@ export interface InstanceStore {
     dispatch: { sequence: number; event: DevtoolsDispatchEvent },
   ): void;
   markChanged(entry: InternalInstance): void;
-  flush(): void;
+  /**
+   * Starts a synchronous notification batch for a recorded dispatch. Paired calls may nest because
+   * a ProseMirror dispatch can trigger another dispatch before it returns.
+   */
+  beginBatch(): void;
+  /**
+   * Finishes a recorded-dispatch batch. Only the outermost call publishes subscribers, ensuring
+   * they observe a complete dispatch tree rather than intermediate recording phases.
+   */
+  endBatch(): void;
 }
 
 const EMPTY_SNAPSHOT: DevtoolsSnapshot = {
@@ -64,16 +74,6 @@ const EMPTY_SNAPSHOT: DevtoolsSnapshot = {
   instances: [],
   version: 0,
 };
-
-function notify(listeners: ReadonlySet<Listener>): void {
-  for (const listener of listeners) {
-    try {
-      listener();
-    } catch (error) {
-      console.error("[prosemirror-devtools] Store subscriber failed", error);
-    }
-  }
-}
 
 function notifyDispatch(
   listeners: ReadonlySet<DevtoolsDispatchListener>,
@@ -119,51 +119,51 @@ export function createInstanceStore({
   onRemove(instanceId: string): void;
 }): InstanceStore {
   const instances = new Map<string, InternalInstance>();
-  const listeners = new Set<Listener>();
-  const activeInstanceListeners = new Set<Listener>();
-  const descriptorListeners = new Set<Listener>();
-  const instanceListeners = new Map<string, Set<Listener>>();
+  // Signals update their values immediately. Their shared scheduler controls only when observers
+  // hear about related writes, allowing one logical operation to publish atomically.
+  const scheduler = createSignalScheduler();
+  const snapshot = createStoreSignal<DevtoolsSnapshot>(EMPTY_SNAPSHOT, scheduler);
+  const activeInstance = createStoreSignal<string | null>(null, scheduler);
+  const descriptors = createStoreSignal<readonly DevtoolsInstanceDescriptor[]>([], scheduler);
+  const instanceSignals = new Map<string, StoreSignal<RegisteredProseMirrorInstance | undefined>>();
   const dispatchListeners = new Set<DevtoolsDispatchListener>();
 
   let activeInstanceId: string | null = null;
   let version = 0;
-  let snapshot: DevtoolsSnapshot = EMPTY_SNAPSHOT;
-  let descriptors: readonly DevtoolsInstanceDescriptor[] = [];
-  let notificationScheduled = false;
-  const changedInstanceIds = new Set<string>();
+  // Nested dispatches complete inside-out, which is not their invocation order. Keep their capture
+  // sequence until the outermost batch can publish the complete group.
   const queuedDispatches: Array<{
     sequence: number;
     event: DevtoolsDispatchEvent;
   }> = [];
 
+  // A stable signal per id lets subscribers remain attached while that instance is removed and
+  // later registered again.
+  const instanceSignal = (id: string): StoreSignal<RegisteredProseMirrorInstance | undefined> => {
+    const existing = instanceSignals.get(id);
+    if (existing) return existing;
+    const signal = createStoreSignal(instances.get(id)?.snapshot, scheduler);
+    instanceSignals.set(id, signal);
+    return signal;
+  };
+
   const rebuildSnapshot = (): void => {
-    snapshot = {
+    snapshot.set({
       activeInstanceId,
       instances: Array.from(instances.values(), (entry) => entry.snapshot),
       version: ++version,
-    };
+    });
   };
 
   const refresh = (entry: InternalInstance): void => {
     entry.snapshot = createSnapshot(entry);
   };
 
-  // Recording updates refresh snapshots immediately but batch subscriber calls.
-  const flush = (): void => {
-    if (!notificationScheduled) return;
-    notificationScheduled = false;
-
+  /** Publishes committed dispatches in invocation order, including nested dispatches. */
+  const publishDispatches = (): void => {
     const dispatches = queuedDispatches.splice(0).sort((left, right) => {
       return left.sequence - right.sequence;
     });
-    const instanceIds = Array.from(changedInstanceIds);
-    changedInstanceIds.clear();
-
-    notify(listeners);
-    for (const instanceId of instanceIds) {
-      const subscriptions = instanceListeners.get(instanceId);
-      if (subscriptions) notify(subscriptions);
-    }
     if (dispatches.length > 0 && dispatchListeners.size > 0) {
       notifyDispatch(
         dispatchListeners,
@@ -172,20 +172,25 @@ export function createInstanceStore({
     }
   };
 
-  const queueRecordedUpdate = (
+  // Recording code may need the latest value before dispatch returns, so writes stay immediate.
+  // Subscriber delivery waits so plugin timing, transaction data, and final view state appear as
+  // one coherent update after the outermost nested dispatch finishes.
+  const publishRecordedUpdate = (
     entry: InternalInstance,
     dispatch?: { sequence: number; event: DevtoolsDispatchEvent },
   ): void => {
     refresh(entry);
     rebuildSnapshot();
-    changedInstanceIds.add(entry.id);
-    if (dispatch) queuedDispatches.push(dispatch);
-    if (notificationScheduled) return;
-    notificationScheduled = true;
-    queueMicrotask(flush);
+    instanceSignal(entry.id).set(entry.snapshot);
+    if (dispatch) {
+      queuedDispatches.push(dispatch);
+      scheduler.schedule(publishDispatches);
+    }
   };
 
-  // Registration and selection changes are rare, so publish them synchronously.
+  // These mutations do not belong to transaction recording, but each can change several related
+  // signals. A short batch prevents combinations such as new descriptors with the previous active
+  // instance from becoming externally observable.
   const publishNow = ({
     instanceId,
     descriptorsChanged = false,
@@ -195,17 +200,16 @@ export function createInstanceStore({
     descriptorsChanged?: boolean;
     activeInstanceChanged?: boolean;
   } = {}): void => {
-    if (descriptorsChanged) {
-      descriptors = Array.from(instances.values(), ({ id, label }) => ({ id, label }));
-    }
-    rebuildSnapshot();
-    notify(listeners);
-    if (descriptorsChanged) notify(descriptorListeners);
-    if (activeInstanceChanged) notify(activeInstanceListeners);
-    if (instanceId !== undefined) {
-      const subscriptions = instanceListeners.get(instanceId);
-      if (subscriptions) notify(subscriptions);
-    }
+    scheduler.batch(() => {
+      if (descriptorsChanged) {
+        descriptors.set(Array.from(instances.values(), ({ id, label }) => ({ id, label })));
+      }
+      if (activeInstanceChanged) activeInstance.set(activeInstanceId);
+      rebuildSnapshot();
+      if (instanceId !== undefined) {
+        instanceSignal(instanceId).set(instances.get(instanceId)?.snapshot);
+      }
+    });
   };
 
   const remove = (id: string, view?: EditorView): void => {
@@ -220,7 +224,6 @@ export function createInstanceStore({
   };
 
   const release = (id: string, view: EditorView): void => {
-    flush();
     const entry = instances.get(id);
     if (!entry || entry.view !== view) return;
     entry.registrationCount -= 1;
@@ -228,38 +231,20 @@ export function createInstanceStore({
   };
 
   return {
-    getSnapshot: () => snapshot,
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    getActiveInstanceId: () => activeInstanceId,
-    subscribeActiveInstance(listener) {
-      activeInstanceListeners.add(listener);
-      return () => activeInstanceListeners.delete(listener);
-    },
-    getInstanceDescriptors: () => descriptors,
-    subscribeInstanceDescriptors(listener) {
-      descriptorListeners.add(listener);
-      return () => descriptorListeners.delete(listener);
-    },
+    getSnapshot: snapshot.get,
+    subscribe: snapshot.subscribe,
+    getActiveInstanceId: activeInstance.get,
+    subscribeActiveInstance: activeInstance.subscribe,
+    getInstanceDescriptors: descriptors.get,
+    subscribeInstanceDescriptors: descriptors.subscribe,
     getInstance: (id) => instances.get(id)?.snapshot,
-    subscribeInstance(id, listener) {
-      const subscriptions = instanceListeners.get(id) ?? new Set();
-      subscriptions.add(listener);
-      instanceListeners.set(id, subscriptions);
-      return () => {
-        subscriptions.delete(listener);
-        if (subscriptions.size === 0) instanceListeners.delete(id);
-      };
-    },
+    subscribeInstance: (id, listener) => instanceSignal(id).subscribe(listener),
     subscribeDispatch(listener) {
       dispatchListeners.add(listener);
       return () => dispatchListeners.delete(listener);
     },
     getEntry: (id) => instances.get(id),
     register(options, pluginTimings) {
-      flush();
       const existing = instances.get(options.id);
       if (existing && existing.view !== options.view) {
         throw new Error(
@@ -329,11 +314,9 @@ export function createInstanceStore({
       };
     },
     unregister(id, view) {
-      flush();
       remove(id, view);
     },
     setActiveInstance(id) {
-      flush();
       if (!instances.has(id)) {
         throw new Error(`Cannot activate unknown ProseMirror editor "${id}".`);
       }
@@ -342,7 +325,6 @@ export function createInstanceStore({
       publishNow({ activeInstanceChanged: true });
     },
     clearTransactions(id) {
-      flush();
       const entry = instances.get(id);
       if (!entry) return;
       clearRecords(entry.transactions);
@@ -365,12 +347,13 @@ export function createInstanceStore({
       if (overflow > 0) clearRecords(transactions.splice(0, overflow));
       entry.transactions = transactions;
       entry.updatedAt = Date.now();
-      queueRecordedUpdate(entry, dispatch);
+      publishRecordedUpdate(entry, dispatch);
     },
     markChanged(entry) {
       entry.updatedAt = Date.now();
-      queueRecordedUpdate(entry);
+      publishRecordedUpdate(entry);
     },
-    flush,
+    beginBatch: scheduler.begin,
+    endBatch: scheduler.end,
   };
 }

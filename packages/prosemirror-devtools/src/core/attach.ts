@@ -103,7 +103,6 @@ export function attachProseMirrorDevtools(
           >[0]);
         }
       } finally {
-        store.flush();
         unregister();
         store.closeSession(options.id, sessionId);
         attachments.delete(view);

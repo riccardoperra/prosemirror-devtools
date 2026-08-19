@@ -226,6 +226,14 @@ export interface DevtoolsDispatchEvent {
   readonly appliedTransactions: readonly Transaction[] | undefined;
 }
 
+/**
+ * Receives a committed group of dispatches synchronously after the outermost dispatch finishes.
+ *
+ * Nested dispatches finish inside-out, but events are supplied in invocation/capture order so an
+ * outer dispatch precedes the inner dispatches it caused. Delivery is batched in core because these
+ * listeners are framework-neutral; a rendering hook cannot provide the same ordering and atomicity
+ * to non-UI consumers.
+ */
 export type DevtoolsDispatchListener = (events: readonly DevtoolsDispatchEvent[]) => void;
 
 export type DevtoolsStoreReader = Readonly<{
@@ -245,8 +253,6 @@ export type DevtoolsInstanceManager = Readonly<{
   unregister: (id: string, view?: EditorView) => void;
   setActiveInstance: (id: string) => void;
   clearTransactions: (id: string) => void;
-  /** Delivers queued subscription batches synchronously. */
-  flush: () => void;
   /** Closes buffered instrumentation owned by a private lifecycle namespace. */
   closeSession: (instanceId: string, sessionId: string) => void;
 }>;

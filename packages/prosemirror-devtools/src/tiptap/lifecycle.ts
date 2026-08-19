@@ -238,7 +238,6 @@ function createTiptapIntegration(
     detach() {
       active = false;
       try {
-        (options.store ?? prosemirrorDevtoolsStore).flush();
         unregister?.();
       } finally {
         recorder = null;

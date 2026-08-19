@@ -35,13 +35,12 @@ export interface ProseMirrorDevtoolsSession {
   attach(view: EditorView): AttachedProseMirrorDevtools;
   /** Registers a view for a framework-owned dispatch middleware. */
   createDispatchRecorder(view: EditorView): ProseMirrorDispatchRecorder;
-  flush(): void;
   dispose(): void;
 }
 
 /**
- * Owns one editor instrumentation lifecycle. Disposing it atomically disables
- * plugin callbacks, flushes queued events, restores dispatch, and unregisters.
+ * Owns one editor instrumentation lifecycle. Disposing it atomically disables plugin callbacks,
+ * restores dispatch, and unregisters the editor.
  */
 export function createProseMirrorDevtoolsSession(
   options: CreateProseMirrorDevtoolsSessionOptions,
@@ -133,9 +132,6 @@ export function createProseMirrorDevtoolsSession(
       }
       return recorder;
     },
-    flush() {
-      store.flush();
-    },
     dispose() {
       if (!active) return;
       active = false;
@@ -145,7 +141,6 @@ export function createProseMirrorDevtoolsSession(
           underlyingAttachment?.detach();
           underlyingAttachment = null;
         } else {
-          store.flush();
           unregister?.();
         }
       } finally {
@@ -154,7 +149,6 @@ export function createProseMirrorDevtoolsSession(
         underlyingAttachment = null;
         view = null;
         store.closeSession(options.id, sessionId);
-        store.flush();
       }
     },
   };

@@ -52,6 +52,38 @@ describe("attachProseMirrorDevtools", () => {
     view.destroy();
   });
 
+  it("records the default apply phase when a plugin throws during transaction application", () => {
+    const applyError = new Error("filter failed");
+    const throwingPlugin = new Plugin({
+      filterTransaction() {
+        throw applyError;
+      },
+    });
+    const store = createProseMirrorDevtoolsStore();
+    const view = createTestView(createTestState("before", [throwingPlugin]));
+    const attachment = attachProseMirrorDevtools({
+      id: "default-throwing",
+      view,
+      store,
+      performanceMarks: false,
+    });
+
+    expect(() => view.dispatch(appendTextTransaction(view.state, "x"))).toThrow(applyError);
+
+    expect(view.state.doc.textContent).toBe("before");
+    expect(store.getSnapshot().instances[0]?.transactions[0]).toMatchObject({
+      applyDuration: expect.any(Number),
+      viewUpdateDuration: null,
+      applicationStatus: "unknown",
+      appliedTransactionCount: null,
+      appendedTransactionCount: null,
+      error: "Error: filter failed",
+    });
+
+    attachment.detach();
+    view.destroy();
+  });
+
   it("profiles apply and view phases in a custom dispatcher and restores shadowed methods", () => {
     const store = createProseMirrorDevtoolsStore();
     let applyDuringDispatch: unknown;
@@ -255,7 +287,6 @@ describe("attachProseMirrorDevtools", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     expect(() => view.dispatch(appendTextTransaction(view.state, "x"))).not.toThrow();
-    expect(() => store.flush()).not.toThrow();
 
     expect(view.state.doc.textContent).toBe("x");
     expect(store.getSnapshot().instances[0]?.transactions).toHaveLength(1);

@@ -19,9 +19,16 @@ type DispatchBarDatum = {
   timelineKey: string;
   kind: "initialization" | "dispatch";
   dispatchId: number | null;
-  phase: "Initialization" | "State apply" | "View update" | "Custom code" | "Other sync work";
+  phase:
+    | "Initialization"
+    | "State apply"
+    | "View update"
+    | "Custom code"
+    | "Other sync work"
+    | "Below timer resolution";
   duration: number;
   totalDuration: number;
+  belowResolution: boolean;
   y1: number;
   y2: number;
   fill: string;
@@ -34,6 +41,7 @@ const phaseColors: Record<DispatchBarDatum["phase"], string> = {
   "View update": "var(--pm-green)",
   "Custom code": "var(--pm-blue)",
   "Other sync work": "var(--pm-border-strong)",
+  "Below timer resolution": "var(--pm-muted)",
 };
 
 const legend = [
@@ -50,6 +58,7 @@ const plotHeight = chartHeight - chartMargin.top - chartMargin.bottom;
 const domainHeadroom = 1.15;
 const detailZoneHeight = 42;
 const minimumPositiveBarHeight = 6;
+const minimumPhaseSegmentHeight = 3;
 const adaptiveDetailSampleRatio = 0.2;
 const adaptiveDetailMultiplier = 4;
 const adaptiveDetailBudgetFraction = 0.25;
@@ -308,21 +317,61 @@ function dispatchRows(
   ]);
   for (const record of records) {
     const breakdown = buildDispatchPhaseBreakdown(record);
-    const phases: Array<[DispatchBarDatum["phase"], number]> = [
-      ["State apply", breakdown.applyDuration],
-      ["View update", breakdown.viewUpdateDuration],
-      ["Custom code", breakdown.customCodeDuration],
-      ["Other sync work", breakdown.otherDuration],
+    const observed = new Set(record.phaseTimings.map(({ phase }) => phase));
+    let phases: Array<{
+      phase: DispatchBarDatum["phase"];
+      duration: number;
+      observed: boolean;
+    }> = [
+      {
+        phase: "State apply",
+        duration: breakdown.applyDuration,
+        observed: observed.has("apply"),
+      },
+      {
+        phase: "View update",
+        duration: breakdown.viewUpdateDuration,
+        observed: observed.has("viewUpdate"),
+      },
+      {
+        phase: "Custom code",
+        duration: breakdown.customCodeDuration,
+        // `customDispatch` covers apply and view too. Only show the exclusive custom-code segment
+        // when interval subtraction found measurable time outside those phases.
+        observed: breakdown.customCodeDuration > 0,
+      },
+      {
+        phase: "Other sync work",
+        duration: breakdown.otherDuration,
+        observed: breakdown.otherDuration > 0,
+      },
     ];
-    const phaseTotal = phases.reduce((total, [, duration]) => total + duration, 0);
-    const paintedTotal = durationScale(record.totalDuration);
-    const paintedBoundary = (duration: number): number =>
-      phaseTotal > 0 ? durationScale.invert((duration / phaseTotal) * paintedTotal) : 0;
-    let cursor = 0;
-    for (const [phase, duration] of phases) {
-      if (duration <= 0) continue;
-      const y1 = paintedBoundary(cursor);
-      cursor += duration;
+    phases = phases.filter(({ duration, observed: wasObserved }) => duration > 0 || wasObserved);
+    if (phases.length === 0) {
+      phases = [{ phase: "Below timer resolution", duration: 0, observed: true }];
+    }
+
+    // Build one unified stack in display-pixel space. Every observed phase reserves a small strip,
+    // even when its two clock reads were equal; remaining height is distributed by exact duration.
+    // Converting the pixel boundaries back through the scale preserves the chart API and leaves all
+    // recorded millisecond values untouched for metrics and tooltips.
+    const phaseTotal = phases.reduce((total, { duration }) => total + duration, 0);
+    const paintedTotal = Math.max(
+      durationScale(record.totalDuration),
+      minimumPositiveBarHeight,
+      phases.length * minimumPhaseSegmentHeight,
+    );
+    const distributableHeight = Math.max(
+      0,
+      paintedTotal - phases.length * minimumPhaseSegmentHeight,
+    );
+    let paintedCursor = 0;
+    for (const { phase, duration } of phases) {
+      const y1 = durationScale.invert(paintedCursor);
+      paintedCursor +=
+        phaseTotal > 0
+          ? minimumPhaseSegmentHeight + (duration / phaseTotal) * distributableHeight
+          : paintedTotal / phases.length;
       rows.push({
         key: `${record.id}:${phase}`,
         timelineKey: String(record.id),
@@ -331,8 +380,9 @@ function dispatchRows(
         phase,
         duration,
         totalDuration: record.totalDuration,
+        belowResolution: duration === 0,
         y1,
-        y2: paintedBoundary(cursor),
+        y2: durationScale.invert(paintedCursor),
         fill:
           record.id === selectedId
             ? phaseColors[phase]
@@ -353,6 +403,7 @@ function initializationRow(initialization: InitializationTimelineEntry): Dispatc
     phase: "Initialization",
     duration: initialization.duration,
     totalDuration: initialization.duration,
+    belowResolution: false,
     y1: 0,
     y2: Math.max(initialization.duration, minimumVisibleDurationMs),
     fill: phaseColors.Initialization,
@@ -429,7 +480,6 @@ export function DispatchTimeline({
       key: "key",
       fill: (datum) => datum.fill,
       inset: 0,
-      maxThickness: 22,
       radius: 0,
     });
     return defineChart({
@@ -496,8 +546,19 @@ export function DispatchTimeline({
             color: datum.fill,
             rows: [
               { label: "Segment", value: datum.phase, color: datum.fill },
-              { label: "Segment duration", value: `${datum.duration.toFixed(2)} ms` },
-              { label: "Full dispatch", value: `${datum.totalDuration.toFixed(2)} ms` },
+              {
+                label: "Segment duration",
+                value: datum.belowResolution
+                  ? "Below timer resolution"
+                  : `${datum.duration.toFixed(2)} ms`,
+              },
+              {
+                label: "Full dispatch",
+                value:
+                  datum.totalDuration === 0
+                    ? "Below timer resolution"
+                    : `${datum.totalDuration.toFixed(2)} ms`,
+              },
             ],
           };
         },
@@ -629,7 +690,7 @@ export function DispatchTimeline({
         </span>
         <div className="pm-dispatch-chart-plot">
           <Chart
-            ariaDescription={`${initialization ? "The first yellow bar summarizes measured state initialization and view creation plugin hooks. " : ""}Stacked state apply, view update, custom code, and other synchronous duration for recent dispatches. The dashed line marks the ${budgetLabel}. ${scaleDescription} This is a dispatch-time budget, not measured browser frame rate.`}
+            ariaDescription={`${initialization ? "The first yellow bar summarizes measured state initialization and view creation plugin hooks. " : ""}Stacked state apply, view update, custom code, and other synchronous duration for recent dispatches. A minimal muted bar means the dispatch completed below the browser timer resolution. The dashed line marks the ${budgetLabel}. ${scaleDescription} This is a dispatch-time budget, not measured browser frame rate.`}
             ariaLabel="Dispatch duration bar chart"
             definition={definition}
             height={chartHeight}
