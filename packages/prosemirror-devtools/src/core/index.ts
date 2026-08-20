@@ -6,6 +6,12 @@ export type * from "./extensions";
 export { instrumentProseMirrorPlugins } from "./instrument";
 export { markProseMirrorDevtools, measureProseMirrorDevtools } from "./markers";
 export type { ProseMirrorDevtoolsMarkerOptions } from "./markers";
+export type { ProseMirrorDevtoolsTab } from "./panel-types";
+export { createProseMirrorDevtoolsRegistrationManager } from "./registration-manager";
+export type {
+  ProseMirrorDevtoolsRegistrationManager,
+  ProseMirrorDevtoolsRegistrationOptions,
+} from "./registration-manager";
 export { createProseMirrorDevtoolsSession } from "./session";
 export type {
   CreateProseMirrorDevtoolsSessionOptions,

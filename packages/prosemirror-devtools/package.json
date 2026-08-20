@@ -19,9 +19,61 @@
       "types": "./dist/performance.d.ts",
       "default": "./dist/performance.js"
     },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
+    },
+    "./react/production": {
+      "types": "./dist/react/production/index.d.ts",
+      "default": "./dist/react/production/index.js"
+    },
+    "./preact": {
+      "types": "./dist/preact/index.d.ts",
+      "default": "./dist/preact/index.js"
+    },
+    "./preact/production": {
+      "types": "./dist/preact/production/index.d.ts",
+      "default": "./dist/preact/production/index.js"
+    },
+    "./solid": {
+      "types": "./dist/solid/index.d.ts",
+      "default": "./dist/solid/index.js"
+    },
+    "./solid/production": {
+      "types": "./dist/solid/production/index.d.ts",
+      "default": "./dist/solid/production/index.js"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "default": "./dist/vue/index.js"
+    },
+    "./vue/production": {
+      "types": "./dist/vue/production/index.d.ts",
+      "default": "./dist/vue/production/index.js"
+    },
+    "./svelte": {
+      "types": "./dist/svelte/index.d.ts",
+      "default": "./dist/svelte/index.js"
+    },
+    "./svelte/production": {
+      "types": "./dist/svelte/production/index.d.ts",
+      "default": "./dist/svelte/production/index.js"
+    },
+    "./angular": {
+      "types": "./dist/angular/index.d.ts",
+      "default": "./dist/angular/index.js"
+    },
+    "./angular/production": {
+      "types": "./dist/angular/production/index.d.ts",
+      "default": "./dist/angular/production/index.js"
+    },
     "./tanstack": {
-      "types": "./dist/tanstack.d.ts",
-      "default": "./dist/tanstack.js"
+      "types": "./dist/tanstack/index.d.ts",
+      "default": "./dist/tanstack/index.js"
+    },
+    "./tanstack/production": {
+      "types": "./dist/tanstack/production/index.d.ts",
+      "default": "./dist/tanstack/production/index.js"
     },
     "./tiptap": {
       "types": "./dist/tiptap.d.ts",
@@ -54,6 +106,9 @@
   ],
   "author": "Riccardo Perra",
   "license": "MIT",
+  "dependencies": {
+    "@tanstack/devtools-utils": "catalog:"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/riccardoperra/prosemirror-devtools.git",
@@ -62,14 +117,22 @@
   "homepage": "https://github.com/riccardoperra/prosemirror-devtools#readme",
   "bugs": "https://github.com/riccardoperra/prosemirror-devtools/issues",
   "peerDependencies": {
+    "@angular/core": ">=19.0.0",
     "@tanstack/react-devtools": ">=0.7.0",
+    "preact": ">=10.0.0",
     "prosemirror-model": ">=1.19.0",
     "prosemirror-state": ">=1.4.0",
     "prosemirror-view": ">=1.31.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "solid-js": ">=1.9.7 <2",
+    "svelte": ">=5.0.0",
+    "vue": ">=3.2.0"
   },
   "peerDependenciesMeta": {
+    "@angular/core": {
+      "optional": true
+    },
     "@tanstack/react-devtools": {
       "optional": true
     },
@@ -78,9 +141,22 @@
     },
     "react-dom": {
       "optional": true
+    },
+    "preact": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
     }
   },
   "devDependencies": {
+    "@angular/core": "catalog:",
     "@tanstack/charts": "catalog:",
     "@tanstack/react-charts": "catalog:",
     "@tanstack/react-devtools": "catalog:",
@@ -93,10 +169,14 @@
     "prosemirror-state": "catalog:",
     "prosemirror-view": "catalog:",
     "publint": "catalog:",
+    "preact": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "solid-js": "catalog:",
+    "svelte": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "vue": "catalog:"
   }
 }

@@ -1,4 +1,4 @@
-import { createReactDevtoolsExtension } from "prosemirror-devtools/tanstack";
+import { createReactDevtoolsExtension } from "prosemirror-devtools/react";
 import { DevtoolsIntegrationPanel } from "./DevtoolsIntegrationPanel";
 
 export const playgroundDevtoolsExtension = createReactDevtoolsExtension({

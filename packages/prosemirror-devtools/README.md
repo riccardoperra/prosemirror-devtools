@@ -12,8 +12,10 @@ Devtools.
 pnpm add -D prosemirror-devtools
 ```
 
-The core entrypoint expects ProseMirror only. React 19 and React DOM are optional peers used by the
-standalone panel; `@tanstack/react-devtools` is needed only by the TanStack adapter.
+The core entrypoint expects ProseMirror only. Framework runtimes are optional peers used by their
+matching panel adapters. Until the renderer migration, every live panel adapter also requires the
+React 19 and React DOM peers; that implementation detail will move behind Solid without changing
+the adapter APIs.
 
 ## Quick start
 
@@ -264,7 +266,7 @@ Create one stable plugin object and pass it to the TanStack shell:
 
 ```tsx
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/tanstack";
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/react";
 
 const prosemirrorPlugin = createProseMirrorDevtoolsPlugin({
   id: "prosemirror-devtools",
@@ -280,8 +282,19 @@ export function App() {
 }
 ```
 
-The adapter follows the shell's light/dark theme. It also re-exports
-`ProseMirrorDevtoolsPanel` and its prop types for adapter-specific imports.
+The adapter follows the shell's light/dark theme. It also exports a native
+`ProseMirrorDevtoolsPanel`, `useProseMirrorDevtools`, and their adapter types.
+
+React, Preact, Solid, Vue, Svelte, and Angular adapters use `@tanstack/devtools-utils`. Their normal
+entrypoints select no-op versions of their exported runtime APIs outside development. Import the
+explicit `/<framework>/production` path to intentionally keep the real devtools in a production
+bundle:
+
+```ts
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/react/production";
+```
+
+`prosemirror-devtools/tanstack` remains a compatibility alias for the React adapter.
 
 ## Standalone React panel
 
@@ -654,14 +667,21 @@ The core entry also exports:
 
 ## Package exports
 
-| Export                              | Contents                                                                                                                  |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `prosemirror-devtools`              | All core APIs and types plus the React panel and React extension adapter                                                  |
-| `prosemirror-devtools/core`         | Store, session, data/extension contracts, instrumentation, serialization, inspection, and snapshots without React imports |
-| `prosemirror-devtools/performance`  | Pure interval, attribution, grouping, summary, ranking, and timeline models                                               |
-| `prosemirror-devtools/tanstack`     | `createProseMirrorDevtoolsPlugin`, panel component, and panel types                                                       |
-| `prosemirror-devtools/tiptap`       | Tiptap 3 lifecycle and native dispatch-middleware adapter                                                                 |
-| `prosemirror-devtools/package.json` | Package metadata                                                                                                          |
+| Export                                        | Contents                                                                                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `prosemirror-devtools`                        | All core APIs and types plus the React panel and React extension adapter                                                  |
+| `prosemirror-devtools/core`                   | Store, session, data/extension contracts, instrumentation, serialization, inspection, and snapshots without React imports |
+| `prosemirror-devtools/performance`            | Pure interval, attribution, grouping, summary, ranking, and timeline models                                               |
+| `prosemirror-devtools/react`                  | React panel, plugin factory, registration hook, and React extension adapter                                               |
+| `prosemirror-devtools/preact`                 | Preact panel, plugin factory, and registration hook                                                                       |
+| `prosemirror-devtools/solid`                  | Solid panel, plugin factory, and registration helper                                                                      |
+| `prosemirror-devtools/vue`                    | Vue panel, plugin factory, and registration composable                                                                    |
+| `prosemirror-devtools/svelte`                 | Svelte panel and plugin factory                                                                                           |
+| `prosemirror-devtools/angular`                | Angular panel, plugin factory, and injection helper                                                                       |
+| `prosemirror-devtools/<framework>/production` | Explicitly enabled version of the matching framework adapter                                                              |
+| `prosemirror-devtools/tanstack`               | Compatibility alias for `prosemirror-devtools/react`                                                                      |
+| `prosemirror-devtools/tiptap`                 | Tiptap 3 lifecycle and native dispatch-middleware adapter                                                                 |
+| `prosemirror-devtools/package.json`           | Package metadata                                                                                                          |
 
 ## Development
 

@@ -19,7 +19,7 @@ import {
 import { useActiveInstance } from "../store/selectors";
 import { EmptyState } from "../ui/empty-state";
 
-const PerformanceView = lazy(async () => {
+const PerformanceView = /* @__PURE__ */ lazy(async () => {
   const module = await import("../features/performance/performance-view");
   return { default: module.PerformanceView };
 });

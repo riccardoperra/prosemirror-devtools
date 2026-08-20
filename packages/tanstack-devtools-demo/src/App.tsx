@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { prosemirrorDevtoolsStore } from "prosemirror-devtools";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/tanstack";
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/react";
 import { playgroundDevtoolsExtension } from "./DevtoolsIntegrationExtension";
 import { ProseMirrorEditor } from "./ProseMirrorEditor";
 

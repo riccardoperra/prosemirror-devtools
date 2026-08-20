@@ -12,8 +12,6 @@ import { PanelTabList } from "./shell/panel-tab-list";
 import { PanelToolbar } from "./shell/panel-toolbar";
 
 export type { ProseMirrorDevtoolsPanelProps, ProseMirrorDevtoolsTab } from "./panel.types";
-export { createReactDevtoolsExtension } from "./react-extension";
-export type { ReactDevtoolsExtensionOptions, ReactDevtoolsPanelExtension } from "./react-extension";
 
 const NO_EXTENSIONS: readonly DevtoolsExtension[] = [];
 
