@@ -1,7 +1,5 @@
-import "zone.js";
-import "@angular/compiler";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { AppComponent } from "./app.component";
-import "@prosemirror-devtools/demo-kit/styles.css";
+import { App } from "./app/app";
+import { appConfig } from "./app/app.config";
 
-void bootstrapApplication(AppComponent).catch((error: unknown) => console.error(error));
+void bootstrapApplication(App, appConfig).catch((error: unknown) => console.error(error));

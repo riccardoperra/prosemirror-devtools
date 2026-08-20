@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "ngc -p tsconfig.json && vite build",
-    "preview": "vite preview",
-    "typecheck": "ngc -p tsconfig.json"
+    "dev": "ng serve --port 4179",
+    "build": "ng build",
+    "preview": "ng serve --configuration production --port 4179",
+    "typecheck": "ngc -p tsconfig.app.json"
   },
   "dependencies": {
+    "@angular/common": "catalog:",
     "@angular/compiler": "catalog:",
     "@angular/core": "catalog:",
     "@angular/platform-browser": "catalog:",
@@ -17,11 +18,12 @@
     "@tanstack/angular-devtools": "catalog:",
     "prosemirror-devtools": "workspace:*",
     "rxjs": "catalog:",
-    "zone.js": "catalog:"
+    "tslib": "catalog:"
   },
   "devDependencies": {
+    "@angular/build": "catalog:",
+    "@angular/cli": "catalog:",
     "@angular/compiler-cli": "catalog:",
-    "typescript": "catalog:",
-    "vite": "catalog:"
+    "typescript": "catalog:"
   }
 }

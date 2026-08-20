@@ -1,17 +1,12 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { ref } from "vue";
 import { TanStackDevtools, type TanStackDevtoolsVuePlugin } from "@tanstack/vue-devtools";
-import {
-  createPlaygroundExtension,
-  mountDemoEditor,
-  type DemoEditorController,
-} from "@prosemirror-devtools/demo-kit";
+import { createPlaygroundExtension } from "@prosemirror-devtools/demo-kit";
 import { prosemirrorDevtoolsStore } from "prosemirror-devtools";
 import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/vue";
+import ProseMirrorEditor from "./ProseMirrorEditor.vue";
 
-const editorHost = ref<HTMLElement>();
 const latencyEnabled = ref(false);
-let editor: DemoEditorController | undefined;
 const plugin = createProseMirrorDevtoolsPlugin({
   defaultPanel: "playground-integration",
   extensions: [createPlaygroundExtension("Vue")],
@@ -22,20 +17,6 @@ const config = {
   hideUntilHover: false,
   openHotkey: ["CtrlOrMeta", "Shift", "D"],
 };
-
-onMounted(() => {
-  if (editorHost.value)
-    editor = mountDemoEditor(editorHost.value, {
-      customDispatch: true,
-      instanceId: "vue-playground-editor",
-      label: "Vue playground document",
-    });
-});
-onBeforeUnmount(() => editor?.destroy());
-function toggleLatency(event: Event) {
-  latencyEnabled.value = (event.currentTarget as HTMLInputElement).checked;
-  editor?.setLatencyEnabled(latencyEnabled.value);
-}
 </script>
 
 <template>
@@ -49,12 +30,11 @@ function toggleLatency(event: Event) {
         <div class="plugin-list">
           <span>plugins:</span><code>history · keymap · wordCount</code>
         </div>
-        <label class="plugin-toggle"
-          ><input :checked="latencyEnabled" type="checkbox" @change="toggleLatency" /> slow
-          apply</label
-        >
+        <label class="plugin-toggle">
+          <input v-model="latencyEnabled" type="checkbox" /> slow apply
+        </label>
       </div>
-      <div ref="editorHost" />
+      <ProseMirrorEditor :latency-enabled="latencyEnabled" />
     </section>
     <TanStackDevtools :config="config" :plugins="[plugin]" />
   </main>
