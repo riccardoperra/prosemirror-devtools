@@ -1,0 +1,25 @@
+{
+  "name": "@prosemirror-devtools/svelte-demo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "svelte-check --tsconfig ./tsconfig.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@prosemirror-devtools/demo-kit": "workspace:*",
+    "@tanstack/svelte-devtools": "catalog:",
+    "dayjs": "catalog:",
+    "prosemirror-devtools": "workspace:*",
+    "svelte": "catalog:"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "svelte-check": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

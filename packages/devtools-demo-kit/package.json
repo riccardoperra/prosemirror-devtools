@@ -1,0 +1,21 @@
+{
+  "name": "@prosemirror-devtools/demo-kit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "dependencies": {
+    "prosemirror-commands": "catalog:",
+    "prosemirror-devtools": "workspace:*",
+    "prosemirror-history": "catalog:",
+    "prosemirror-keymap": "catalog:",
+    "prosemirror-model": "catalog:",
+    "prosemirror-schema-basic": "catalog:",
+    "prosemirror-schema-list": "catalog:",
+    "prosemirror-state": "catalog:",
+    "prosemirror-view": "catalog:"
+  }
+}

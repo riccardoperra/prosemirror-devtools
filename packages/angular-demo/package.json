@@ -1,0 +1,29 @@
+{
+  "name": "@prosemirror-devtools/angular-demo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ng serve --port 4179",
+    "build": "ng build",
+    "preview": "ng serve --configuration production --port 4179",
+    "typecheck": "ngc -p tsconfig.app.json"
+  },
+  "dependencies": {
+    "@angular/common": "catalog:",
+    "@angular/compiler": "catalog:",
+    "@angular/core": "catalog:",
+    "@angular/platform-browser": "catalog:",
+    "@prosemirror-devtools/demo-kit": "workspace:*",
+    "@tanstack/angular-devtools": "catalog:",
+    "prosemirror-devtools": "workspace:*",
+    "rxjs": "catalog:",
+    "tslib": "catalog:"
+  },
+  "devDependencies": {
+    "@angular/build": "catalog:",
+    "@angular/cli": "catalog:",
+    "@angular/compiler-cli": "catalog:",
+    "typescript": "catalog:"
+  }
+}

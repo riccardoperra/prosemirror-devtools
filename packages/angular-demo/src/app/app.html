@@ -1,0 +1,27 @@
+<main class="playground">
+  <header class="playground-header">
+    <h1>ProseMirror + Angular playground</h1>
+    <span class="devtools-shortcut">Devtools <kbd>⌘⇧D</kbd></span>
+  </header>
+
+  <section class="editor-workspace" aria-label="ProseMirror editor playground">
+    <div class="plugin-bar">
+      <div class="plugin-list">
+        <span>plugins:</span>
+        <code>history · keymap · wordCount</code>
+      </div>
+      <label class="plugin-toggle">
+        <input [checked]="latencyEnabled()" (change)="toggleLatency($event)" type="checkbox" />
+        slow apply
+      </label>
+    </div>
+
+    <app-prosemirror-editor
+      instanceId="angular-playground-editor"
+      label="Angular playground document"
+      [latencyEnabled]="latencyEnabled()"
+    />
+  </section>
+
+  <tanstack-devtools [config]="devtoolsConfig" [plugins]="devtoolsPlugins" />
+</main>
