@@ -67,14 +67,6 @@
       "types": "./dist/angular/production/index.d.ts",
       "default": "./dist/angular/production/index.js"
     },
-    "./tanstack": {
-      "types": "./dist/tanstack/index.d.ts",
-      "default": "./dist/tanstack/index.js"
-    },
-    "./tanstack/production": {
-      "types": "./dist/tanstack/production/index.d.ts",
-      "default": "./dist/tanstack/production/index.js"
-    },
     "./tiptap": {
       "types": "./dist/tiptap.d.ts",
       "default": "./dist/tiptap.js"

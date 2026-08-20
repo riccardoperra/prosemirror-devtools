@@ -294,8 +294,6 @@ bundle:
 import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/react/production";
 ```
 
-`prosemirror-devtools/tanstack` remains a compatibility alias for the React adapter.
-
 ## Standalone React panel
 
 ```tsx
@@ -679,7 +677,6 @@ The core entry also exports:
 | `prosemirror-devtools/svelte`                 | Svelte panel and plugin factory                                                                                           |
 | `prosemirror-devtools/angular`                | Angular panel, plugin factory, and injection helper                                                                       |
 | `prosemirror-devtools/<framework>/production` | Explicitly enabled version of the matching framework adapter                                                              |
-| `prosemirror-devtools/tanstack`               | Compatibility alias for `prosemirror-devtools/react`                                                                      |
 | `prosemirror-devtools/tiptap`                 | Tiptap 3 lifecycle and native dispatch-middleware adapter                                                                 |
 | `prosemirror-devtools/package.json`           | Package metadata                                                                                                          |
 

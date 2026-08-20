@@ -22,8 +22,6 @@ export default defineConfig({
     "svelte/production/index": "src/svelte/production/index.ts",
     "angular/index": "src/angular/index.ts",
     "angular/production/index": "src/angular/production/index.ts",
-    "tanstack/index": "src/tanstack/index.ts",
-    "tanstack/production/index": "src/tanstack/production/index.ts",
     tiptap: "src/tiptap/index.ts",
   },
   format: "esm",
