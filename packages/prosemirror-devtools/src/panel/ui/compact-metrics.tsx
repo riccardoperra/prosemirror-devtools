@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { For, Show, type JSX } from "solid-js";
 
 export interface CompactMetric {
   label: string;
@@ -6,23 +6,24 @@ export interface CompactMetric {
   detail?: string;
 }
 
-export function CompactMetrics({
-  label,
-  metrics,
-}: {
+export function CompactMetrics(props: {
   label: string;
   metrics: readonly CompactMetric[];
-}): ReactElement {
+}): JSX.Element {
   return (
-    <section aria-label={label} className="pm-compact-metrics">
-      {metrics.map((metric) => (
-        <div className="pm-compact-metric" key={metric.label}>
-          <i aria-hidden="true" className="pm-status-dot" />
-          <span>{metric.label}</span>
-          <strong>{metric.value}</strong>
-          {metric.detail ? <small title={metric.detail}>{metric.detail}</small> : null}
-        </div>
-      ))}
+    <section aria-label={props.label} class="pm-compact-metrics">
+      <For each={props.metrics}>
+        {(metric) => (
+          <div class="pm-compact-metric">
+            <i aria-hidden="true" class="pm-status-dot" />
+            <span>{metric.label}</span>
+            <strong>{metric.value}</strong>
+            <Show when={metric.detail}>
+              {(detail) => <small title={detail()}>{detail()}</small>}
+            </Show>
+          </div>
+        )}
+      </For>
     </section>
   );
 }

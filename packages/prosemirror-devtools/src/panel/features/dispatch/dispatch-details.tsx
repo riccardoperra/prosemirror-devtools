@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import type { ReactElement } from "react";
+import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 
 import type {
   AppliedTransactionRecord,
@@ -10,105 +9,111 @@ import { formatMs } from "../../formatters";
 import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
 
-function AppliedTransaction({
-  transaction,
-}: {
-  transaction: AppliedTransactionRecord;
-}): ReactElement {
-  const [open, setOpen] = useState(transaction.index === 0);
+function AppliedTransaction(props: { transaction: AppliedTransactionRecord }): JSX.Element {
+  const [open, setOpen] = createSignal(props.transaction.index === 0);
 
   return (
     <details
-      className="pm-transaction-record"
+      class="pm-transaction-record"
       onToggle={(event) => setOpen(event.currentTarget.open)}
-      open={open}
+      open={open()}
     >
       <summary>
-        <span className="pm-transaction-kind">{transaction.appended ? "Appended" : "Root"}</span>
-        <strong>Transaction {transaction.index + 1}</strong>
-        <span className="pm-spacer" />
-        {transaction.docChanged ? <Badge tone="green">doc</Badge> : null}
-        {transaction.selectionSet ? <Badge tone="blue">selection</Badge> : null}
-        {transaction.storedMarksSet ? <Badge>marks</Badge> : null}
-        <span className="pm-row-detail">
-          {transaction.steps.length} {transaction.steps.length === 1 ? "step" : "steps"}
+        <span class="pm-transaction-kind">{props.transaction.appended ? "Appended" : "Root"}</span>
+        <strong>Transaction {props.transaction.index + 1}</strong>
+        <span class="pm-spacer" />
+        <Show when={props.transaction.docChanged}>
+          <Badge tone="green">doc</Badge>
+        </Show>
+        <Show when={props.transaction.selectionSet}>
+          <Badge tone="blue">selection</Badge>
+        </Show>
+        <Show when={props.transaction.storedMarksSet}>
+          <Badge>marks</Badge>
+        </Show>
+        <span class="pm-row-detail">
+          {props.transaction.steps.length} {props.transaction.steps.length === 1 ? "step" : "steps"}
         </span>
       </summary>
-      <div className="pm-transaction-payload">
+      <div class="pm-transaction-payload">
         <section>
-          <div className="pm-detail-heading">
-            <span className="pm-section-title">Steps</span>
-            <Badge>{transaction.steps.length}</Badge>
+          <div class="pm-detail-heading">
+            <span class="pm-section-title">Steps</span>
+            <Badge>{props.transaction.steps.length}</Badge>
           </div>
-          <JsonTree defaultExpandedDepth={4} value={transaction.steps} />
+          <JsonTree defaultExpandedDepth={4} value={props.transaction.steps} />
         </section>
         <section>
-          <div className="pm-detail-heading">
-            <span className="pm-section-title">Metadata</span>
-            <Badge>{Object.keys(transaction.meta).length}</Badge>
+          <div class="pm-detail-heading">
+            <span class="pm-section-title">Metadata</span>
+            <Badge>{Object.keys(props.transaction.meta).length}</Badge>
           </div>
-          <JsonTree defaultExpandedDepth={4} value={transaction.meta} />
+          <JsonTree defaultExpandedDepth={4} value={props.transaction.meta} />
         </section>
       </div>
     </details>
   );
 }
 
-export function AppliedTransactions({ record }: { record: TransactionRecord }): ReactElement {
-  if (record.transactions.length === 0) {
-    return (
-      <div className="pm-inspector-empty">
-        {record.filtered
-          ? "The root transaction was filtered before it could be applied."
-          : "No applied transaction payload was observed for this dispatch."}
-      </div>
-    );
-  }
-
+export function AppliedTransactions(props: { record: TransactionRecord }): JSX.Element {
   return (
-    <div className="pm-transaction-stack">
-      {record.transactions.map((transaction) => (
-        <AppliedTransaction key={`${record.id}-${transaction.index}`} transaction={transaction} />
-      ))}
-    </div>
+    <Show
+      when={props.record.transactions.length > 0}
+      fallback={
+        <div class="pm-inspector-empty">
+          {props.record.filtered
+            ? "The root transaction was filtered before it could be applied."
+            : "No applied transaction payload was observed for this dispatch."}
+        </div>
+      }
+    >
+      <div class="pm-transaction-stack">
+        <For each={props.record.transactions}>
+          {(transaction) => <AppliedTransaction transaction={transaction} />}
+        </For>
+      </div>
+    </Show>
   );
 }
 
-export function DispatchDocuments({ record }: { record: TransactionRecord }): ReactElement {
-  const [open, setOpen] = useState(false);
+export function DispatchDocuments(props: { record: TransactionRecord }): JSX.Element {
+  const [open, setOpen] = createSignal(false);
 
   return (
     <>
-      <section className="pm-selection-detail">
-        <div className="pm-detail-heading">
-          <span className="pm-section-title">Selection</span>
+      <section class="pm-selection-detail">
+        <div class="pm-detail-heading">
+          <span class="pm-section-title">Selection</span>
         </div>
         <JsonTree
           defaultExpandedDepth={4}
-          value={{ before: record.selectionBefore, after: record.selectionAfter }}
+          value={{
+            before: props.record.selectionBefore,
+            after: props.record.selectionAfter,
+          }}
         />
       </section>
       <details
-        className="pm-document-disclosure"
+        class="pm-document-disclosure"
         onToggle={(event) => setOpen(event.currentTarget.open)}
-        open={open}
+        open={open()}
       >
         <summary>
-          <span className="pm-section-title">Documents</span>
-          <span className="pm-row-detail">Before and after JSON</span>
+          <span class="pm-section-title">Documents</span>
+          <span class="pm-row-detail">Before and after JSON</span>
         </summary>
-        <div className="pm-detail-columns">
+        <div class="pm-detail-columns">
           <section>
-            <div className="pm-detail-heading">
-              <span className="pm-section-title">Before</span>
+            <div class="pm-detail-heading">
+              <span class="pm-section-title">Before</span>
             </div>
-            <JsonTree defaultExpandedDepth={2} value={record.docBefore} />
+            <JsonTree defaultExpandedDepth={2} value={props.record.docBefore} />
           </section>
           <section>
-            <div className="pm-detail-heading">
-              <span className="pm-section-title">After</span>
+            <div class="pm-detail-heading">
+              <span class="pm-section-title">After</span>
             </div>
-            <JsonTree defaultExpandedDepth={2} value={record.docAfter} />
+            <JsonTree defaultExpandedDepth={2} value={props.record.docAfter} />
           </section>
         </div>
       </details>
@@ -116,43 +121,40 @@ export function DispatchDocuments({ record }: { record: TransactionRecord }): Re
   );
 }
 
-export function DispatchMarkers({
-  markers,
-}: {
-  markers: readonly DevtoolsMarker[];
-}): ReactElement | null {
-  const orderedMarkers = useMemo(
-    () => [...markers].sort((left, right) => left.startOffset - right.startOffset),
-    [markers],
+export function DispatchMarkers(props: { markers: readonly DevtoolsMarker[] }): JSX.Element {
+  const orderedMarkers = createMemo(() =>
+    [...props.markers].sort((left, right) => left.startOffset - right.startOffset),
   );
 
-  if (orderedMarkers.length === 0) return null;
-
   return (
-    <section aria-label="Custom markers" className="pm-marker-section">
-      <div className="pm-workspace-heading">
-        <span className="pm-section-title">Markers</span>
-        <Badge>{orderedMarkers.length}</Badge>
-      </div>
-      {orderedMarkers.map((marker, index) => (
-        <div className="pm-marker-entry" data-tone={marker.tone} key={`${index}-${marker.label}`}>
-          <div className="pm-marker-row">
-            <i aria-hidden="true" className="pm-status-dot" />
-            <span className="pm-row-main">
-              <span className="pm-row-title">{marker.label}</span>
-              <span className="pm-row-detail">
-                {marker.category ?? "custom"} · at {formatMs(marker.startOffset)}
-              </span>
-            </span>
-            <span className="pm-mono">
-              {marker.duration == null ? "point" : formatMs(marker.duration)}
-            </span>
-          </div>
-          {marker.data !== undefined ? (
-            <JsonTree defaultExpandedDepth={4} value={marker.data} />
-          ) : null}
+    <Show when={orderedMarkers().length > 0}>
+      <section aria-label="Custom markers" class="pm-marker-section">
+        <div class="pm-workspace-heading">
+          <span class="pm-section-title">Markers</span>
+          <Badge>{orderedMarkers().length}</Badge>
         </div>
-      ))}
-    </section>
+        <For each={orderedMarkers()}>
+          {(marker) => (
+            <div class="pm-marker-entry" data-tone={marker.tone}>
+              <div class="pm-marker-row">
+                <i aria-hidden="true" class="pm-status-dot" />
+                <span class="pm-row-main">
+                  <span class="pm-row-title">{marker.label}</span>
+                  <span class="pm-row-detail">
+                    {marker.category ?? "custom"} · at {formatMs(marker.startOffset)}
+                  </span>
+                </span>
+                <span class="pm-mono">
+                  {marker.duration == null ? "point" : formatMs(marker.duration)}
+                </span>
+              </div>
+              <Show when={marker.data !== undefined}>
+                <JsonTree defaultExpandedDepth={4} value={marker.data} />
+              </Show>
+            </div>
+          )}
+        </For>
+      </section>
+    </Show>
   );
 }

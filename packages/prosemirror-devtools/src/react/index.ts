@@ -16,11 +16,8 @@ export const useProseMirrorDevtools: typeof registration.useProseMirrorDevtools 
   ? registration.useProseMirrorDevtools
   : noOp.useProseMirrorDevtoolsNoOp;
 
-export { createReactDevtoolsExtension } from "../panel/react-extension";
-export type {
-  ReactDevtoolsExtensionOptions,
-  ReactDevtoolsPanelExtension,
-} from "../panel/react-extension";
+export { createReactDevtoolsExtension } from "./extension";
+export type { ReactDevtoolsExtensionOptions, ReactDevtoolsPanelExtension } from "./extension";
 export type { CreateProseMirrorDevtoolsPluginOptions } from "../adapters/types";
 export type { ProseMirrorDevtoolsPanelProps, ProseMirrorDevtoolsTab } from "../panel/panel.types";
 export type { ProseMirrorDevtoolsReactInit } from "./panel";

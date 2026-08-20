@@ -99,7 +99,8 @@
   "author": "Riccardo Perra",
   "license": "MIT",
   "dependencies": {
-    "@tanstack/devtools-utils": "catalog:"
+    "@tanstack/devtools-utils": "catalog:",
+    "solid-js": "catalog:"
   },
   "repository": {
     "type": "git",
@@ -117,7 +118,6 @@
     "prosemirror-view": ">=1.31.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "solid-js": ">=1.9.7 <2",
     "svelte": ">=5.0.0",
     "vue": ">=3.2.0"
   },
@@ -137,9 +137,6 @@
     "preact": {
       "optional": true
     },
-    "solid-js": {
-      "optional": true
-    },
     "svelte": {
       "optional": true
     },
@@ -150,7 +147,7 @@
   "devDependencies": {
     "@angular/core": "catalog:",
     "@tanstack/charts": "catalog:",
-    "@tanstack/react-charts": "catalog:",
+    "@tanstack/solid-charts": "catalog:",
     "@tanstack/react-devtools": "catalog:",
     "@types/d3-scale": "catalog:",
     "@types/react": "catalog:",
@@ -164,10 +161,10 @@
     "preact": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "solid-js": "catalog:",
     "svelte": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
+    "unplugin-solid": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:"
   }

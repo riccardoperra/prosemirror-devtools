@@ -1,12 +1,12 @@
-import type { ReactElement } from "react";
+import type { JSX } from "solid-js";
 
-export function EmptyState(): ReactElement {
+export function EmptyState(): JSX.Element {
   return (
-    <div className="pm-empty">
+    <div class="pm-empty">
       <div>
-        <div className="pm-empty-mark">PM</div>
+        <div class="pm-empty-mark">PM</div>
         <div>No ProseMirror instances are registered.</div>
-        <div className="pm-muted pm-mono" style={{ marginTop: 5 }}>
+        <div class="pm-muted pm-mono" style={{ "margin-top": "5px" }}>
           Call attachProseMirrorDevtools({`{ view, id }`}).
         </div>
       </div>

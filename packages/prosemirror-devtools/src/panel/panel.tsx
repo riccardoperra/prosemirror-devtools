@@ -1,4 +1,4 @@
-import { useMemo, type ReactElement } from "react";
+import { createMemo, mergeProps, Show, type JSX } from "solid-js";
 
 import type { DevtoolsExtension } from "../core/extensions";
 import { prosemirrorDevtoolsStore } from "../core/store/create-devtools-store";
@@ -15,42 +15,44 @@ export type { ProseMirrorDevtoolsPanelProps, ProseMirrorDevtoolsTab } from "./pa
 
 const NO_EXTENSIONS: readonly DevtoolsExtension[] = [];
 
-export function ProseMirrorDevtoolsPanel({
-  store = prosemirrorDevtoolsStore,
-  theme = "system",
-  defaultTab = "state",
-  defaultPanel,
-  activePanel,
-  onActivePanelChange,
-  extensions = NO_EXTENSIONS,
-  performanceFrameBudgetMs = DEFAULT_PERFORMANCE_FRAME_BUDGET_MS,
-  performanceDetailThresholdMs,
-  className,
-  style,
-  styleTarget,
-  embedded = false,
-}: ProseMirrorDevtoolsPanelProps): ReactElement {
-  const panels = useMemo(() => resolvePanelRegistry(extensions), [extensions]);
+export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = {}): JSX.Element {
+  const props = mergeProps(
+    {
+      store: prosemirrorDevtoolsStore,
+      theme: "system" as const,
+      defaultTab: "state" as const,
+      extensions: NO_EXTENSIONS,
+      embedded: false,
+      performanceFrameBudgetMs: DEFAULT_PERFORMANCE_FRAME_BUDGET_MS,
+    },
+    input,
+  );
+  const panels = createMemo(() => resolvePanelRegistry(props.extensions));
+
   return (
-    <PanelProvider
-      activePanel={activePanel}
-      defaultPanel={defaultPanel ?? defaultTab}
-      onActivePanelChange={onActivePanelChange}
-      panels={panels}
-      store={store}
-      styleTarget={styleTarget}
-      theme={theme}
-    >
-      <PanelFrame className={className} embedded={embedded} style={style}>
-        <header className="pm-header" data-embedded={embedded ? "true" : undefined}>
-          <PanelToolbar embedded={embedded} />
-          <PanelTabList />
-        </header>
-        <PanelContent
-          performanceDetailThresholdMs={performanceDetailThresholdMs}
-          performanceFrameBudgetMs={performanceFrameBudgetMs}
-        />
-      </PanelFrame>
-    </PanelProvider>
+    <Show keyed when={props.store}>
+      {(store) => (
+        <PanelProvider
+          activePanel={props.activePanel}
+          defaultPanel={props.defaultPanel ?? props.defaultTab}
+          onActivePanelChange={props.onActivePanelChange}
+          panels={panels()}
+          store={store}
+          styleTarget={props.styleTarget}
+          theme={props.theme}
+        >
+          <PanelFrame className={props.className} embedded={props.embedded} style={props.style}>
+            <header class="pm-header" data-embedded={props.embedded ? "true" : undefined}>
+              <PanelToolbar embedded={props.embedded} />
+              <PanelTabList />
+            </header>
+            <PanelContent
+              performanceDetailThresholdMs={props.performanceDetailThresholdMs}
+              performanceFrameBudgetMs={props.performanceFrameBudgetMs}
+            />
+          </PanelFrame>
+        </PanelProvider>
+      )}
+    </Show>
   );
 }

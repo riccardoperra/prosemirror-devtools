@@ -2,10 +2,9 @@ import { rect } from "@tanstack/charts/rect";
 import { defineChart } from "@tanstack/charts/scene";
 import { tooltip } from "@tanstack/charts/tooltip";
 import { portal } from "@tanstack/charts/tooltip/portal";
-import { Chart } from "@tanstack/react-charts";
+import { Chart } from "@tanstack/solid-charts";
 import { scaleBand, scaleLinear } from "d3-scale";
-import { useMemo } from "react";
-import type { ReactElement } from "react";
+import { createMemo, type JSX } from "solid-js";
 
 import { formatMs } from "../../../formatters";
 import { formatTimelineOffset } from "../plugin-timing-formatters";
@@ -63,20 +62,21 @@ function visibleInterval(
   return [Math.max(0, domainEnd - minimumDuration), domainEnd];
 }
 
-export function PluginTimelineChart({
-  lanes,
-  totalDuration,
-}: {
+export function PluginTimelineChart(props: {
   lanes: readonly PluginTimelineLane[];
   totalDuration: number;
-}): ReactElement {
-  const height = pluginTimelineChartHeight(lanes.length);
-  const definition = useMemo(() => {
-    const domainEnd = Math.max(0.001, totalDuration, ...lanes.map((lane) => lane.endOffset));
+}): JSX.Element {
+  const height = createMemo(() => pluginTimelineChartHeight(props.lanes.length));
+  const definition = createMemo(() => {
+    const domainEnd = Math.max(
+      0.001,
+      props.totalDuration,
+      ...props.lanes.map((lane) => lane.endOffset),
+    );
     const colorDomain = Object.keys(timelineColors) as PluginTimelineColor[];
     const sceneDefinition = defineChart(({ width }) => {
       const plotWidth = width - chartMargin.left - chartMargin.right;
-      const intervalMark = rect(lanes, {
+      const intervalMark = rect(props.lanes, {
         id: "dispatch-intervals",
         x1: (lane) => visibleInterval(lane, domainEnd, plotWidth)[0],
         x2: (lane) => visibleInterval(lane, domainEnd, plotWidth)[1],
@@ -107,7 +107,7 @@ export function PluginTimelineChart({
         },
         y: {
           scale: scaleBand<string>()
-            .domain(lanes.map((lane) => lane.laneKey))
+            .domain(props.lanes.map((lane) => lane.laneKey))
             .paddingInner(0.22)
             .paddingOuter(0.08),
           grid: false,
@@ -144,18 +144,21 @@ export function PluginTimelineChart({
         },
       },
     });
-  }, [lanes, totalDuration]);
+  });
 
   return (
     <div
-      className="pm-timeline-chart-surface"
-      style={{ blockSize: `${height}px`, minInlineSize: `${minimumTimelineWidth}px` }}
+      class="pm-timeline-chart-surface"
+      style={{
+        "block-size": `${height()}px`,
+        "min-inline-size": `${minimumTimelineWidth}px`,
+      }}
     >
       <Chart
         ariaDescription="A shared elapsed-time axis. Overview spans appear first; plugin hook calls follow in strictly increasing measured start order. Intervals shorter than two display pixels use a two-pixel minimum rectangle while retaining their exact measured duration. Overlap means nested synchronous instrumentation, not parallel execution."
         ariaLabel="Ordered synchronous dispatch timeline"
-        definition={definition}
-        height={height}
+        definition={definition()}
+        height={height()}
         initialWidth={minimumTimelineWidth}
       />
     </div>

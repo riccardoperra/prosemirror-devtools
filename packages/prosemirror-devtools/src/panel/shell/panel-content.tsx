@@ -1,5 +1,14 @@
-import { lazy, Suspense, useEffect, useMemo, useReducer, useRef } from "react";
-import type { ReactElement } from "react";
+import {
+  createEffect,
+  createMemo,
+  lazy,
+  Match,
+  onCleanup,
+  Show,
+  Suspense,
+  Switch,
+  type JSX,
+} from "solid-js";
 
 import type { RegisteredProseMirrorInstance } from "../../core/types";
 import { HistoryView } from "../features/history/history-view";
@@ -9,7 +18,6 @@ import { SnapshotsView } from "../features/snapshots/snapshots-view";
 import { StateView } from "../features/state/state-view";
 import type { ExternalPanelDefinition } from "../panel-registry";
 import type { ProseMirrorDevtoolsTab } from "../panel.types";
-import { getReactDevtoolsPanelRenderer } from "../react-extension";
 import {
   usePanelAppearance,
   usePanelDataAccess,
@@ -19,216 +27,161 @@ import {
 import { useActiveInstance } from "../store/selectors";
 import { EmptyState } from "../ui/empty-state";
 
-const PerformanceView = /* @__PURE__ */ lazy(async () => {
+const PerformanceView = lazy(async () => {
   const module = await import("../features/performance/performance-view");
   return { default: module.PerformanceView };
 });
 
-function ExtensionPanelView({ definition }: { definition: ExternalPanelDefinition }): ReactElement {
-  const reactRenderer = getReactDevtoolsPanelRenderer(definition.panel);
-  if (reactRenderer) {
-    return <ReactExtensionPanelView definition={definition} render={reactRenderer} />;
-  }
-  return <DomExtensionPanelView definition={definition} />;
-}
-
-function usePanelAbortController(): AbortController {
-  const controllerRef = useRef<AbortController | null>(null);
-  const [, refresh] = useReducer((version: number) => version + 1, 0);
-
-  if (!controllerRef.current) controllerRef.current = new AbortController();
-
-  useEffect(() => {
-    let controller = controllerRef.current;
-    if (!controller || controller.signal.aborted) {
-      controller = new AbortController();
-      controllerRef.current = controller;
-      refresh();
-    }
-    return () => controller.abort();
-  }, []);
-
-  return controllerRef.current;
-}
-
-function ReactExtensionPanelView({
-  definition,
-  render,
-}: {
-  definition: ExternalPanelDefinition;
-  render: NonNullable<ReturnType<typeof getReactDevtoolsPanelRenderer>>;
-}): ReactElement {
+function ExtensionPanelView(props: { definition: ExternalPanelDefinition }): JSX.Element {
+  let container: HTMLDivElement | undefined;
   const { data, actions } = usePanelDataAccess();
-  const { density, resolvedTheme } = usePanelAppearance();
-  const { ownerDocument } = usePanelMeta();
-  const { activePanel, selectPanel } = usePanelNavigation();
-  const controller = usePanelAbortController();
-  const context = useMemo(
-    () => ({
-      data,
-      actions,
-      host: {
-        ownerDocument,
-        theme: resolvedTheme,
-        density,
-        activePanelId: activePanel,
-        selectPanel,
-        signal: controller.signal,
-      },
-    }),
-    [
-      actions,
-      activePanel,
-      controller.signal,
-      data,
-      density,
-      ownerDocument,
-      resolvedTheme,
-      selectPanel,
-    ],
-  );
-  return (
-    <div
-      className="pm-extension-panel"
-      data-extension-id={definition.extensionId}
-      data-panel-id={definition.id}
-    >
-      {render(context)}
-    </div>
-  );
-}
+  const appearance = usePanelAppearance();
+  const navigation = usePanelNavigation();
 
-function DomExtensionPanelView({
-  definition,
-}: {
-  definition: ExternalPanelDefinition;
-}): ReactElement {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { data, actions } = usePanelDataAccess();
-  const { density, resolvedTheme } = usePanelAppearance();
-  const { activePanel, selectPanel } = usePanelNavigation();
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  createEffect(() => {
+    const mountElement = container;
+    if (!mountElement) return;
+    const definition = props.definition;
+    const density = appearance.density();
+    const theme = appearance.resolvedTheme();
+    const activePanelId = navigation.activePanel();
     const controller = new AbortController();
     let cleanup: void | (() => void);
+
     try {
-      cleanup = definition.panel.mount(container, {
+      cleanup = definition.panel.mount(mountElement, {
         data,
         actions,
         host: {
-          ownerDocument: container.ownerDocument,
-          theme: resolvedTheme,
+          ownerDocument: mountElement.ownerDocument,
+          theme,
           density,
-          activePanelId: activePanel,
-          selectPanel,
+          activePanelId,
+          selectPanel: navigation.selectPanel,
           signal: controller.signal,
         },
       });
     } catch (error) {
       controller.abort();
-      container.replaceChildren();
+      mountElement.replaceChildren();
       throw error;
     }
-    return () => {
+
+    onCleanup(() => {
       controller.abort();
       try {
         cleanup?.();
       } finally {
-        container.replaceChildren();
+        mountElement.replaceChildren();
       }
-    };
-  }, [actions, activePanel, data, definition.panel, density, resolvedTheme, selectPanel]);
+    });
+  });
 
   return (
     <div
-      className="pm-extension-panel"
-      data-extension-id={definition.extensionId}
-      data-panel-id={definition.id}
-      ref={containerRef}
+      class="pm-extension-panel"
+      data-extension-id={props.definition.extensionId}
+      data-panel-id={props.definition.id}
+      ref={(element) => {
+        container = element;
+      }}
     />
   );
 }
 
-function ActivePanelView({
-  tab,
-  instance,
-  onClearHistory,
-  performanceDetailThresholdMs,
-  performanceFrameBudgetMs,
-}: {
+function ActivePanelView(props: {
   tab: ProseMirrorDevtoolsTab;
   instance: RegisteredProseMirrorInstance;
   onClearHistory: () => void;
   performanceDetailThresholdMs: number | undefined;
   performanceFrameBudgetMs: number;
-}): ReactElement {
-  switch (tab) {
-    case "state":
-      return <StateView key={instance.id} instance={instance} />;
-    case "history":
-      return <HistoryView key={instance.id} instance={instance} onClear={onClearHistory} />;
-    case "performance":
-      return (
-        <Suspense fallback={<div className="pm-empty">Loading performance tools…</div>}>
-          <PerformanceView
-            key={instance.id}
-            instance={instance}
-            detailThresholdMs={performanceDetailThresholdMs}
-            frameBudgetMs={performanceFrameBudgetMs}
-          />
-        </Suspense>
-      );
-    case "plugins":
-      return <PluginsView key={instance.id} instance={instance} />;
-    case "schema":
-      return <SchemaView key={instance.id} instance={instance} />;
-    case "snapshots":
-      return <SnapshotsView key={instance.id} instance={instance} />;
-  }
+}): JSX.Element {
+  return (
+    <Show keyed when={props.instance.id}>
+      {(_instanceId) => (
+        <Switch>
+          <Match when={props.tab === "state"}>
+            <StateView instance={props.instance} />
+          </Match>
+          <Match when={props.tab === "history"}>
+            <HistoryView instance={props.instance} onClear={props.onClearHistory} />
+          </Match>
+          <Match when={props.tab === "performance"}>
+            <Suspense fallback={<div class="pm-empty">Loading performance tools…</div>}>
+              <PerformanceView
+                detailThresholdMs={props.performanceDetailThresholdMs}
+                frameBudgetMs={props.performanceFrameBudgetMs}
+                instance={props.instance}
+              />
+            </Suspense>
+          </Match>
+          <Match when={props.tab === "plugins"}>
+            <PluginsView instance={props.instance} />
+          </Match>
+          <Match when={props.tab === "schema"}>
+            <SchemaView instance={props.instance} />
+          </Match>
+          <Match when={props.tab === "snapshots"}>
+            <SnapshotsView instance={props.instance} />
+          </Match>
+        </Switch>
+      )}
+    </Show>
+  );
 }
 
-export function PanelContent({
-  performanceDetailThresholdMs,
-  performanceFrameBudgetMs,
-}: {
+export function PanelContent(props: {
   performanceDetailThresholdMs: number | undefined;
   performanceFrameBudgetMs: number;
-}): ReactElement {
+}): JSX.Element {
   const { actions } = usePanelDataAccess();
   const activeInstance = useActiveInstance();
-  const { activePanel, panels } = usePanelNavigation();
-  const { tabId, tabPanelId } = usePanelMeta();
-  const definition = panels.find(({ id }) => id === activePanel);
-  const showEmptyState = !activeInstance && (definition?.requiresInstance ?? true);
+  const navigation = usePanelNavigation();
+  const meta = usePanelMeta();
+  const definition = createMemo(() =>
+    navigation.panels().find(({ id }) => id === navigation.activePanel()),
+  );
+  const extensionDefinition = createMemo(() => {
+    const current = definition();
+    return current?.kind === "extension" ? current : undefined;
+  });
+  const builtinDefinition = createMemo(() => {
+    const current = definition();
+    return current?.kind === "builtin" ? current : undefined;
+  });
+  const showEmptyState = createMemo(
+    () => !activeInstance() && (definition()?.requiresInstance ?? true),
+  );
 
   return (
     <main
-      aria-labelledby={tabId(activePanel)}
-      className="pm-body"
-      id={tabPanelId}
+      aria-labelledby={meta.tabId(navigation.activePanel())}
+      class="pm-body"
+      id={meta.tabPanelId}
       role="tabpanel"
       tabIndex={0}
     >
-      {showEmptyState ? (
-        <EmptyState />
-      ) : definition?.kind === "extension" ? (
-        <ExtensionPanelView
-          definition={definition}
-          key={`${definition.extensionId}:${definition.id}`}
-        />
-      ) : activeInstance && definition?.kind === "builtin" ? (
-        <ActivePanelView
-          instance={activeInstance}
-          onClearHistory={() => actions.clearTransactions(activeInstance.id)}
-          performanceDetailThresholdMs={performanceDetailThresholdMs}
-          performanceFrameBudgetMs={performanceFrameBudgetMs}
-          tab={definition.id}
-        />
-      ) : (
-        <EmptyState />
-      )}
+      <Show when={!showEmptyState()} fallback={<EmptyState />}>
+        <Show
+          when={extensionDefinition()}
+          fallback={
+            <Show when={activeInstance() && builtinDefinition()} fallback={<EmptyState />}>
+              <ActivePanelView
+                instance={activeInstance()!}
+                onClearHistory={() => {
+                  const instance = activeInstance();
+                  if (instance) actions.clearTransactions(instance.id);
+                }}
+                performanceDetailThresholdMs={props.performanceDetailThresholdMs}
+                performanceFrameBudgetMs={props.performanceFrameBudgetMs}
+                tab={builtinDefinition()!.id}
+              />
+            </Show>
+          }
+        >
+          {(current) => <ExtensionPanelView definition={current()} />}
+        </Show>
+      </Show>
     </main>
   );
 }

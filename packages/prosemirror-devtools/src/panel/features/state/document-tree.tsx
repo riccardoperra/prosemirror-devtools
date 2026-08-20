@@ -1,6 +1,5 @@
 import type { Node as ProseMirrorNode } from "prosemirror-model";
-import { memo, useState } from "react";
-import type { CSSProperties, ReactElement } from "react";
+import { createMemo, createSignal, Index, Show, type JSX } from "solid-js";
 
 import { Badge } from "../../ui/badge";
 
@@ -40,17 +39,7 @@ function getSelectionCoverage(
   return selection.from <= contentFrom && selection.to >= contentTo ? "full" : "partial";
 }
 
-export const DocumentTree = memo(function DocumentTree({
-  node,
-  pos,
-  depth,
-  selectedPosition,
-  selectedRoot,
-  selection,
-  onSelect,
-  onReveal,
-  onSelectNode,
-}: {
+interface DocumentTreeProps {
   node: ProseMirrorNode;
   pos: number;
   depth: number;
@@ -60,118 +49,132 @@ export const DocumentTree = memo(function DocumentTree({
   onSelect: (node: ProseMirrorNode, pos: number) => void;
   onReveal: (pos: number) => void;
   onSelectNode: (node: ProseMirrorNode, pos: number) => void;
-}): ReactElement {
-  const [expanded, setExpanded] = useState(depth < 2 && node.childCount <= 50);
-  const children: ReactElement[] = [];
-  const isRoot = depth === 0;
-  const range = getDocumentNodeRange(node, pos, isRoot);
-  const selectionCoverage = getSelectionCoverage(node, pos, isRoot, selection);
+}
 
-  if (expanded) {
-    node.forEach((child, offset, index) => {
-      const childPos = isRoot ? offset : pos + 1 + offset;
-      children.push(
-        <DocumentTree
-          depth={depth + 1}
-          key={`${childPos}-${index}-${child.type.name}`}
-          node={child}
-          onReveal={onReveal}
-          onSelect={onSelect}
-          onSelectNode={onSelectNode}
-          pos={childPos}
-          selectedPosition={selectedPosition}
-          selectedRoot={selectedRoot}
-          selection={selection}
-        />,
-      );
+export function DocumentTree(props: DocumentTreeProps): JSX.Element {
+  const [expanded, setExpanded] = createSignal(props.depth < 2 && props.node.childCount <= 50);
+  const isRoot = createMemo(() => props.depth === 0);
+  const range = createMemo(() => getDocumentNodeRange(props.node, props.pos, isRoot()));
+  const selectionCoverage = createMemo(() =>
+    getSelectionCoverage(props.node, props.pos, isRoot(), props.selection),
+  );
+  const children = createMemo(() => {
+    const result: Array<{ node: ProseMirrorNode; pos: number }> = [];
+    props.node.forEach((child, offset) => {
+      result.push({ node: child, pos: isRoot() ? offset : props.pos + 1 + offset });
     });
-  }
-
-  const text = node.isInline ? node.textContent : "";
-  const isInspected = selectedPosition === pos && selectedRoot === isRoot;
+    return result;
+  });
+  const text = createMemo(() => (props.node.isInline ? props.node.textContent : ""));
+  const isInspected = createMemo(
+    () => props.selectedPosition === props.pos && props.selectedRoot === isRoot(),
+  );
 
   return (
-    <div className="pm-doc-tree-item">
+    <div class="pm-doc-tree-item">
       <div
-        className="pm-doc-row"
-        data-editor-selection={selectionCoverage ?? undefined}
-        data-inspected={isInspected}
-        data-node-type={node.type.name}
-        style={{ "--depth": depth } as CSSProperties}
+        class="pm-doc-row"
+        data-editor-selection={selectionCoverage() ?? undefined}
+        data-inspected={isInspected()}
+        data-node-type={props.node.type.name}
+        style={{ "--depth": props.depth } as JSX.CSSProperties}
       >
-        {node.childCount > 0 ? (
+        <Show
+          when={props.node.childCount > 0}
+          fallback={
+            <span aria-hidden="true" class="pm-node-caret">
+              ·
+            </span>
+          }
+        >
           <button
-            aria-expanded={expanded}
-            aria-label={expanded ? `Collapse ${node.type.name}` : `Expand ${node.type.name}`}
-            className="pm-node-caret"
+            aria-expanded={expanded()}
+            aria-label={
+              expanded() ? `Collapse ${props.node.type.name}` : `Expand ${props.node.type.name}`
+            }
+            class="pm-node-caret"
             onClick={() => setExpanded((current) => !current)}
             type="button"
           >
-            {expanded ? "▾" : "▸"}
+            {expanded() ? "▾" : "▸"}
           </button>
-        ) : (
-          <span aria-hidden="true" className="pm-node-caret">
-            ·
-          </span>
-        )}
+        </Show>
         <button
-          aria-selected={isInspected}
-          className="pm-doc-row-main"
-          onClick={() => onSelect(node, pos)}
-          onDoubleClick={() => onReveal(pos)}
+          aria-selected={isInspected()}
+          class="pm-doc-row-main"
+          onClick={() => props.onSelect(props.node, props.pos)}
+          onDblClick={() => props.onReveal(props.pos)}
           onKeyDown={(event) => {
-            if (node.childCount > 0 && event.key === "ArrowRight") {
+            if (props.node.childCount > 0 && event.key === "ArrowRight") {
               event.preventDefault();
               setExpanded(true);
-            } else if (node.childCount > 0 && event.key === "ArrowLeft") {
+            } else if (props.node.childCount > 0 && event.key === "ArrowLeft") {
               event.preventDefault();
               setExpanded(false);
             } else if (event.key.toLowerCase() === "r") {
               event.preventDefault();
-              onReveal(pos);
+              props.onReveal(props.pos);
             }
           }}
           title="Inspect this node. Double-click or press R to reveal it in the editor."
           type="button"
         >
-          <span className="pm-node-name">{node.type.name}</span>
-          {text ? (
-            <span className="pm-node-text">
-              {JSON.stringify(text.length > 42 ? `${text.slice(0, 42)}…` : text)}
+          <span class="pm-node-name">{props.node.type.name}</span>
+          <Show when={text()}>
+            <span class="pm-node-text">
+              {JSON.stringify(text().length > 42 ? `${text().slice(0, 42)}…` : text())}
             </span>
-          ) : null}
-          {node.marks.length > 0 ? (
-            <Badge>{node.marks.map((mark) => mark.type.name).join("+")}</Badge>
-          ) : null}
+          </Show>
+          <Show when={props.node.marks.length > 0}>
+            <Badge>{props.node.marks.map((mark) => mark.type.name).join("+")}</Badge>
+          </Show>
         </button>
-        {selectionCoverage ? (
-          <span className="pm-node-selection-label" data-coverage={selectionCoverage}>
-            {selectionCoverage === "full" ? "selected" : "partial"}
-          </span>
-        ) : null}
+        <Show when={selectionCoverage()}>
+          {(coverage) => (
+            <span class="pm-node-selection-label" data-coverage={coverage()}>
+              {coverage() === "full" ? "selected" : "partial"}
+            </span>
+          )}
+        </Show>
         <span
-          aria-label={`Open position ${range.from}, close position ${range.to}`}
-          className="pm-node-range"
-          title={`Node range [${range.from}, ${range.to})`}
+          aria-label={`Open position ${range().from}, close position ${range().to}`}
+          class="pm-node-range"
+          title={`Node range [${range().from}, ${range().to})`}
         >
-          <span>{range.from}</span>
+          <span>{range().from}</span>
           <span aria-hidden="true">→</span>
-          <span>{range.to}</span>
+          <span>{range().to}</span>
         </span>
         <button
-          aria-label={`Select ${node.type.name} node in the editor`}
-          className="pm-node-select-action"
+          aria-label={`Select ${props.node.type.name} node in the editor`}
+          class="pm-node-select-action"
           onClick={() => {
-            onSelect(node, pos);
-            onSelectNode(node, pos);
+            props.onSelect(props.node, props.pos);
+            props.onSelectNode(props.node, props.pos);
           }}
-          title={`Select the entire ${node.type.name} node (${range.from}–${range.to})`}
+          title={`Select the entire ${props.node.type.name} node (${range().from}–${range().to})`}
           type="button"
         >
           Select
         </button>
       </div>
-      {children}
+      <Show when={expanded()}>
+        <Index each={children()}>
+          {(child) => (
+            <DocumentTree
+              depth={props.depth + 1}
+              node={child().node}
+              onReveal={props.onReveal}
+              onSelect={props.onSelect}
+              onSelectNode={props.onSelectNode}
+              pos={child().pos}
+              selectedPosition={props.selectedPosition}
+              selectedRoot={props.selectedRoot}
+              selection={props.selection}
+            />
+          )}
+        </Index>
+      </Show>
     </div>
   );
-});
+}

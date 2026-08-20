@@ -1,14 +1,14 @@
-import type { ReactElement, ReactNode } from "react";
+import type { JSX } from "solid-js";
 
 export interface BadgeProps {
-  children: ReactNode;
+  children: JSX.Element;
   tone?: "green" | "yellow" | "red" | "blue" | undefined;
 }
 
-export function Badge({ children, tone }: BadgeProps): ReactElement {
+export function Badge(props: BadgeProps): JSX.Element {
   return (
-    <span className="pm-badge" data-tone={tone}>
-      {children}
+    <span class="pm-badge" data-tone={props.tone}>
+      {props.children}
     </span>
   );
 }

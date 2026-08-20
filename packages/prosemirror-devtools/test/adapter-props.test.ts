@@ -6,9 +6,26 @@ import {
   resolveProseMirrorDevtoolsPanelProps,
   resolveProseMirrorDevtoolsPluginMetadata,
 } from "../src/adapters/panel-props";
+import { ProseMirrorDevtoolsCore } from "../src/adapters/core";
 import { resolveProseMirrorDevtoolsSolidProps } from "../src/solid/panel";
 
 describe("adapter panel props", () => {
+  it("mounts and disposes the shared Solid panel core", () => {
+    const element = document.createElement("div");
+    const core = new ProseMirrorDevtoolsCore({ defaultPanel: "state", theme: "light" });
+
+    core.mount(element);
+    expect(element.querySelector(".pm-devtools")?.getAttribute("data-theme")).toBe("light");
+    expect(() => core.mount(element)).toThrow("already mounted");
+
+    core.unmount();
+    expect(element.childElementCount).toBe(0);
+
+    core.mount(element, { theme: "dark" });
+    expect(element.querySelector(".pm-devtools")?.getAttribute("data-theme")).toBe("dark");
+    core.unmount();
+  });
+
   it("assigns only defined options and lets host props win", () => {
     const onActivePanelChange = () => {};
     const resolved = resolveProseMirrorDevtoolsAdapterPanelProps(

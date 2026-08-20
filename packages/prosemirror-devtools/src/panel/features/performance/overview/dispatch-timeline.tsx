@@ -2,11 +2,10 @@ import { barY } from "@tanstack/charts/bar";
 import { defineChart } from "@tanstack/charts/scene";
 import { tooltip } from "@tanstack/charts/tooltip";
 import { portal } from "@tanstack/charts/tooltip/portal";
-import { Chart } from "@tanstack/react-charts";
+import { Chart } from "@tanstack/solid-charts";
 import { scaleBand, scaleLinear } from "d3-scale";
 import type { ScaleLinear } from "d3-scale";
-import { useMemo, useState } from "react";
-import type { ReactElement } from "react";
+import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 
 import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../../core/types";
 import { buildDispatchPhaseBreakdown } from "../../../../performance/phase-timings";
@@ -411,15 +410,7 @@ function initializationRow(initialization: InitializationTimelineEntry): Dispatc
   };
 }
 
-export function DispatchTimeline({
-  records,
-  initialization,
-  dispatchCount,
-  selectedId,
-  onSelect,
-  detailThresholdMs,
-  frameBudgetMs,
-}: {
+export function DispatchTimeline(props: {
   records: readonly TransactionRecord[];
   initialization: InitializationTimelineEntry | null;
   dispatchCount: number;
@@ -427,52 +418,42 @@ export function DispatchTimeline({
   onSelect: (id: number) => void;
   detailThresholdMs: number | undefined;
   frameBudgetMs: number;
-}): ReactElement {
-  const [windowStartId, setWindowStartId] = useState<number | null>(null);
-  const summary = useMemo(() => buildPerformanceSummary(records), [records]);
-  const { visible, startIndex, endIndex, selectedIndex } = useMemo(
-    () => resolveDispatchWindow(records, windowStartId, selectedId),
-    [records, selectedId, windowStartId],
-  );
-  const adaptiveDetail = useMemo(
-    () =>
-      resolveAdaptiveDetailThreshold(
-        [
-          ...(initialization ? [Math.max(initialization.duration, minimumVisibleDurationMs)] : []),
-          ...visible.map((record) => record.totalDuration),
-        ],
-        frameBudgetMs,
-      ),
-    [frameBudgetMs, initialization, visible],
-  );
-  const fixedDetailThresholdMs =
-    detailThresholdMs !== undefined && Number.isFinite(detailThresholdMs) && detailThresholdMs >= 0
-      ? detailThresholdMs
-      : null;
-  const requestedDetailThresholdMs = fixedDetailThresholdMs ?? adaptiveDetail.thresholdMs;
-  const measuredMaximum = Math.max(
-    initialization ? Math.max(initialization.duration, minimumVisibleDurationMs) : 0,
-    ...visible.map((record) => record.totalDuration),
-    0,
-  );
-  const scale = useMemo(
-    () => resolveDispatchTimelineScale(measuredMaximum, frameBudgetMs, requestedDetailThresholdMs),
-    [frameBudgetMs, measuredMaximum, requestedDetailThresholdMs],
-  );
-  const {
-    budgetLineTop,
-    detailThresholdMs: resolvedDetailThresholdMs,
-    detailZoneTop,
-    frameBudgetMs: resolvedFrameBudgetMs,
-    frameRate,
-    maximum,
-  } = scale;
-  const definition = useMemo(() => {
+}): JSX.Element {
+  const [windowStartId, setWindowStartId] = createSignal<number | null>(null);
+  const model = createMemo(() => {
+    const summary = buildPerformanceSummary(props.records);
+    const window = resolveDispatchWindow(props.records, windowStartId(), props.selectedId);
+    const adaptiveDetail = resolveAdaptiveDetailThreshold(
+      [
+        ...(props.initialization
+          ? [Math.max(props.initialization.duration, minimumVisibleDurationMs)]
+          : []),
+        ...window.visible.map((record) => record.totalDuration),
+      ],
+      props.frameBudgetMs,
+    );
+    const fixedDetailThresholdMs =
+      props.detailThresholdMs !== undefined &&
+      Number.isFinite(props.detailThresholdMs) &&
+      props.detailThresholdMs >= 0
+        ? props.detailThresholdMs
+        : null;
+    const requestedDetailThresholdMs = fixedDetailThresholdMs ?? adaptiveDetail.thresholdMs;
+    const measuredMaximum = Math.max(
+      props.initialization ? Math.max(props.initialization.duration, minimumVisibleDurationMs) : 0,
+      ...window.visible.map((record) => record.totalDuration),
+      0,
+    );
+    const scale = resolveDispatchTimelineScale(
+      measuredMaximum,
+      props.frameBudgetMs,
+      requestedDetailThresholdMs,
+    );
     const rows = [
-      ...(initialization ? [initializationRow(initialization)] : []),
-      ...dispatchRows(visible, selectedId, maximum, resolvedDetailThresholdMs),
+      ...(props.initialization ? [initializationRow(props.initialization)] : []),
+      ...dispatchRows(window.visible, props.selectedId, scale.maximum, scale.detailThresholdMs),
     ];
-    const domain = timelineDomain(visible, initialization !== null);
+    const domain = timelineDomain(window.visible, props.initialization !== null);
     const mark = barY(rows, {
       x: "timelineKey",
       y1: "y1",
@@ -482,7 +463,7 @@ export function DispatchTimeline({
       inset: 0,
       radius: 0,
     });
-    return defineChart({
+    const definition = defineChart({
       marks: [mark] as const,
       x: {
         scale: scaleBand<string>().domain(domain).paddingInner(0.08).paddingOuter(0.03),
@@ -493,12 +474,12 @@ export function DispatchTimeline({
         },
       },
       y: {
-        scale: createDispatchDurationScale(maximum, resolvedDetailThresholdMs),
+        scale: createDispatchDurationScale(scale.maximum, scale.detailThresholdMs),
         grid: false,
         axis: {
           line: true,
           ticks: {
-            values: durationAxisTicks(maximum, resolvedDetailThresholdMs),
+            values: durationAxisTicks(scale.maximum, scale.detailThresholdMs),
             size: 0,
             padding: 4,
             format: formatAxisDuration,
@@ -526,7 +507,7 @@ export function DispatchTimeline({
               rows: [
                 {
                   label: "Instance",
-                  value: `${metadata.instanceLabel} (${metadata.instanceId})`,
+                  value: metadata.instanceLabel + " (" + metadata.instanceId + ")",
                   color: datum.fill,
                 },
                 { label: "Measured hooks", value: formatMs(metadata.duration) },
@@ -542,7 +523,7 @@ export function DispatchTimeline({
             };
           }
           return {
-            title: `Dispatch #${datum.dispatchId}`,
+            title: "Dispatch #" + datum.dispatchId,
             color: datum.fill,
             rows: [
               { label: "Segment", value: datum.phase, color: datum.fill },
@@ -550,156 +531,203 @@ export function DispatchTimeline({
                 label: "Segment duration",
                 value: datum.belowResolution
                   ? "Below timer resolution"
-                  : `${datum.duration.toFixed(2)} ms`,
+                  : datum.duration.toFixed(2) + " ms",
               },
               {
                 label: "Full dispatch",
                 value:
                   datum.totalDuration === 0
                     ? "Below timer resolution"
-                    : `${datum.totalDuration.toFixed(2)} ms`,
+                    : datum.totalDuration.toFixed(2) + " ms",
               },
             ],
           };
         },
       },
     });
-  }, [initialization, maximum, resolvedDetailThresholdMs, selectedId, visible]);
-  const hasPrevious = selectedIndex > 0;
-  const hasNext = selectedIndex >= 0 && selectedIndex < records.length - 1;
-  const selectionLabel = `${Math.max(0, selectedIndex + 1)} / ${records.length}`;
+    const slotCount = dispatchWindowSize + (props.initialization ? 1 : 0);
+    const initialWidth = slotCount * dispatchSlotWidth + chartMargin.left + chartMargin.right;
+    const budgetLabel =
+      "Frame budget: " +
+      formatBudgetMs(scale.frameBudgetMs) +
+      " ms (" +
+      scale.frameRate +
+      " FPS target)";
+    const scaleDescription =
+      scale.detailThresholdMs > 0
+        ? "Durations from zero to " +
+          formatBudgetMs(scale.detailThresholdMs) +
+          " milliseconds are expanded for visibility while tooltips retain exact values. " +
+          (fixedDetailThresholdMs === null
+            ? "The threshold is four times the " +
+              formatBudgetMs(adaptiveDetail.shortAverageMs) +
+              " millisecond average of the fastest visible 20 percent."
+            : "The threshold is configured explicitly.")
+        : "The Y axis uses a linear scale.";
+
+    return {
+      adaptiveDetail,
+      budgetLabel,
+      definition,
+      fixedDetailThresholdMs,
+      hasNext: window.selectedIndex >= 0 && window.selectedIndex < props.records.length - 1,
+      hasPrevious: window.selectedIndex > 0,
+      initialWidth,
+      scale,
+      scaleDescription,
+      selectionLabel: Math.max(0, window.selectedIndex + 1) + " / " + props.records.length,
+      slotCount,
+      summary,
+      window,
+    };
+  });
 
   const selectAtIndex = (index: number): void => {
-    const target = records[index];
+    const target = props.records[index];
     if (!target) return;
 
-    let nextStartIndex = startIndex;
-    if (index < startIndex) {
+    const current = model().window;
+    let nextStartIndex = current.startIndex;
+    if (index < current.startIndex) {
       nextStartIndex = index;
-    } else if (index >= endIndex) {
+    } else if (index >= current.endIndex) {
       nextStartIndex = Math.max(0, index - dispatchWindowSize + 1);
     }
 
-    setWindowStartId(index === records.length - 1 ? null : (records[nextStartIndex]?.id ?? null));
-    onSelect(target.id);
+    setWindowStartId(
+      index === props.records.length - 1 ? null : (props.records[nextStartIndex]?.id ?? null),
+    );
+    props.onSelect(target.id);
   };
 
-  const slotCount = dispatchWindowSize + (initialization ? 1 : 0);
-  const initialWidth = slotCount * dispatchSlotWidth + chartMargin.left + chartMargin.right;
-  const budgetLabel = `Frame budget: ${formatBudgetMs(resolvedFrameBudgetMs)} ms (${frameRate} FPS target)`;
-  const scaleDescription =
-    resolvedDetailThresholdMs > 0
-      ? `Durations from zero to ${formatBudgetMs(resolvedDetailThresholdMs)} milliseconds are expanded for visibility while tooltips retain exact values. ${fixedDetailThresholdMs === null ? `The threshold is four times the ${formatBudgetMs(adaptiveDetail.shortAverageMs)} millisecond average of the fastest visible 20 percent.` : "The threshold is configured explicitly."}`
-      : "The Y axis uses a linear scale.";
-
   return (
-    <section className="pm-chart-wrap">
+    <section class="pm-chart-wrap">
       <div
         aria-label="Performance overview and dispatch navigation"
-        className="pm-chart-header pm-performance-toolbar"
+        class="pm-chart-header pm-performance-toolbar"
       >
-        <div aria-label="Performance summary" className="pm-chart-summary" role="list">
-          <span className="pm-chart-summary-metric" role="listitem">
+        <div aria-label="Performance summary" class="pm-chart-summary" role="list">
+          <span class="pm-chart-summary-metric" role="listitem">
             <span>Dispatches</span>
-            <strong>{dispatchCount}</strong>
-            {records.length < dispatchCount ? <small>{records.length} retained</small> : null}
+            <strong>{props.dispatchCount}</strong>
+            <Show when={props.records.length < props.dispatchCount}>
+              <small>{props.records.length} retained</small>
+            </Show>
           </span>
-          <span className="pm-chart-summary-metric" role="listitem">
+          <span class="pm-chart-summary-metric" role="listitem">
             <span>Average</span>
-            <strong>{formatMs(summary.average)}</strong>
+            <strong>{formatMs(model().summary.average)}</strong>
           </span>
-          <span className="pm-chart-summary-metric" role="listitem">
+          <span class="pm-chart-summary-metric" role="listitem">
             <span>p95</span>
-            <strong>{formatMs(summary.percentile95)}</strong>
+            <strong>{formatMs(model().summary.percentile95)}</strong>
           </span>
-          <span className="pm-chart-summary-metric" role="listitem">
+          <span class="pm-chart-summary-metric" role="listitem">
             <span>Maximum</span>
-            <strong>{formatMs(summary.maximum)}</strong>
+            <strong>{formatMs(model().summary.maximum)}</strong>
           </span>
         </div>
-        <div aria-label="Dispatch selection" className="pm-dispatch-selection" role="group">
+        <div aria-label="Dispatch selection" class="pm-dispatch-selection" role="group">
           <button
             aria-label="Select previous dispatch"
-            disabled={!hasPrevious}
-            onClick={() => selectAtIndex(selectedIndex - 1)}
+            disabled={!model().hasPrevious}
+            onClick={() => selectAtIndex(model().window.selectedIndex - 1)}
             title="Previous dispatch"
             type="button"
           >
             <span aria-hidden="true">←</span>
           </button>
           <output
-            aria-label={`Selected dispatch ${Math.max(0, selectedIndex + 1)} of ${records.length}`}
+            aria-label={
+              "Selected dispatch " +
+              Math.max(0, model().window.selectedIndex + 1) +
+              " of " +
+              props.records.length
+            }
             aria-live="polite"
           >
-            {selectionLabel}
+            {model().selectionLabel}
           </output>
           <button
             aria-label="Select next dispatch"
-            disabled={!hasNext}
-            onClick={() => selectAtIndex(selectedIndex + 1)}
+            disabled={!model().hasNext}
+            onClick={() => selectAtIndex(model().window.selectedIndex + 1)}
             title="Next dispatch"
             type="button"
           >
             <span aria-hidden="true">→</span>
           </button>
         </div>
-        <span className="pm-spacer" />
-        <div aria-label="Dispatch phases" className="pm-chart-legend">
-          {legend.map(([label, color]) => (
-            <span key={label}>
-              <i className="pm-legend-dot" style={{ background: color }} />
-              {label.toLowerCase()}
-            </span>
-          ))}
+        <span class="pm-spacer" />
+        <div aria-label="Dispatch phases" class="pm-chart-legend">
+          <For each={legend}>
+            {([label, color]) => (
+              <span>
+                <i class="pm-legend-dot" style={{ background: color }} />
+                {label.toLowerCase()}
+              </span>
+            )}
+          </For>
         </div>
       </div>
       <div
-        className="pm-tanstack-chart pm-dispatch-chart"
-        data-detail-threshold-mode={fixedDetailThresholdMs === null ? "auto" : "fixed"}
-        data-detail-threshold-ms={resolvedDetailThresholdMs}
-        data-frame-budget-ms={resolvedFrameBudgetMs}
-        data-has-initialization={initialization !== null}
-        data-scale-maximum-ms={maximum}
-        data-selected-id={selectedId}
-        data-slot-count={slotCount}
-        data-window-end-id={visible.at(-1)?.id}
-        data-window-start-id={visible.at(0)?.id}
+        class="pm-tanstack-chart pm-dispatch-chart"
+        data-detail-threshold-mode={model().fixedDetailThresholdMs === null ? "auto" : "fixed"}
+        data-detail-threshold-ms={model().scale.detailThresholdMs}
+        data-frame-budget-ms={model().scale.frameBudgetMs}
+        data-has-initialization={props.initialization !== null}
+        data-scale-maximum-ms={model().scale.maximum}
+        data-selected-id={props.selectedId}
+        data-slot-count={model().slotCount}
+        data-window-end-id={model().window.visible.at(-1)?.id}
+        data-window-start-id={model().window.visible.at(0)?.id}
       >
-        {resolvedDetailThresholdMs > 0 ? (
+        <Show when={model().scale.detailThresholdMs > 0}>
           <span
             aria-hidden="true"
-            className="pm-duration-detail-zone"
+            class="pm-duration-detail-zone"
             style={{
-              insetBlockEnd: `${2 + chartMargin.bottom}px`,
-              insetBlockStart: `${4 + detailZoneTop}px`,
-              insetInlineEnd: `${8 + chartMargin.right}px`,
-              insetInlineStart: `${8 + chartMargin.left}px`,
+              "inset-block-end": 2 + chartMargin.bottom + "px",
+              "inset-block-start": 4 + model().scale.detailZoneTop + "px",
+              "inset-inline-end": 8 + chartMargin.right + "px",
+              "inset-inline-start": 8 + chartMargin.left + "px",
             }}
           />
-        ) : null}
+        </Show>
         <span
           aria-hidden="true"
-          className="pm-frame-budget-reference"
+          class="pm-frame-budget-reference"
           style={{
-            insetBlockStart: `${4 + budgetLineTop}px`,
-            insetInlineEnd: `${8 + chartMargin.right}px`,
-            insetInlineStart: `${8 + chartMargin.left}px`,
+            "inset-block-start": 4 + model().scale.budgetLineTop + "px",
+            "inset-inline-end": 8 + chartMargin.right + "px",
+            "inset-inline-start": 8 + chartMargin.left + "px",
           }}
         >
-          <span className="pm-frame-budget-label">{budgetLabel}</span>
+          <span class="pm-frame-budget-label">{model().budgetLabel}</span>
         </span>
-        <div className="pm-dispatch-chart-plot">
+        <div class="pm-dispatch-chart-plot">
           <Chart
-            ariaDescription={`${initialization ? "The first yellow bar summarizes measured state initialization and view creation plugin hooks. " : ""}Stacked state apply, view update, custom code, and other synchronous duration for recent dispatches. A minimal muted bar means the dispatch completed below the browser timer resolution. The dashed line marks the ${budgetLabel}. ${scaleDescription} This is a dispatch-time budget, not measured browser frame rate.`}
+            ariaDescription={
+              (props.initialization
+                ? "The first yellow bar summarizes measured state initialization and view creation plugin hooks. "
+                : "") +
+              "Stacked state apply, view update, custom code, and other synchronous duration for recent dispatches. A minimal muted bar means the dispatch completed below the browser timer resolution. The dashed line marks the " +
+              model().budgetLabel +
+              ". " +
+              model().scaleDescription +
+              " This is a dispatch-time budget, not measured browser frame rate."
+            }
             ariaLabel="Dispatch duration bar chart"
-            definition={definition}
+            definition={model().definition}
             height={chartHeight}
-            initialWidth={initialWidth}
+            initialWidth={model().initialWidth}
             onSelect={(point) => {
               if (!point || point.datum.kind !== "dispatch" || point.datum.dispatchId === null) {
                 return;
               }
-              selectAtIndex(records.findIndex((record) => record.id === point.datum.dispatchId));
+              selectAtIndex(
+                props.records.findIndex((record) => record.id === point.datum.dispatchId),
+              );
             }}
           />
         </div>

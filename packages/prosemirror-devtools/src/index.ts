@@ -4,8 +4,3 @@ export {
   type ProseMirrorDevtoolsPanelProps,
   type ProseMirrorDevtoolsTab,
 } from "./panel/panel";
-export { createReactDevtoolsExtension } from "./panel/react-extension";
-export type {
-  ReactDevtoolsExtensionOptions,
-  ReactDevtoolsPanelExtension,
-} from "./panel/react-extension";

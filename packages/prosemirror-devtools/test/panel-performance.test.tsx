@@ -1,5 +1,4 @@
-import { act } from "react";
-import { createRoot } from "react-dom/client";
+import { render } from "solid-js/web";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProseMirrorDevtoolsPanel } from "../src";
@@ -13,17 +12,12 @@ import {
 } from "../src/panel/features/performance/overview/dispatch-timeline";
 import { appendTextTransaction, createTestState, createTestView } from "./helpers";
 
-const reactTestEnvironment = globalThis as typeof globalThis & {
-  IS_REACT_ACT_ENVIRONMENT?: boolean;
-};
-const originalActEnvironment = reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT;
+async function flush(callback: () => void | Promise<void>): Promise<void> {
+  await callback();
+  await Promise.resolve();
+}
 
 afterEach(() => {
-  if (originalActEnvironment === undefined) {
-    delete reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT;
-  } else {
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment;
-  }
   document.body.replaceChildren();
   vi.restoreAllMocks();
 });
@@ -79,16 +73,16 @@ describe("performance panel", () => {
 
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    let dispose = (): void => {};
 
     try {
-      await act(async () => {
-        root.render(
-          <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+      await flush(async () => {
+        dispose = render(
+          () => <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+          container,
         );
       });
-      await act(async () => {
+      await flush(async () => {
         await import("../src/panel/features/performance/performance-view");
       });
 
@@ -114,8 +108,8 @@ describe("performance panel", () => {
       expect(markers.every((marker) => Number(marker.getAttribute("width")) > 22)).toBe(true);
       expect(chart?.textContent).toContain("below the browser timer resolution");
     } finally {
-      await act(async () => {
-        root.unmount();
+      await flush(async () => {
+        dispose();
       });
       attachment.detach();
       view.destroy();
@@ -135,16 +129,16 @@ describe("performance panel", () => {
 
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    let dispose = (): void => {};
 
     try {
-      await act(async () => {
-        root.render(
-          <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+      await flush(async () => {
+        dispose = render(
+          () => <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+          container,
         );
       });
-      await act(async () => {
+      await flush(async () => {
         await import("../src/panel/features/performance/performance-view");
       });
 
@@ -154,7 +148,7 @@ describe("performance panel", () => {
       expect(selection()?.textContent).toBe("1 / 1");
       expect(chart()?.dataset.selectedId).toBe("1");
 
-      await act(async () => {
+      await flush(async () => {
         view.dispatch(appendTextTransaction(view.state, "b"));
       });
       expect(selection()?.textContent).toBe("2 / 2");
@@ -162,21 +156,21 @@ describe("performance panel", () => {
 
       // An explicit historical selection is sticky, so live recording does not pull the user's
       // inspection away. Returning to the newest item resumes follow mode.
-      await act(async () => {
+      await flush(async () => {
         container
           .querySelector<HTMLButtonElement>('[aria-label="Select previous dispatch"]')
           ?.click();
       });
       expect(selection()?.textContent).toBe("1 / 2");
 
-      await act(async () => {
+      await flush(async () => {
         view.dispatch(appendTextTransaction(view.state, "c"));
       });
       expect(selection()?.textContent).toBe("1 / 3");
       expect(chart()?.dataset.selectedId).toBe("1");
     } finally {
-      await act(async () => {
-        root.unmount();
+      await flush(async () => {
+        dispose();
       });
       attachment.detach();
       view.destroy();
@@ -210,16 +204,16 @@ describe("performance panel", () => {
 
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    let dispose = (): void => {};
 
     try {
-      await act(async () => {
-        root.render(
-          <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+      await flush(async () => {
+        dispose = render(
+          () => <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+          container,
         );
       });
-      await act(async () => {
+      await flush(async () => {
         await import("../src/panel/features/performance/performance-view");
       });
 
@@ -237,7 +231,7 @@ describe("performance panel", () => {
         "0 / 0",
       );
 
-      await act(async () => {
+      await flush(async () => {
         const transaction = appendTextTransaction(view.state, "x");
         const measurement = store.beginTransaction("editor", transaction, view.state, false);
         clock += 1;
@@ -271,8 +265,8 @@ describe("performance panel", () => {
       );
       expect(widestHorizontalLine).toBeGreaterThan(1_500);
     } finally {
-      await act(async () => {
-        root.unmount();
+      await flush(async () => {
+        dispose();
       });
       unregister();
       view.destroy();
@@ -320,16 +314,16 @@ describe("performance panel", () => {
 
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    let dispose = (): void => {};
 
     try {
-      await act(async () => {
-        root.render(
-          <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+      await flush(async () => {
+        dispose = render(
+          () => <ProseMirrorDevtoolsPanel defaultTab="performance" store={store} theme="light" />,
+          container,
         );
       });
-      await act(async () => {
+      await flush(async () => {
         await import("../src/panel/features/performance/performance-view");
       });
 
@@ -471,7 +465,7 @@ describe("performance panel", () => {
 
       const documents = inspector?.querySelector<HTMLDetailsElement>(".pm-document-disclosure");
       expect(documents?.open).toBe(false);
-      await act(async () => {
+      await flush(async () => {
         documents?.querySelector<HTMLElement>("summary")?.click();
       });
       expect(documents?.open).toBe(true);
@@ -484,7 +478,7 @@ describe("performance panel", () => {
       const timelineButton = inspector?.querySelector<HTMLButtonElement>(
         '[aria-label="Dispatch cost view"] button:last-child',
       );
-      await act(async () => {
+      await flush(async () => {
         timelineButton?.click();
       });
       expect(timelineButton?.getAttribute("aria-pressed")).toBe("true");
@@ -514,7 +508,7 @@ describe("performance panel", () => {
         inspector?.querySelector<HTMLElement>(".pm-timeline-chart-surface")?.style.minInlineSize,
       ).toBe("960px");
 
-      await act(async () => {
+      await flush(async () => {
         const nextTransaction = appendTextTransaction(view.state, "y");
         const nextMeasurement = store.beginTransaction(
           "editor",
@@ -541,14 +535,14 @@ describe("performance panel", () => {
       expect(nextButton?.disabled).toBe(true);
       expect(dispatchSelection?.querySelector("output")?.textContent).toBe("2 / 2");
       expect(container.querySelector('[aria-label="Dispatch 2 inspector"]')).not.toBeNull();
-      await act(async () => {
+      await flush(async () => {
         previousButton?.click();
       });
       expect(dispatchSelection?.querySelector("output")?.textContent).toBe("1 / 2");
       expect(container.querySelector('[aria-label="Dispatch 1 inspector"]')).not.toBeNull();
     } finally {
-      await act(async () => {
-        root.unmount();
+      await flush(async () => {
+        dispose();
       });
       unregister();
       view.destroy();
@@ -584,22 +578,24 @@ describe("performance panel", () => {
 
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    let dispose = (): void => {};
 
     try {
-      await act(async () => {
-        root.render(
-          <ProseMirrorDevtoolsPanel
-            defaultTab="performance"
-            performanceDetailThresholdMs={0.25}
-            performanceFrameBudgetMs={8}
-            store={store}
-            theme="light"
-          />,
+      await flush(async () => {
+        dispose = render(
+          () => (
+            <ProseMirrorDevtoolsPanel
+              defaultTab="performance"
+              performanceDetailThresholdMs={0.25}
+              performanceFrameBudgetMs={8}
+              store={store}
+              theme="light"
+            />
+          ),
+          container,
         );
       });
-      await act(async () => {
+      await flush(async () => {
         await import("../src/panel/features/performance/performance-view");
       });
 
@@ -621,7 +617,7 @@ describe("performance panel", () => {
       expect(collapsedChart?.textContent).toContain("Fast 5");
       expect(collapsedChart?.textContent).not.toContain("Fast 6");
 
-      await act(async () => {
+      await flush(async () => {
         disclosure?.click();
       });
 
@@ -635,7 +631,7 @@ describe("performance panel", () => {
       const timelineButton = container.querySelector<HTMLButtonElement>(
         '[aria-label="Dispatch cost view"] button:last-child',
       );
-      await act(async () => {
+      await flush(async () => {
         timelineButton?.click();
       });
 
@@ -660,8 +656,8 @@ describe("performance panel", () => {
       ).toBe(true);
       expect(timeline?.querySelector(".ts-chart__dot")).toBeNull();
     } finally {
-      await act(async () => {
-        root.unmount();
+      await flush(async () => {
+        dispose();
       });
       unregister();
       view.destroy();

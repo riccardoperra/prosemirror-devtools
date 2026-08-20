@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import type { ReactElement } from "react";
+import { createMemo, For, type JSX } from "solid-js";
 
 import type { TransactionRecord } from "../../../../core/types";
 import { Badge } from "../../../ui/badge";
@@ -14,40 +13,42 @@ const legendItems = [
   ["props", "Other props"],
 ] as const;
 
-export function PluginTimingTimeline({ record }: { record: TransactionRecord }): ReactElement {
-  const model = useMemo(() => buildPluginTimelineModel(record), [record]);
+export function PluginTimingTimeline(props: { record: TransactionRecord }): JSX.Element {
+  const model = createMemo(() => buildPluginTimelineModel(props.record));
 
   return (
-    <section aria-label="Ordered synchronous plugin timeline" className="pm-plugin-timeline">
-      <div className="pm-plugin-timeline-heading">
-        <span className="pm-plugin-timeline-copy">
+    <section aria-label="Ordered synchronous plugin timeline" class="pm-plugin-timeline">
+      <div class="pm-plugin-timeline-heading">
+        <span class="pm-plugin-timeline-copy">
           <strong>Ordered execution timeline</strong>
           <span>Top to bottom: start order · left to right: elapsed dispatch time</span>
         </span>
-        <Badge>{model.pluginCallCount} calls</Badge>
+        <Badge>{model().pluginCallCount} calls</Badge>
       </div>
-      <div aria-label="Timeline color legend" className="pm-plugin-timeline-legend">
-        {legendItems.map(([family, label]) => (
-          <span key={family}>
-            <i data-family={family} />
-            {label}
-          </span>
-        ))}
+      <div aria-label="Timeline color legend" class="pm-plugin-timeline-legend">
+        <For each={legendItems}>
+          {([family, label]) => (
+            <span>
+              <i data-family={family} />
+              {label}
+            </span>
+          )}
+        </For>
         <span>
           <i data-kind="minimum" />
           {"<0.01 ms shown at 2 px"}
         </span>
-        <span className="pm-timeline-scroll-cue">Scroll time →</span>
+        <span class="pm-timeline-scroll-cue">Scroll time →</span>
       </div>
-      <div className="pm-timeline-shell">
-        <PluginTimelineLaneRail lanes={model.lanes} />
+      <div class="pm-timeline-shell">
+        <PluginTimelineLaneRail lanes={model().lanes} />
         <div
           aria-label="Scrollable dispatch time axis"
-          className="pm-timeline-scroll"
+          class="pm-timeline-scroll"
           role="region"
           tabIndex={0}
         >
-          <PluginTimelineChart lanes={model.lanes} totalDuration={record.totalDuration} />
+          <PluginTimelineChart lanes={model().lanes} totalDuration={props.record.totalDuration} />
         </div>
       </div>
     </section>

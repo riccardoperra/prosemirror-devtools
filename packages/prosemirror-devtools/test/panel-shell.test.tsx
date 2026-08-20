@@ -1,9 +1,11 @@
-import { act, StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { act, createElement } from "react";
+import { createSignal } from "solid-js";
+import { render } from "solid-js/web";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createReactDevtoolsExtension, ProseMirrorDevtoolsPanel } from "../src";
+import { ProseMirrorDevtoolsPanel } from "../src";
 import { createProseMirrorDevtoolsStore, type DevtoolsExtension } from "../src/core";
+import { createReactDevtoolsExtension } from "../src/react/extension";
 import { appendTextTransaction, createTestState, createTestView } from "./helpers";
 
 const reactTestEnvironment = globalThis as typeof globalThis & {
@@ -21,47 +23,65 @@ afterEach(() => {
 });
 
 describe("devtools panel shell", () => {
-  it("supports roving tab focus and a standalone theme control", async () => {
+  it("reacts to direct Solid panel prop updates", () => {
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    const [className, setClassName] = createSignal("first-class");
+    const [color, setColor] = createSignal("red");
+    const dispose = render(
+      () => <ProseMirrorDevtoolsPanel className={className()} style={{ color: color() }} />,
+      container,
+    );
 
     try {
-      await act(async () => {
-        root.render(<ProseMirrorDevtoolsPanel theme="light" />);
-      });
+      const panel = container.querySelector<HTMLElement>(".pm-devtools");
+      expect(panel?.classList.contains("first-class")).toBe(true);
+      expect(panel?.style.color).toBe("red");
 
+      setClassName("second-class");
+      setColor("blue");
+      expect(panel?.classList.contains("first-class")).toBe(false);
+      expect(panel?.classList.contains("second-class")).toBe(true);
+      expect(panel?.style.color).toBe("blue");
+    } finally {
+      dispose();
+    }
+  });
+
+  it("supports roving tab focus and a standalone theme control", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const [embedded, setEmbedded] = createSignal(false);
+    const dispose = render(
+      () => <ProseMirrorDevtoolsPanel embedded={embedded()} theme="light" />,
+      container,
+    );
+
+    try {
       const panel = container.querySelector<HTMLElement>(".pm-devtools");
       const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
       expect(tabs).toHaveLength(6);
       expect(panel?.dataset.theme).toBe("light");
 
       tabs[0]?.focus();
-      await act(async () => {
-        tabs[0]?.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
-      });
+      tabs[0]?.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
       expect(tabs[1]?.getAttribute("aria-selected")).toBe("true");
       expect(document.activeElement).toBe(tabs[1]);
 
-      await act(async () => {
-        container.querySelector<HTMLButtonElement>('[aria-label="Cycle color theme"]')?.click();
-      });
+      container.querySelector<HTMLButtonElement>('[aria-label="Cycle color theme"]')?.click();
       expect(panel?.dataset.theme).toBe("dark");
       expect(container.querySelector('[aria-label="Toggle density"]')).toBeNull();
 
-      await act(async () => {
-        root.render(<ProseMirrorDevtoolsPanel embedded theme="light" />);
-      });
+      setEmbedded(true);
+      expect(panel?.getAttribute("data-embedded")).toBe("true");
       expect(container.querySelector(".pm-header")?.getAttribute("data-embedded")).toBe("true");
       expect(container.querySelector(".pm-brand")).toBeNull();
       expect(container.querySelector('[aria-label="Cycle color theme"]')).toBeNull();
     } finally {
-      await act(async () => root.unmount());
+      dispose();
     }
   });
-
-  it("renders the history-specific inspector composition and clears its records", async () => {
+  it("renders the history-specific inspector composition and clears its records", () => {
     const store = createProseMirrorDevtoolsStore();
     const view = createTestView(createTestState());
     const unregister = store.register({ id: "editor", view });
@@ -76,33 +96,29 @@ describe("devtools panel shell", () => {
 
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    const dispose = render(
+      () => <ProseMirrorDevtoolsPanel defaultTab="history" store={store} theme="light" />,
+      container,
+    );
 
     try {
-      await act(async () => {
-        root.render(<ProseMirrorDevtoolsPanel defaultTab="history" store={store} theme="light" />);
-      });
-
       const inspector = container.querySelector<HTMLElement>(".pm-dispatch-inspector");
       expect(inspector?.classList.contains("pm-scroll")).toBe(true);
       expect(inspector?.querySelector('[aria-label="Plugin cost"]')).toBeNull();
       expect(inspector?.querySelector('[aria-label="Transaction details"]')).not.toBeNull();
 
-      await act(async () => {
-        container.querySelector<HTMLButtonElement>(".pm-history-list .pm-button")?.click();
-      });
+      container.querySelector<HTMLButtonElement>(".pm-history-list .pm-button")?.click();
       expect(container.querySelector(".pm-body")?.textContent).toContain(
         "Dispatch a transaction to begin recording history.",
       );
     } finally {
-      await act(async () => root.unmount());
+      dispose();
       unregister();
       view.destroy();
     }
   });
 
-  it("mounts framework-neutral extensions with reactive data and deterministic cleanup", async () => {
+  it("mounts framework-neutral extensions with reactive data and deterministic cleanup", () => {
     const store = createProseMirrorDevtoolsStore();
     const cleanup = vi.fn();
     const extension: DevtoolsExtension = {
@@ -131,56 +147,50 @@ describe("devtools panel shell", () => {
     };
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    const dispose = render(
+      () => (
+        <ProseMirrorDevtoolsPanel
+          defaultPanel="live-state"
+          extensions={[extension]}
+          store={store}
+        />
+      ),
+      container,
+    );
     const view = createTestView(createTestState());
     let unregister = (): void => {};
 
     try {
-      await act(async () => {
-        root.render(
-          <ProseMirrorDevtoolsPanel
-            defaultPanel="live-state"
-            extensions={[extension]}
-            store={store}
-          />,
-        );
-      });
       expect(container.querySelectorAll('[role="tab"]')).toHaveLength(7);
       expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("No active editor");
 
-      await act(async () => {
-        unregister = store.register({ id: "editor", view });
-      });
+      unregister = store.register({ id: "editor", view });
       expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("Editor editor: ");
 
-      await act(async () => {
-        const transaction = appendTextTransaction(view.state, "x");
-        const measurement = store.beginTransaction("editor", transaction, view.state, false);
-        const applied = view.state.applyTransaction(transaction);
-        view.updateState(applied.state);
-        store.finishTransaction(measurement, {
-          stateAfter: applied.state,
-          appliedTransactions: applied.transactions,
-        });
+      const transaction = appendTextTransaction(view.state, "x");
+      const measurement = store.beginTransaction("editor", transaction, view.state, false);
+      const applied = view.state.applyTransaction(transaction);
+      view.updateState(applied.state);
+      store.finishTransaction(measurement, {
+        stateAfter: applied.state,
+        appliedTransactions: applied.transactions,
       });
       expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("Editor editor: x");
 
-      await act(async () => {
-        Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
-          .find((tab) => tab.textContent === "State")
-          ?.click();
-      });
+      Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
+        .find((tab) => tab.textContent === "State")
+        ?.click();
       expect(cleanup).toHaveBeenCalledOnce();
       expect(container.querySelector(".pm-extension-panel")).toBeNull();
     } finally {
-      await act(async () => root.unmount());
+      dispose();
       unregister();
       view.destroy();
     }
   });
 
   it("supports controlled extension navigation and the React adapter", async () => {
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
     const onActivePanelChange = vi.fn();
     const extension = createReactDevtoolsExtension({
       id: "react-example",
@@ -189,56 +199,58 @@ describe("devtools panel shell", () => {
           id: "react-panel",
           title: "React panel",
           requiresInstance: false,
-          render: () => <div data-testid="react-extension">React extension content</div>,
+          render: () =>
+            createElement("div", { "data-testid": "react-extension" }, "React extension content"),
         },
       ],
     });
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    let dispose = (): void => {};
 
     try {
       await act(async () => {
-        root.render(
-          <ProseMirrorDevtoolsPanel
-            activePanel="react-panel"
-            extensions={[extension]}
-            onActivePanelChange={onActivePanelChange}
-          />,
+        dispose = render(
+          () => (
+            <ProseMirrorDevtoolsPanel
+              activePanel="react-panel"
+              extensions={[extension]}
+              onActivePanelChange={onActivePanelChange}
+            />
+          ),
+          container,
         );
       });
       expect(container.querySelector('[data-testid="react-extension"]')?.textContent).toBe(
         "React extension content",
       );
 
-      await act(async () => {
-        Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
-          .find((tab) => tab.textContent === "State")
-          ?.click();
-      });
+      Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
+        .find((tab) => tab.textContent === "State")
+        ?.click();
       expect(onActivePanelChange).toHaveBeenCalledWith("state");
       expect(container.querySelector('[data-testid="react-extension"]')).not.toBeNull();
     } finally {
-      await act(async () => root.unmount());
+      await act(async () => dispose());
     }
   });
 
-  it("keeps React extension lifecycle signals active under Strict Mode", async () => {
+  it("aborts React extension lifecycle signals before unmounting", async () => {
+    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
     const renderedSignals: AbortSignal[] = [];
     const extension = createReactDevtoolsExtension({
-      id: "strict-react-example",
+      id: "react-lifecycle-example",
       panels: [
         {
-          id: "strict-react-panel",
-          title: "Strict React panel",
+          id: "react-lifecycle-panel",
+          title: "React lifecycle panel",
           requiresInstance: false,
           render: (context) => {
             renderedSignals.push(context.host.signal);
-            return (
-              <div data-testid="strict-react-extension">
-                {context.host.signal.aborted ? "disposed" : "mounted"}
-              </div>
+            return createElement(
+              "div",
+              { "data-testid": "react-lifecycle-extension" },
+              context.host.signal.aborted ? "disposed" : "mounted",
             );
           },
         },
@@ -246,26 +258,29 @@ describe("devtools panel shell", () => {
     });
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    let dispose = (): void => {};
     let activeSignal: AbortSignal | undefined;
 
     try {
       await act(async () => {
-        root.render(
-          <StrictMode>
-            <ProseMirrorDevtoolsPanel defaultPanel="strict-react-panel" extensions={[extension]} />
-          </StrictMode>,
+        dispose = render(
+          () => (
+            <ProseMirrorDevtoolsPanel
+              defaultPanel="react-lifecycle-panel"
+              extensions={[extension]}
+            />
+          ),
+          container,
         );
       });
 
-      expect(container.querySelector('[data-testid="strict-react-extension"]')?.textContent).toBe(
-        "mounted",
-      );
+      expect(
+        container.querySelector('[data-testid="react-lifecycle-extension"]')?.textContent,
+      ).toBe("mounted");
       activeSignal = renderedSignals.at(-1);
       expect(activeSignal?.aborted).toBe(false);
     } finally {
-      await act(async () => root.unmount());
+      await act(async () => dispose());
     }
 
     expect(activeSignal?.aborted).toBe(true);

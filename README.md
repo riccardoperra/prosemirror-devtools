@@ -16,17 +16,17 @@ plugin timing, snapshots, and a panel that plugs into TanStack Devtools.
 - Application-defined markers for collaboration, commands, and other domain-specific work.
 - State, selection, document, transaction, plugin, and schema inspectors.
 - Local snapshots that can be saved, restored, imported, and exported as JSON.
-- A compact React panel with system, light, and dark themes.
+- A compact Solid-rendered panel with system, light, and dark themes.
 - A TanStack Devtools adapter and a private Vite playground with a live editor.
 
 ## Repository architecture
 
 | Path                                                                                                     | Purpose                                                                                   |
 | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| [`packages/prosemirror-devtools`](./packages/prosemirror-devtools)                                       | Published library, framework-neutral runtime, React panel, and TanStack adapter           |
+| [`packages/prosemirror-devtools`](./packages/prosemirror-devtools)                                       | Published library, framework-neutral runtime, Solid panel, and framework adapters         |
 | [`packages/prosemirror-devtools/src/core/store`](./packages/prosemirror-devtools/src/core/store)         | Functional store, transaction records, timing aggregates, and browser performance entries |
 | [`packages/prosemirror-devtools/src/core/dispatch`](./packages/prosemirror-devtools/src/core/dispatch)   | Default and custom dispatch observation                                                   |
-| [`packages/prosemirror-devtools/src/panel/features`](./packages/prosemirror-devtools/src/panel/features) | Feature-owned React views and models                                                      |
+| [`packages/prosemirror-devtools/src/panel/features`](./packages/prosemirror-devtools/src/panel/features) | Feature-owned Solid views and framework-neutral models                                    |
 | [`packages/tanstack-devtools-demo`](./packages/tanstack-devtools-demo)                                   | Private Vite playground with a registered editor and optional artificial plugin latency   |
 | [`.changeset`](./.changeset)                                                                             | Version and release notes for the public package                                          |
 
@@ -35,7 +35,7 @@ The runtime flow is deliberately explicit:
 ```text
 raw plugins → instrument plugins → EditorState.create → new EditorView → attach view
                                                               ↓
-                                        store → React panel / TanStack Devtools
+                                        store → Solid panel → framework / TanStack adapters
 ```
 
 Plugin instrumentation must happen before `EditorState.create`. Attaching happens after the
@@ -162,8 +162,9 @@ export function App() {
 }
 ```
 
-The root export also provides `ProseMirrorDevtoolsPanel` for mounting the panel in any React host.
-Its per-host `extensions` registry accepts framework-neutral DOM mounts plus a React adapter, with
+React applications can also mount `ProseMirrorDevtoolsPanel` from
+`prosemirror-devtools/react`; the framework adapters all host the same Solid-rendered panel through
+a DOM boundary. Its per-host `extensions` registry accepts framework-neutral DOM mounts, with
 controlled or uncontrolled tab navigation. See the
 [package guide](./packages/prosemirror-devtools/README.md) for isolated stores, data subscriptions,
 and extension examples.

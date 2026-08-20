@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { JSX } from "solid-js";
 
 import type { DevtoolsExtension } from "../core/extensions";
 import type { ProseMirrorDevtoolsTab } from "../core/panel-types";
@@ -33,7 +33,7 @@ export interface ProseMirrorDevtoolsPanelProps {
    */
   performanceDetailThresholdMs?: number;
   className?: string;
-  style?: CSSProperties;
+  style?: JSX.CSSProperties;
   /** Document that receives the panel stylesheet. Defaults to the current document. */
   styleTarget?: Document;
   /** @internal Whether a devtools host already provides the surrounding chrome. */
