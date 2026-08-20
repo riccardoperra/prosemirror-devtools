@@ -1,40 +1,46 @@
 import { createMemo, For, Show, type JSX } from "solid-js";
 
+import { cx, panelStyles } from "../../styles";
+
 import { inspectPlugins } from "../../../core/serialize";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
 import { usePluginSelection } from "./use-plugin-selection";
 
-export function PluginsView(props: { instance: RegisteredProseMirrorInstance }): JSX.Element {
+export interface PluginsViewProps {
+  instance: RegisteredProseMirrorInstance;
+}
+
+export function PluginsView(props: PluginsViewProps): JSX.Element {
   const plugins = createMemo(() => inspectPlugins(props.instance.view.state));
   const { query, setQuery, filtered, selected, select } = usePluginSelection(plugins);
 
   return (
-    <div class="pm-split">
-      <div class="pm-pane">
-        <div class="pm-pane-header">
+    <div class={panelStyles.pmSplit}>
+      <div class={panelStyles.pmPane}>
+        <div class={panelStyles.pmPaneHeader}>
           <input
             aria-label="Search plugins"
-            class="pm-search"
+            class={panelStyles.pmSearch}
             onInput={(event) => setQuery(event.currentTarget.value)}
             placeholder="Filter plugins…"
             value={query()}
           />
         </div>
-        <ul class="pm-list">
+        <ul class={panelStyles.pmList}>
           <For each={filtered()}>
             {(plugin) => (
               <li>
                 <button
                   aria-selected={selected()?.key === plugin.key}
-                  class="pm-list-row"
+                  class={panelStyles.pmListRow}
                   onClick={() => select(plugin.key)}
                   type="button"
                 >
-                  <span class="pm-row-main">
-                    <span class="pm-row-title pm-mono">{plugin.key}</span>
-                    <span class="pm-row-detail">
+                  <span class={panelStyles.pmRowMain}>
+                    <span class={cx(panelStyles.pmRowTitle, panelStyles.pmMono)}>{plugin.key}</span>
+                    <span class={panelStyles.pmRowDetail}>
                       {plugin.props.length} props · index {plugin.index}
                     </span>
                   </span>
@@ -47,13 +53,16 @@ export function PluginsView(props: { instance: RegisteredProseMirrorInstance }):
           </For>
         </ul>
       </div>
-      <div class="pm-pane">
-        <Show when={selected()} fallback={<div class="pm-empty">No matching plugins.</div>}>
+      <div class={panelStyles.pmPane}>
+        <Show
+          when={selected()}
+          fallback={<div class={panelStyles.pmEmpty}>No matching plugins.</div>}
+        >
           {(plugin) => (
             <>
-              <div class="pm-detail-heading">
-                <span class="pm-section-title">{plugin().key}</span>
-                <span class="pm-spacer" />
+              <div class={panelStyles.pmDetailHeading}>
+                <span class={panelStyles.pmSectionTitle}>{plugin().key}</span>
+                <span class={panelStyles.pmSpacer} />
                 <Badge>{plugin().props.join(", ") || "no props"}</Badge>
               </div>
               <JsonTree value={plugin().state} />

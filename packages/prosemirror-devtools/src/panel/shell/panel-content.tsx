@@ -10,6 +10,8 @@ import {
   type JSX,
 } from "solid-js";
 
+import { panelStyles } from "../styles";
+
 import type { RegisteredProseMirrorInstance } from "../../core/types";
 import { HistoryView } from "../features/history/history-view";
 import { PluginsView } from "../features/plugins/plugins-view";
@@ -32,7 +34,11 @@ const PerformanceView = lazy(async () => {
   return { default: module.PerformanceView };
 });
 
-function ExtensionPanelView(props: { definition: ExternalPanelDefinition }): JSX.Element {
+interface ExtensionPanelViewProps {
+  definition: ExternalPanelDefinition;
+}
+
+function ExtensionPanelView(props: ExtensionPanelViewProps): JSX.Element {
   let container: HTMLDivElement | undefined;
   const { data, actions } = usePanelDataAccess();
   const appearance = usePanelAppearance();
@@ -79,7 +85,7 @@ function ExtensionPanelView(props: { definition: ExternalPanelDefinition }): JSX
 
   return (
     <div
-      class="pm-extension-panel"
+      class={panelStyles.pmExtensionPanel}
       data-extension-id={props.definition.extensionId}
       data-panel-id={props.definition.id}
       ref={(element) => {
@@ -89,13 +95,15 @@ function ExtensionPanelView(props: { definition: ExternalPanelDefinition }): JSX
   );
 }
 
-function ActivePanelView(props: {
+interface ActivePanelViewProps {
   tab: ProseMirrorDevtoolsTab;
   instance: RegisteredProseMirrorInstance;
   onClearHistory: () => void;
   performanceDetailThresholdMs: number | undefined;
   performanceFrameBudgetMs: number;
-}): JSX.Element {
+}
+
+function ActivePanelView(props: ActivePanelViewProps): JSX.Element {
   return (
     <Show keyed when={props.instance.id}>
       {(_instanceId) => (
@@ -107,7 +115,7 @@ function ActivePanelView(props: {
             <HistoryView instance={props.instance} onClear={props.onClearHistory} />
           </Match>
           <Match when={props.tab === "performance"}>
-            <Suspense fallback={<div class="pm-empty">Loading performance tools…</div>}>
+            <Suspense fallback={<div class={panelStyles.pmEmpty}>Loading performance tools…</div>}>
               <PerformanceView
                 detailThresholdMs={props.performanceDetailThresholdMs}
                 frameBudgetMs={props.performanceFrameBudgetMs}
@@ -130,10 +138,12 @@ function ActivePanelView(props: {
   );
 }
 
-export function PanelContent(props: {
+export interface PanelContentProps {
   performanceDetailThresholdMs: number | undefined;
   performanceFrameBudgetMs: number;
-}): JSX.Element {
+}
+
+export function PanelContent(props: PanelContentProps): JSX.Element {
   const { actions } = usePanelDataAccess();
   const activeInstance = useActiveInstance();
   const navigation = usePanelNavigation();
@@ -156,7 +166,7 @@ export function PanelContent(props: {
   return (
     <main
       aria-labelledby={meta.tabId(navigation.activePanel())}
-      class="pm-body"
+      class={panelStyles.pmBody}
       id={meta.tabPanelId}
       role="tabpanel"
       tabIndex={0}

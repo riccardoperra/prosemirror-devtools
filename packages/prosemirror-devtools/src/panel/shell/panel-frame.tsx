@@ -1,18 +1,23 @@
 import type { JSX } from "solid-js";
 
-import { usePanelAppearance } from "../panel-provider";
+import { cx, panelStyles } from "../styles";
 
-export function PanelFrame(props: {
+import { usePanelAppearance } from "../panel-provider";
+import type { ProseMirrorDevtoolsPanelStyle } from "../panel.types";
+
+export interface PanelFrameProps {
   className: string | undefined;
   embedded: boolean;
-  style: JSX.CSSProperties | undefined;
+  style: ProseMirrorDevtoolsPanelStyle | undefined;
   children: JSX.Element;
-}): JSX.Element {
+}
+
+export function PanelFrame(props: PanelFrameProps): JSX.Element {
   const appearance = usePanelAppearance();
 
   return (
     <section
-      class={["pm-devtools", props.className].filter(Boolean).join(" ")}
+      class={cx(panelStyles.pmDevtools, props.className)}
       data-density={appearance.density()}
       data-embedded={props.embedded ? "true" : undefined}
       data-theme={appearance.resolvedTheme()}

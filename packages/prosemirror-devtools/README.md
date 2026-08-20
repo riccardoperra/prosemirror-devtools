@@ -331,6 +331,38 @@ line and acts as the minimum upper bound of its Y scale, so very fast dispatches
 small instead of filling the chart. For a 120 FPS budget use `1000 / 120`. This is a synchronous
 dispatch-time comparison; it does not measure the browser's actual frame rate.
 
+### Styling and extension themes
+
+The panel is compiled from a CSS Module and its entrypoint loads the emitted stylesheet. A custom
+host that consumes the stylesheet independently can import `prosemirror-devtools/styles.css`.
+
+Stable `--prosemirror-devtools-*` custom properties live on the panel root and are inherited by
+extension panels. The typed variable map is available from both the root and lightweight styles
+entrypoints:
+
+```tsx
+import {
+  ProseMirrorDevtoolsPanel,
+  proseMirrorDevtoolsCssVariables as cssVariables,
+} from "prosemirror-devtools";
+
+<ProseMirrorDevtoolsPanel
+  style={{
+    [cssVariables.background]: "#101114",
+    [cssVariables.surface]: "#17191e",
+    [cssVariables.accent]: "#9b8cff",
+    [cssVariables.radius]: "10px",
+  }}
+/>;
+```
+
+Use `prosemirror-devtools/styles` when an extension needs only the variable names. The map includes
+background and surface colors, borders, primary/muted text, accent, semantic status colors and
+their soft variants, shadow, typography, line height, and radius. For example, extension CSS can
+use `color: var(--prosemirror-devtools-text)` and
+`border-color: var(--prosemirror-devtools-border)` without depending on the panel's scoped class
+names.
+
 When `performanceDetailThresholdMs` is omitted, the panel averages the fastest 20% of the 60
 visible dispatches and uses four times that value as the detail threshold, capped at one quarter of
 the frame budget. The adaptive zone can use up to 42 chart pixels and gives every positive dispatch
@@ -680,6 +712,8 @@ The core entry also exports:
 | `prosemirror-devtools`                        | All core APIs and types plus the native Solid-rendered panel                                                           |
 | `prosemirror-devtools/core`                   | Store, session, data/extension contracts, instrumentation, serialization, inspection, and snapshots without UI imports |
 | `prosemirror-devtools/performance`            | Pure interval, attribution, grouping, summary, ranking, and timeline models                                            |
+| `prosemirror-devtools/styles`                 | Typed names for the public, inherited panel CSS custom properties                                                      |
+| `prosemirror-devtools/styles.css`             | Compiled panel stylesheet for explicit CSS-only consumption                                                            |
 | `prosemirror-devtools/react`                  | React panel wrapper, plugin factory, registration hook, and React extension adapter                                    |
 | `prosemirror-devtools/preact`                 | Preact panel, plugin factory, and registration hook                                                                    |
 | `prosemirror-devtools/solid`                  | Solid adapter panel, plugin factory, and registration helper                                                           |

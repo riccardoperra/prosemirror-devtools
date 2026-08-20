@@ -19,6 +19,11 @@
       "types": "./dist/performance.d.ts",
       "default": "./dist/performance.js"
     },
+    "./styles": {
+      "types": "./dist/styles/index.d.ts",
+      "default": "./dist/styles/index.js"
+    },
+    "./styles.css": "./dist/prosemirror-devtools.css",
     "./react": {
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
@@ -78,7 +83,9 @@
     "README.md",
     "LICENSE"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
@@ -149,6 +156,7 @@
     "@tanstack/charts": "catalog:",
     "@tanstack/solid-charts": "catalog:",
     "@tanstack/react-devtools": "catalog:",
+    "@tsdown/css": "catalog:",
     "@types/d3-scale": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

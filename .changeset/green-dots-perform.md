@@ -15,5 +15,8 @@ with explicit production entrypoints.
 Move the built-in panel and TanStack Charts renderer from React to Solid 1 while preserving the
 framework-neutral adapter and extension contracts.
 
+Compile the panel through CSS Modules, expose inherited and typed theme variables plus explicit
+styles entrypoints, and adapt framework-neutral store readables to owner-scoped Solid signals.
+
 Replace the stateful registry API with a functional devtools store, granular subscriptions, lazy
 transaction detail serialization, versioned local snapshots, and a container-responsive panel.

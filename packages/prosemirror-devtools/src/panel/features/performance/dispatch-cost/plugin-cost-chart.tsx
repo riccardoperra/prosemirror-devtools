@@ -7,6 +7,8 @@ import { Chart } from "@tanstack/solid-charts";
 import { scaleBand, scaleLinear } from "d3-scale";
 import { createMemo, type JSX } from "solid-js";
 
+import { cx, panelStyles } from "../../../styles";
+
 import type { PluginTimingGroup } from "../../../../performance/group-plugin-timings";
 
 type PluginBarDatum = {
@@ -19,7 +21,11 @@ type PluginBarDatum = {
   fill: string;
 };
 
-export function PluginCostChart(props: { groups: readonly PluginTimingGroup[] }): JSX.Element {
+export interface PluginCostChartProps {
+  groups: readonly PluginTimingGroup[];
+}
+
+export function PluginCostChart(props: PluginCostChartProps): JSX.Element {
   const definition = createMemo(() => {
     const maximum = Math.max(...props.groups.map((group) => group.duration), 0.001);
     const labels = new Map(props.groups.map((group) => [group.pluginKey, group.pluginLabel]));
@@ -96,7 +102,7 @@ export function PluginCostChart(props: { groups: readonly PluginTimingGroup[] })
   });
 
   return (
-    <div class="pm-tanstack-chart pm-plugin-cost-chart">
+    <div class={cx(panelStyles.pmTanstackChart, panelStyles.pmPluginCostChart)}>
       <Chart
         ariaDescription="Plugins sorted from the largest full synchronous cost to the smallest."
         ariaLabel="Plugin cost ranking"

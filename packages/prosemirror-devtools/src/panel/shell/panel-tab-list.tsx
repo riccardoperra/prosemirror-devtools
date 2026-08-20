@@ -1,5 +1,7 @@
 import { For, Show, type JSX } from "solid-js";
 
+import { panelStyles } from "../styles";
+
 import { useTabList } from "../hooks/use-tab-list";
 import { usePanelMeta, usePanelNavigation } from "../panel-provider";
 import { useActiveInstance } from "../store/selectors";
@@ -18,7 +20,7 @@ export function PanelTabList(): JSX.Element {
   return (
     <nav
       aria-label="ProseMirror Devtools panels"
-      class="pm-tabs"
+      class={panelStyles.pmTabs}
       onKeyDown={handleKeyDown}
       role="tablist"
     >
@@ -27,7 +29,7 @@ export function PanelTabList(): JSX.Element {
           <button
             aria-controls={meta.tabPanelId}
             aria-selected={navigation.activePanel() === item.id}
-            class="pm-tab"
+            class={panelStyles.pmTab}
             id={meta.tabId(item.id)}
             onClick={() => navigation.selectPanel(item.id)}
             ref={(element) => registerTab(index(), element)}
@@ -37,7 +39,7 @@ export function PanelTabList(): JSX.Element {
           >
             {item.title}
             <Show when={item.badge === "transactions"}>
-              <span class="pm-tab-count">{transactionCount()}</span>
+              <span class={panelStyles.pmTabCount}>{transactionCount()}</span>
             </Show>
           </button>
         )}

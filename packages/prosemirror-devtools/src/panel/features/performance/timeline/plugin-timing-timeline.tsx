@@ -1,5 +1,7 @@
 import { createMemo, For, type JSX } from "solid-js";
 
+import { panelStyles } from "../../../styles";
+
 import type { TransactionRecord } from "../../../../core/types";
 import { Badge } from "../../../ui/badge";
 import { PluginTimelineChart } from "./chart";
@@ -13,19 +15,23 @@ const legendItems = [
   ["props", "Other props"],
 ] as const;
 
-export function PluginTimingTimeline(props: { record: TransactionRecord }): JSX.Element {
+export interface PluginTimingTimelineProps {
+  record: TransactionRecord;
+}
+
+export function PluginTimingTimeline(props: PluginTimingTimelineProps): JSX.Element {
   const model = createMemo(() => buildPluginTimelineModel(props.record));
 
   return (
-    <section aria-label="Ordered synchronous plugin timeline" class="pm-plugin-timeline">
-      <div class="pm-plugin-timeline-heading">
-        <span class="pm-plugin-timeline-copy">
+    <section aria-label="Ordered synchronous plugin timeline" class={panelStyles.pmPluginTimeline}>
+      <div class={panelStyles.pmPluginTimelineHeading}>
+        <span class={panelStyles.pmPluginTimelineCopy}>
           <strong>Ordered execution timeline</strong>
           <span>Top to bottom: start order · left to right: elapsed dispatch time</span>
         </span>
         <Badge>{model().pluginCallCount} calls</Badge>
       </div>
-      <div aria-label="Timeline color legend" class="pm-plugin-timeline-legend">
+      <div aria-label="Timeline color legend" class={panelStyles.pmPluginTimelineLegend}>
         <For each={legendItems}>
           {([family, label]) => (
             <span>
@@ -38,13 +44,13 @@ export function PluginTimingTimeline(props: { record: TransactionRecord }): JSX.
           <i data-kind="minimum" />
           {"<0.01 ms shown at 2 px"}
         </span>
-        <span class="pm-timeline-scroll-cue">Scroll time →</span>
+        <span class={panelStyles.pmTimelineScrollCue}>Scroll time →</span>
       </div>
-      <div class="pm-timeline-shell">
+      <div class={panelStyles.pmTimelineShell}>
         <PluginTimelineLaneRail lanes={model().lanes} />
         <div
           aria-label="Scrollable dispatch time axis"
-          class="pm-timeline-scroll"
+          class={panelStyles.pmTimelineScroll}
           role="region"
           tabIndex={0}
         >

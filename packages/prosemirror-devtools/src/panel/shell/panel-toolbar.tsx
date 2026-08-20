@@ -1,28 +1,34 @@
 import { For, Show, type JSX } from "solid-js";
 
+import { panelStyles } from "../styles";
+
 import { usePanelAppearance, usePanelDataAccess } from "../panel-provider";
 import { useActiveInstanceId, useInstanceDescriptors } from "../store/selectors";
 
-export function PanelToolbar(props: { embedded: boolean }): JSX.Element {
+export interface PanelToolbarProps {
+  embedded: boolean;
+}
+
+export function PanelToolbar(props: PanelToolbarProps): JSX.Element {
   const { actions } = usePanelDataAccess();
   const activeInstanceId = useActiveInstanceId();
   const instances = useInstanceDescriptors();
   const appearance = usePanelAppearance();
 
   return (
-    <div class="pm-toolbar">
+    <div class={panelStyles.pmToolbar}>
       <Show when={!props.embedded}>
-        <div class="pm-brand">
-          <span class="pm-brand-mark">PM</span>
-          <span class="pm-brand-copy">ProseMirror</span>
+        <div class={panelStyles.pmBrand}>
+          <span class={panelStyles.pmBrandMark}>PM</span>
+          <span class={panelStyles.pmBrandCopy}>ProseMirror</span>
         </div>
       </Show>
       <Show when={activeInstanceId()}>
-        <span class="pm-live" title="Instance connected" />
+        <span class={panelStyles.pmLive} title="Instance connected" />
       </Show>
       <select
         aria-label="Active ProseMirror instance"
-        class="pm-instance-select"
+        class={panelStyles.pmInstanceSelect}
         disabled={instances().length === 0}
         onChange={(event) => actions.setActiveInstance(event.currentTarget.value)}
         value={activeInstanceId() ?? ""}
@@ -32,10 +38,10 @@ export function PanelToolbar(props: { embedded: boolean }): JSX.Element {
         </Show>
       </select>
       <Show when={!props.embedded}>
-        <span class="pm-spacer" />
+        <span class={panelStyles.pmSpacer} />
         <button
           aria-label="Cycle color theme"
-          class="pm-icon-button"
+          class={panelStyles.pmIconButton}
           onClick={appearance.cycleTheme}
           title={`Theme: ${appearance.themeChoice()}`}
           type="button"

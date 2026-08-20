@@ -1,5 +1,7 @@
 import { createContext, useContext, Show, type Accessor, type JSX } from "solid-js";
 
+import { cx, panelStyles } from "../../styles";
+
 import { restoreDocument } from "../../../core/snapshots";
 import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../core/types";
 import { formatDateTime, formatMs, formatTime } from "../../formatters";
@@ -26,12 +28,14 @@ function useDispatchInspector(): DispatchInspectorContextValue {
   return context;
 }
 
-function DispatchInspectorRoot(props: {
+interface DispatchInspectorRootProps {
   instance: RegisteredProseMirrorInstance;
   record: TransactionRecord;
-  className?: string;
+  className?: string | undefined;
   children: JSX.Element;
-}): JSX.Element {
+}
+
+function DispatchInspectorRoot(props: DispatchInspectorRootProps): JSX.Element {
   const value: DispatchInspectorContextValue = {
     record: () => props.record,
     markers: () => props.record.markers,
@@ -43,7 +47,7 @@ function DispatchInspectorRoot(props: {
     <DispatchInspectorContext.Provider value={value}>
       <section
         aria-label={`Dispatch ${props.record.id} inspector`}
-        class={["pm-dispatch-inspector", props.className].filter(Boolean).join(" ")}
+        class={cx(panelStyles.pmDispatchInspector, props.className)}
       >
         {props.children}
       </section>
@@ -55,23 +59,23 @@ function DispatchInspectorHeader(): JSX.Element {
   const inspector = useDispatchInspector();
 
   return (
-    <header class="pm-dispatch-header">
-      <div class="pm-dispatch-identity">
-        <span class="pm-eyebrow">Selected dispatch</span>
+    <header class={panelStyles.pmDispatchHeader}>
+      <div class={panelStyles.pmDispatchIdentity}>
+        <span class={panelStyles.pmEyebrow}>Selected dispatch</span>
         <strong>#{inspector.record().id}</strong>
         <time
-          class="pm-row-detail pm-history-timestamp"
+          class={cx(panelStyles.pmRowDetail, panelStyles.pmHistoryTimestamp)}
           dateTime={new Date(inspector.record().timestamp).toISOString()}
           title={formatDateTime(inspector.record().timestamp)}
         >
           {formatTime(inspector.record().timestamp)}
         </time>
       </div>
-      <div class="pm-dispatch-badges">
+      <div class={panelStyles.pmDispatchBadges}>
         <TransactionBadges record={inspector.record()} />
       </div>
-      <span class="pm-spacer" />
-      <button class="pm-button" onClick={inspector.restore} type="button">
+      <span class={panelStyles.pmSpacer} />
+      <button class={panelStyles.pmButton} onClick={inspector.restore} type="button">
         Restore
       </button>
     </header>
@@ -99,25 +103,37 @@ function DispatchInspectorMetrics(): JSX.Element {
   );
 }
 
-function DetailsWorkspace(props: { children: JSX.Element }): JSX.Element {
+interface DetailsWorkspaceProps {
+  children: JSX.Element;
+}
+
+function DetailsWorkspace(props: DetailsWorkspaceProps): JSX.Element {
   return (
-    <div class="pm-dispatch-workspace" data-layout="details">
+    <div class={panelStyles.pmDispatchWorkspace} data-layout="details">
       {props.children}
     </div>
   );
 }
 
-function SplitWorkspace(props: { children: JSX.Element }): JSX.Element {
+interface SplitWorkspaceProps {
+  children: JSX.Element;
+}
+
+function SplitWorkspace(props: SplitWorkspaceProps): JSX.Element {
   return (
-    <div class="pm-dispatch-workspace" data-layout="split">
+    <div class={panelStyles.pmDispatchWorkspace} data-layout="split">
       {props.children}
     </div>
   );
 }
 
-function PluginPane(props: { children: JSX.Element }): JSX.Element {
+interface PluginPaneProps {
+  children: JSX.Element;
+}
+
+function PluginPane(props: PluginPaneProps): JSX.Element {
   return (
-    <section aria-label="Dispatch cost" class="pm-dispatch-plugin-pane">
+    <section aria-label="Dispatch cost" class={panelStyles.pmDispatchPluginPane}>
       {props.children}
     </section>
   );
@@ -127,18 +143,18 @@ function TransactionDetails(): JSX.Element {
   const inspector = useDispatchInspector();
 
   return (
-    <aside aria-label="Transaction details" class="pm-dispatch-detail-pane">
+    <aside aria-label="Transaction details" class={panelStyles.pmDispatchDetailPane}>
       <DispatchMarkers markers={inspector.markers()} />
-      <div class="pm-workspace-heading">
-        <span class="pm-section-title">Transactions</span>
+      <div class={panelStyles.pmWorkspaceHeading}>
+        <span class={panelStyles.pmSectionTitle}>Transactions</span>
         <Badge>
           {inspector.record().appliedTransactionCount ?? inspector.record().transactions.length}
         </Badge>
-        <span class="pm-spacer" />
-        <span class="pm-row-detail">root + appended</span>
+        <span class={panelStyles.pmSpacer} />
+        <span class={panelStyles.pmRowDetail}>root + appended</span>
       </div>
       <Show when={inspector.record().error}>
-        {(error) => <div class="pm-warning">{error()}</div>}
+        {(error) => <div class={panelStyles.pmWarning}>{error()}</div>}
       </Show>
       <AppliedTransactions record={inspector.record()} />
       <DispatchDocuments record={inspector.record()} />

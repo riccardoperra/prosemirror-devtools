@@ -9,6 +9,7 @@ export default defineConfig({
     index: "src/index.ts",
     core: "src/core/index.ts",
     performance: "src/performance/index.ts",
+    "styles/index": "src/styles/index.ts",
     // The extension is usable without the panel. Keeping it as an internal
     // entry lets production no-op adapters tree-shake React extension support.
     "internal/react-extension": "src/react/extension.ts",
@@ -29,6 +30,16 @@ export default defineConfig({
   format: "esm",
   dts: true,
   sourcemap: true,
+  css: {
+    fileName: "prosemirror-devtools.css",
+    inject: true,
+    modules: {
+      generateScopedName: "[local]_[hash]",
+      localsConvention: "camelCaseOnly",
+    },
+    splitting: false,
+    target: false,
+  },
   clean: !isWatchMode,
   // Preserve adapter NODE_ENV branches for the consuming application to fold.
   platform: "neutral",

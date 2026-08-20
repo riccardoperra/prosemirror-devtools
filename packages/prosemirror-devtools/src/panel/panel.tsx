@@ -1,5 +1,7 @@
 import { createMemo, mergeProps, Show, type JSX } from "solid-js";
 
+import { panelStyles } from "./styles";
+
 import type { DevtoolsExtension } from "../core/extensions";
 import { prosemirrorDevtoolsStore } from "../core/store/create-devtools-store";
 import { DEFAULT_PERFORMANCE_FRAME_BUDGET_MS } from "./panel.constants";
@@ -11,7 +13,11 @@ import { PanelFrame } from "./shell/panel-frame";
 import { PanelTabList } from "./shell/panel-tab-list";
 import { PanelToolbar } from "./shell/panel-toolbar";
 
-export type { ProseMirrorDevtoolsPanelProps, ProseMirrorDevtoolsTab } from "./panel.types";
+export type {
+  ProseMirrorDevtoolsPanelProps,
+  ProseMirrorDevtoolsPanelStyle,
+  ProseMirrorDevtoolsTab,
+} from "./panel.types";
 
 const NO_EXTENSIONS: readonly DevtoolsExtension[] = [];
 
@@ -42,7 +48,10 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
           theme={props.theme}
         >
           <PanelFrame className={props.className} embedded={props.embedded} style={props.style}>
-            <header class="pm-header" data-embedded={props.embedded ? "true" : undefined}>
+            <header
+              class={panelStyles.pmHeader}
+              data-embedded={props.embedded ? "true" : undefined}
+            >
               <PanelToolbar embedded={props.embedded} />
               <PanelTabList />
             </header>

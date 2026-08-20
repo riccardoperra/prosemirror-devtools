@@ -1,17 +1,23 @@
 import { createMemo, For, Show, type JSX } from "solid-js";
 
+import { panelStyles } from "../../../styles";
+
 import { formatMs } from "../../../formatters";
 import { formatTimelineOffset } from "../plugin-timing-formatters";
 import { pluginTimelineChartHeight, pluginTimelineLanePosition } from "./chart";
 import type { PluginTimelineLane } from "./model";
 import { timelineLaneDetail } from "./model";
 
-function LaneText(props: { lane: PluginTimelineLane }): JSX.Element {
+interface LaneTextProps {
+  lane: PluginTimelineLane;
+}
+
+function LaneText(props: LaneTextProps): JSX.Element {
   return (
     <Show
       when={props.lane.kind === "plugin" ? props.lane : undefined}
       fallback={
-        <span class="pm-timeline-lane-copy">
+        <span class={panelStyles.pmTimelineLaneCopy}>
           <strong>{props.lane.label}</strong>
           <span>
             {timelineLaneDetail(props.lane)} · {formatMs(props.lane.duration)}
@@ -21,9 +27,9 @@ function LaneText(props: { lane: PluginTimelineLane }): JSX.Element {
     >
       {(lane) => (
         <>
-          <span class="pm-timeline-sequence">{lane().sequence}</span>
+          <span class={panelStyles.pmTimelineSequence}>{lane().sequence}</span>
           <span
-            class="pm-timeline-lane-copy"
+            class={panelStyles.pmTimelineLaneCopy}
             style={{ "padding-inline-start": `${lane().depth * 8}px` }}
           >
             <strong>{lane().label}</strong>
@@ -38,15 +44,17 @@ function LaneText(props: { lane: PluginTimelineLane }): JSX.Element {
   );
 }
 
-export function PluginTimelineLaneRail(props: {
+export interface PluginTimelineLaneRailProps {
   lanes: readonly PluginTimelineLane[];
-}): JSX.Element {
+}
+
+export function PluginTimelineLaneRail(props: PluginTimelineLaneRailProps): JSX.Element {
   const height = createMemo(() => pluginTimelineChartHeight(props.lanes.length));
 
   return (
     <div
       aria-label="Dispatch timeline lanes"
-      class="pm-timeline-lane-rail"
+      class={panelStyles.pmTimelineLaneRail}
       role="list"
       style={{ "block-size": `${height()}px` }}
     >
@@ -58,7 +66,7 @@ export function PluginTimelineLaneRail(props: {
                 ? `Call ${lane.sequence}: ${lane.label}, ${timelineLaneDetail(lane)}, starts at ${formatTimelineOffset(lane.startOffset)}, duration ${formatMs(lane.duration)}`
                 : `${lane.label}, starts at ${formatTimelineOffset(lane.startOffset)}, duration ${formatMs(lane.duration)}`
             }
-            class="pm-timeline-lane-label"
+            class={panelStyles.pmTimelineLaneLabel}
             data-depth={lane.kind === "plugin" ? lane.depth : undefined}
             data-kind={lane.kind}
             data-lane-key={lane.laneKey}

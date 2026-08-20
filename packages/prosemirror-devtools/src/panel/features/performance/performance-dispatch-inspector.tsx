@@ -4,10 +4,14 @@ import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../
 import { DispatchInspector } from "../dispatch/dispatch-inspector";
 import { DispatchCostBreakdown } from "./dispatch-cost/dispatch-cost-breakdown";
 
-export function PerformanceDispatchInspector(props: {
+export interface PerformanceDispatchInspectorProps {
   instance: RegisteredProseMirrorInstance;
   record: TransactionRecord;
-}): JSX.Element {
+}
+
+export function PerformanceDispatchInspector(
+  props: PerformanceDispatchInspectorProps,
+): JSX.Element {
   return (
     <DispatchInspector.Root instance={props.instance} record={props.record}>
       <DispatchInspector.Header />

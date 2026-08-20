@@ -5,23 +5,31 @@ import type {
   DevtoolsMarker,
   TransactionRecord,
 } from "../../../core/types";
+
+import { panelStyles } from "../../styles";
 import { formatMs } from "../../formatters";
 import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
 
-function AppliedTransaction(props: { transaction: AppliedTransactionRecord }): JSX.Element {
+interface AppliedTransactionProps {
+  transaction: AppliedTransactionRecord;
+}
+
+function AppliedTransaction(props: AppliedTransactionProps): JSX.Element {
   const [open, setOpen] = createSignal(props.transaction.index === 0);
 
   return (
     <details
-      class="pm-transaction-record"
+      class={panelStyles.pmTransactionRecord}
       onToggle={(event) => setOpen(event.currentTarget.open)}
       open={open()}
     >
       <summary>
-        <span class="pm-transaction-kind">{props.transaction.appended ? "Appended" : "Root"}</span>
+        <span class={panelStyles.pmTransactionKind}>
+          {props.transaction.appended ? "Appended" : "Root"}
+        </span>
         <strong>Transaction {props.transaction.index + 1}</strong>
-        <span class="pm-spacer" />
+        <span class={panelStyles.pmSpacer} />
         <Show when={props.transaction.docChanged}>
           <Badge tone="green">doc</Badge>
         </Show>
@@ -31,21 +39,21 @@ function AppliedTransaction(props: { transaction: AppliedTransactionRecord }): J
         <Show when={props.transaction.storedMarksSet}>
           <Badge>marks</Badge>
         </Show>
-        <span class="pm-row-detail">
+        <span class={panelStyles.pmRowDetail}>
           {props.transaction.steps.length} {props.transaction.steps.length === 1 ? "step" : "steps"}
         </span>
       </summary>
-      <div class="pm-transaction-payload">
+      <div class={panelStyles.pmTransactionPayload}>
         <section>
-          <div class="pm-detail-heading">
-            <span class="pm-section-title">Steps</span>
+          <div class={panelStyles.pmDetailHeading}>
+            <span class={panelStyles.pmSectionTitle}>Steps</span>
             <Badge>{props.transaction.steps.length}</Badge>
           </div>
           <JsonTree defaultExpandedDepth={4} value={props.transaction.steps} />
         </section>
         <section>
-          <div class="pm-detail-heading">
-            <span class="pm-section-title">Metadata</span>
+          <div class={panelStyles.pmDetailHeading}>
+            <span class={panelStyles.pmSectionTitle}>Metadata</span>
             <Badge>{Object.keys(props.transaction.meta).length}</Badge>
           </div>
           <JsonTree defaultExpandedDepth={4} value={props.transaction.meta} />
@@ -55,19 +63,23 @@ function AppliedTransaction(props: { transaction: AppliedTransactionRecord }): J
   );
 }
 
-export function AppliedTransactions(props: { record: TransactionRecord }): JSX.Element {
+export interface AppliedTransactionsProps {
+  record: TransactionRecord;
+}
+
+export function AppliedTransactions(props: AppliedTransactionsProps): JSX.Element {
   return (
     <Show
       when={props.record.transactions.length > 0}
       fallback={
-        <div class="pm-inspector-empty">
+        <div class={panelStyles.pmInspectorEmpty}>
           {props.record.filtered
             ? "The root transaction was filtered before it could be applied."
             : "No applied transaction payload was observed for this dispatch."}
         </div>
       }
     >
-      <div class="pm-transaction-stack">
+      <div class={panelStyles.pmTransactionStack}>
         <For each={props.record.transactions}>
           {(transaction) => <AppliedTransaction transaction={transaction} />}
         </For>
@@ -76,14 +88,18 @@ export function AppliedTransactions(props: { record: TransactionRecord }): JSX.E
   );
 }
 
-export function DispatchDocuments(props: { record: TransactionRecord }): JSX.Element {
+export interface DispatchDocumentsProps {
+  record: TransactionRecord;
+}
+
+export function DispatchDocuments(props: DispatchDocumentsProps): JSX.Element {
   const [open, setOpen] = createSignal(false);
 
   return (
     <>
-      <section class="pm-selection-detail">
-        <div class="pm-detail-heading">
-          <span class="pm-section-title">Selection</span>
+      <section class={panelStyles.pmSelectionDetail}>
+        <div class={panelStyles.pmDetailHeading}>
+          <span class={panelStyles.pmSectionTitle}>Selection</span>
         </div>
         <JsonTree
           defaultExpandedDepth={4}
@@ -94,24 +110,24 @@ export function DispatchDocuments(props: { record: TransactionRecord }): JSX.Ele
         />
       </section>
       <details
-        class="pm-document-disclosure"
+        class={panelStyles.pmDocumentDisclosure}
         onToggle={(event) => setOpen(event.currentTarget.open)}
         open={open()}
       >
         <summary>
-          <span class="pm-section-title">Documents</span>
-          <span class="pm-row-detail">Before and after JSON</span>
+          <span class={panelStyles.pmSectionTitle}>Documents</span>
+          <span class={panelStyles.pmRowDetail}>Before and after JSON</span>
         </summary>
-        <div class="pm-detail-columns">
+        <div class={panelStyles.pmDetailColumns}>
           <section>
-            <div class="pm-detail-heading">
-              <span class="pm-section-title">Before</span>
+            <div class={panelStyles.pmDetailHeading}>
+              <span class={panelStyles.pmSectionTitle}>Before</span>
             </div>
             <JsonTree defaultExpandedDepth={2} value={props.record.docBefore} />
           </section>
           <section>
-            <div class="pm-detail-heading">
-              <span class="pm-section-title">After</span>
+            <div class={panelStyles.pmDetailHeading}>
+              <span class={panelStyles.pmSectionTitle}>After</span>
             </div>
             <JsonTree defaultExpandedDepth={2} value={props.record.docAfter} />
           </section>
@@ -121,30 +137,34 @@ export function DispatchDocuments(props: { record: TransactionRecord }): JSX.Ele
   );
 }
 
-export function DispatchMarkers(props: { markers: readonly DevtoolsMarker[] }): JSX.Element {
+export interface DispatchMarkersProps {
+  markers: readonly DevtoolsMarker[];
+}
+
+export function DispatchMarkers(props: DispatchMarkersProps): JSX.Element {
   const orderedMarkers = createMemo(() =>
     [...props.markers].sort((left, right) => left.startOffset - right.startOffset),
   );
 
   return (
     <Show when={orderedMarkers().length > 0}>
-      <section aria-label="Custom markers" class="pm-marker-section">
-        <div class="pm-workspace-heading">
-          <span class="pm-section-title">Markers</span>
+      <section aria-label="Custom markers" class={panelStyles.pmMarkerSection}>
+        <div class={panelStyles.pmWorkspaceHeading}>
+          <span class={panelStyles.pmSectionTitle}>Markers</span>
           <Badge>{orderedMarkers().length}</Badge>
         </div>
         <For each={orderedMarkers()}>
           {(marker) => (
-            <div class="pm-marker-entry" data-tone={marker.tone}>
-              <div class="pm-marker-row">
-                <i aria-hidden="true" class="pm-status-dot" />
-                <span class="pm-row-main">
-                  <span class="pm-row-title">{marker.label}</span>
-                  <span class="pm-row-detail">
+            <div class={panelStyles.pmMarkerEntry} data-tone={marker.tone}>
+              <div class={panelStyles.pmMarkerRow}>
+                <i aria-hidden="true" class={panelStyles.pmStatusDot} />
+                <span class={panelStyles.pmRowMain}>
+                  <span class={panelStyles.pmRowTitle}>{marker.label}</span>
+                  <span class={panelStyles.pmRowDetail}>
                     {marker.category ?? "custom"} · at {formatMs(marker.startOffset)}
                   </span>
                 </span>
-                <span class="pm-mono">
+                <span class={panelStyles.pmMono}>
                   {marker.duration == null ? "point" : formatMs(marker.duration)}
                 </span>
               </div>

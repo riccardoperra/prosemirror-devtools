@@ -3,7 +3,11 @@ import { Show, type JSX } from "solid-js";
 import type { TransactionRecord } from "../../../core/types";
 import { Badge } from "../../ui/badge";
 
-export function TransactionBadges(props: { record: TransactionRecord }): JSX.Element {
+export interface TransactionBadgesProps {
+  record: TransactionRecord;
+}
+
+export function TransactionBadges(props: TransactionBadgesProps): JSX.Element {
   return (
     <>
       <Show when={props.record.docChanged}>

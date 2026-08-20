@@ -3,10 +3,14 @@ import type { JSX } from "solid-js";
 import type { DevtoolsExtension } from "../core/extensions";
 import type { ProseMirrorDevtoolsTab } from "../core/panel-types";
 import type { DevtoolsTheme, DevtoolsStore } from "../core/types";
+import type { ProseMirrorDevtoolsCssVariable } from "../styles";
 
 export type { ProseMirrorDevtoolsTab } from "../core/panel-types";
 
 export type PanelDensity = "compact" | "comfortable";
+
+export type ProseMirrorDevtoolsPanelStyle = JSX.CSSProperties &
+  Partial<Record<ProseMirrorDevtoolsCssVariable, string | number>>;
 
 export interface ProseMirrorDevtoolsPanelProps {
   store?: DevtoolsStore;
@@ -33,7 +37,7 @@ export interface ProseMirrorDevtoolsPanelProps {
    */
   performanceDetailThresholdMs?: number;
   className?: string;
-  style?: JSX.CSSProperties;
+  style?: ProseMirrorDevtoolsPanelStyle;
   /** Document that receives the panel stylesheet. Defaults to the current document. */
   styleTarget?: Document;
   /** @internal Whether a devtools host already provides the surrounding chrome. */

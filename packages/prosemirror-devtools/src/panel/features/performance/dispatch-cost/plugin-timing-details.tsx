@@ -1,67 +1,75 @@
 import { createMemo, For, Show, type JSX } from "solid-js";
 
+import { panelStyles } from "../../../styles";
+
 import type { PluginTimingGroup } from "../../../../performance/group-plugin-timings";
 import { formatMs } from "../../../formatters";
 import { Badge } from "../../../ui/badge";
 import { hookFamily, hookLabel, hookTitle } from "../plugin-timing-formatters";
 
-export function PluginTimingDetails(props: {
+export interface PluginTimingDetailsProps {
   groups: readonly PluginTimingGroup[];
   dispatchDuration: number;
-}): JSX.Element {
+}
+
+export function PluginTimingDetails(props: PluginTimingDetailsProps): JSX.Element {
   const safeDispatchDuration = createMemo(() => Math.max(props.dispatchDuration, 0.001));
 
   return (
-    <details class="pm-plugin-breakdown-details">
+    <details class={panelStyles.pmPluginBreakdownDetails}>
       <summary>
-        <span class="pm-section-title">Exact hook breakdown</span>
+        <span class={panelStyles.pmSectionTitle}>Exact hook breakdown</span>
         <Badge>{props.groups.reduce((count, group) => count + group.callCount, 0)} calls</Badge>
       </summary>
-      <div aria-hidden="true" class="pm-plugin-timing-columns">
+      <div aria-hidden="true" class={panelStyles.pmPluginTimingColumns}>
         <span>Plugin</span>
         <span>Hook time</span>
         <span>Full sync</span>
       </div>
       <div
         aria-label="Plugins ordered by synchronous cost"
-        class="pm-plugin-timing-list"
+        class={panelStyles.pmPluginTimingList}
         role="list"
       >
         <For each={props.groups}>
           {(group, index) => (
-            <div class="pm-plugin-timing-group" data-plugin-key={group.pluginKey} role="listitem">
-              <div class="pm-plugin-timing-identity" title={group.pluginKey}>
-                <span class="pm-plugin-timing-rank">{index() + 1}</span>
-                <span class="pm-row-main">
-                  <span class="pm-row-title">{group.pluginLabel}</span>
-                  <span class="pm-row-detail">
+            <div
+              class={panelStyles.pmPluginTimingGroup}
+              data-plugin-key={group.pluginKey}
+              role="listitem"
+            >
+              <div class={panelStyles.pmPluginTimingIdentity} title={group.pluginKey}>
+                <span class={panelStyles.pmPluginTimingRank}>{index() + 1}</span>
+                <span class={panelStyles.pmRowMain}>
+                  <span class={panelStyles.pmRowTitle}>{group.pluginLabel}</span>
+                  <span class={panelStyles.pmRowDetail}>
                     {group.hooks.length} {group.hooks.length === 1 ? "hook" : "hooks"} ·{" "}
                     {group.callCount} {group.callCount === 1 ? "call" : "calls"}
                   </span>
                 </span>
               </div>
-              <div class="pm-plugin-hook-list">
+              <div class={panelStyles.pmPluginHookList}>
                 <For each={group.hooks}>
                   {(hook) => (
                     <span
                       aria-label={`${hookLabel(hook.hook)}, ${formatMs(hook.duration)}, ${hook.callCount} ${hook.callCount === 1 ? "call" : "calls"}, maximum call ${formatMs(hook.maxDuration)}`}
-                      class="pm-plugin-hook-chip"
+                      class={panelStyles.pmPluginHookChip}
                       data-family={hookFamily(hook.hook)}
                       title={hookTitle(hook.hook, hook.callCount, hook.maxDuration)}
                     >
-                      <span class="pm-plugin-hook-name">{hookLabel(hook.hook)}</span>
-                      <span class="pm-mono">{formatMs(hook.duration)}</span>
+                      <span class={panelStyles.pmPluginHookName}>{hookLabel(hook.hook)}</span>
+                      <span class={panelStyles.pmMono}>{formatMs(hook.duration)}</span>
                       <Show when={hook.callCount > 1}>
-                        <span class="pm-plugin-hook-count">×{hook.callCount}</span>
+                        <span class={panelStyles.pmPluginHookCount}>×{hook.callCount}</span>
                       </Show>
                     </span>
                   )}
                 </For>
               </div>
-              <div class="pm-plugin-full-time">
-                <span class="pm-plugin-full-value">{formatMs(group.duration)}</span>
-                <span class="pm-plugin-full-label">full sync</span>
-                <span class="pm-plugin-full-meter" aria-hidden="true">
+              <div class={panelStyles.pmPluginFullTime}>
+                <span class={panelStyles.pmPluginFullValue}>{formatMs(group.duration)}</span>
+                <span class={panelStyles.pmPluginFullLabel}>full sync</span>
+                <span class={panelStyles.pmPluginFullMeter} aria-hidden="true">
                   <span
                     style={{
                       width: `${Math.min(100, (group.duration / safeDispatchDuration()) * 100)}%`,

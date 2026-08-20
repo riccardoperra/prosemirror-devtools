@@ -6,6 +6,8 @@ import { Chart } from "@tanstack/solid-charts";
 import { scaleBand, scaleLinear } from "d3-scale";
 import { createMemo, type JSX } from "solid-js";
 
+import { panelStyles } from "../../../styles";
+
 import { formatMs } from "../../../formatters";
 import { formatTimelineOffset } from "../plugin-timing-formatters";
 import type { PluginTimelineColor, PluginTimelineLane } from "./model";
@@ -62,10 +64,12 @@ function visibleInterval(
   return [Math.max(0, domainEnd - minimumDuration), domainEnd];
 }
 
-export function PluginTimelineChart(props: {
+export interface PluginTimelineChartProps {
   lanes: readonly PluginTimelineLane[];
   totalDuration: number;
-}): JSX.Element {
+}
+
+export function PluginTimelineChart(props: PluginTimelineChartProps): JSX.Element {
   const height = createMemo(() => pluginTimelineChartHeight(props.lanes.length));
   const definition = createMemo(() => {
     const domainEnd = Math.max(
@@ -148,7 +152,7 @@ export function PluginTimelineChart(props: {
 
   return (
     <div
-      class="pm-timeline-chart-surface"
+      class={panelStyles.pmTimelineChartSurface}
       style={{
         "block-size": `${height()}px`,
         "min-inline-size": `${minimumTimelineWidth}px`,

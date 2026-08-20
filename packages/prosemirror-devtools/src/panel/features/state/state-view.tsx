@@ -1,5 +1,7 @@
 import { createMemo, createSignal, Show, type JSX } from "solid-js";
 
+import { panelStyles } from "../../styles";
+
 import { inspectState } from "../../../core/serialize";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
@@ -9,7 +11,11 @@ import { useDocumentSelection } from "./use-document-selection";
 
 type DocumentView = "structure" | "json";
 
-export function StateView(props: { instance: RegisteredProseMirrorInstance }): JSX.Element {
+export interface StateViewProps {
+  instance: RegisteredProseMirrorInstance;
+}
+
+export function StateView(props: StateViewProps): JSX.Element {
   const state = createMemo(() => props.instance.view.state);
   const inspection = createMemo(() => inspectState(state()));
   const [documentView, setDocumentView] = createSignal<DocumentView>("structure");
@@ -31,12 +37,12 @@ export function StateView(props: { instance: RegisteredProseMirrorInstance }): J
   }));
 
   return (
-    <div class="pm-split">
-      <div class="pm-pane">
-        <div class="pm-pane-header">
-          <span class="pm-pane-title">Document</span>
-          <span class="pm-spacer" />
-          <div aria-label="Document view" class="pm-view-switch" role="group">
+    <div class={panelStyles.pmSplit}>
+      <div class={panelStyles.pmPane}>
+        <div class={panelStyles.pmPaneHeader}>
+          <span class={panelStyles.pmPaneTitle}>Document</span>
+          <span class={panelStyles.pmSpacer} />
+          <div aria-label="Document view" class={panelStyles.pmViewSwitch} role="group">
             <button
               aria-label="Show document structure"
               aria-pressed={documentView() === "structure"}
@@ -56,7 +62,7 @@ export function StateView(props: { instance: RegisteredProseMirrorInstance }): J
           </div>
           <Badge>{state().doc.childCount} roots</Badge>
         </div>
-        <div class="pm-inspector-stats">
+        <div class={panelStyles.pmInspectorStats}>
           <Badge>{inspection().stats.nodeSize} node size</Badge>
           <Badge>{inspection().stats.textSize} chars</Badge>
           <Badge tone={state().selection.empty ? undefined : "blue"}>
@@ -66,7 +72,7 @@ export function StateView(props: { instance: RegisteredProseMirrorInstance }): J
         <Show
           when={documentView() === "structure"}
           fallback={
-            <div class="pm-document-json">
+            <div class={panelStyles.pmDocumentJson}>
               <JsonTree defaultExpandedDepth={3} value={inspection().doc} />
             </div>
           }
@@ -84,19 +90,19 @@ export function StateView(props: { instance: RegisteredProseMirrorInstance }): J
           />
         </Show>
       </div>
-      <div class="pm-pane">
-        <div class="pm-detail-block">
-          <div class="pm-detail-heading">
-            <span class="pm-section-title">Selected node</span>
+      <div class={panelStyles.pmPane}>
+        <div class={panelStyles.pmDetailBlock}>
+          <div class={panelStyles.pmDetailHeading}>
+            <span class={panelStyles.pmSectionTitle}>Selected node</span>
             <Badge tone="blue">open {selectedRange().from}</Badge>
             <Badge>close {selectedRange().to}</Badge>
             <Badge>{selected().node.nodeSize} size</Badge>
           </div>
           <JsonTree value={selectedNodeJson()} />
         </div>
-        <div class="pm-detail-block">
-          <div class="pm-detail-heading">
-            <span class="pm-section-title">Selection & marks</span>
+        <div class={panelStyles.pmDetailBlock}>
+          <div class={panelStyles.pmDetailHeading}>
+            <span class={panelStyles.pmSectionTitle}>Selection & marks</span>
           </div>
           <JsonTree value={selectionJson()} />
         </div>

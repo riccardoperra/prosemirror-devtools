@@ -17,6 +17,7 @@ plugin timing, snapshots, and a panel that plugs into TanStack Devtools.
 - State, selection, document, transaction, plugin, and schema inspectors.
 - Local snapshots that can be saved, restored, imported, and exported as JSON.
 - A compact Solid-rendered panel with system, light, and dark themes.
+- CSS Module styling with public, inherited theme variables for application and extension panels.
 - A TanStack Devtools adapter and a private Vite playground with a live editor.
 
 ## Repository architecture

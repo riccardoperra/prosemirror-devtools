@@ -1,18 +1,22 @@
 import { createUniqueId, Show, type JSX } from "solid-js";
 
+import { panelStyles } from "../../../styles";
+
 import type { PluginTimingGroup } from "../../../../performance/group-plugin-timings";
 import { FAST_PLUGIN_THRESHOLD_MS } from "./model";
 import { PluginCostChart } from "./plugin-cost-chart";
 import { PluginTimingDetails } from "./plugin-timing-details";
 
-export function PluginCostRanking(props: {
+export interface PluginCostRankingProps {
   groups: readonly PluginTimingGroup[];
   visibleGroups: readonly PluginTimingGroup[];
   hiddenFastPluginCount: number;
   showAllFastPlugins: boolean;
   onToggleFastPlugins: () => void;
   dispatchDuration: number;
-}): JSX.Element {
+}
+
+export function PluginCostRanking(props: PluginCostRankingProps): JSX.Element {
   const chartId = createUniqueId();
 
   return (
@@ -21,7 +25,7 @@ export function PluginCostRanking(props: {
         <PluginCostChart groups={props.visibleGroups} />
       </div>
       <Show when={props.hiddenFastPluginCount > 0}>
-        <div class="pm-fast-plugin-disclosure">
+        <div class={panelStyles.pmFastPluginDisclosure}>
           <button
             aria-controls={chartId}
             aria-expanded={props.showAllFastPlugins}

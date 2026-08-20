@@ -1,5 +1,7 @@
 import { createMemo, createSignal, For, mergeProps, Show, type JSX } from "solid-js";
 
+import { cx, panelStyles } from "./styles";
+
 export interface JsonTreeProps {
   value: unknown;
   name?: string;
@@ -27,17 +29,17 @@ function copyValue(value: unknown): void {
 }
 
 function primitive(value: unknown): JSX.Element {
-  if (value === null) return <span class="pm-json-null">null</span>;
+  if (value === null) return <span class={panelStyles.pmJsonNull}>null</span>;
   if (typeof value === "string") {
-    return <span class="pm-json-string">{JSON.stringify(value)}</span>;
+    return <span class={panelStyles.pmJsonString}>{JSON.stringify(value)}</span>;
   }
   if (typeof value === "number" || typeof value === "bigint") {
-    return <span class="pm-json-number">{String(value)}</span>;
+    return <span class={panelStyles.pmJsonNumber}>{String(value)}</span>;
   }
   if (typeof value === "boolean") {
-    return <span class="pm-json-boolean">{String(value)}</span>;
+    return <span class={panelStyles.pmJsonBoolean}>{String(value)}</span>;
   }
-  return <span class="pm-json-string">{text(value)}</span>;
+  return <span class={panelStyles.pmJsonString}>{text(value)}</span>;
 }
 
 function entries(value: unknown): [string, unknown][] {
@@ -83,12 +85,12 @@ function JsonNode(props: JsonNodeProps): JSX.Element {
   );
 
   return (
-    <div class="pm-json-node">
-      <div class="pm-json-row" style={{ "--depth": props.depth } as JSX.CSSProperties}>
-        <Show when={expandable()} fallback={<span class="pm-json-toggle" />}>
+    <div class={panelStyles.pmJsonNode}>
+      <div class={panelStyles.pmJsonRow} style={{ "--depth": props.depth } as JSX.CSSProperties}>
+        <Show when={expandable()} fallback={<span class={panelStyles.pmJsonToggle} />}>
           <button
             aria-label={expanded() ? "Collapse value" : "Expand value"}
-            class="pm-json-toggle"
+            class={panelStyles.pmJsonToggle}
             onClick={() => setExpanded((current) => !current)}
             type="button"
           >
@@ -96,22 +98,22 @@ function JsonNode(props: JsonNodeProps): JSX.Element {
           </button>
         </Show>
         <Show when={props.name !== undefined}>
-          <span class="pm-json-key">{props.name}</span>
-          <span class="pm-muted">:</span>
+          <span class={panelStyles.pmJsonKey}>{props.name}</span>
+          <span class={panelStyles.pmMuted}>:</span>
         </Show>
         <Show
           when={expandable()}
           fallback={
             <Show when={circular()} fallback={primitive(props.value)}>
-              <span class="pm-json-string">[Circular]</span>
+              <span class={panelStyles.pmJsonString}>[Circular]</span>
             </Show>
           }
         >
-          <span class="pm-json-summary">{summary(props.value)}</span>
+          <span class={panelStyles.pmJsonSummary}>{summary(props.value)}</span>
         </Show>
         <button
           aria-label="Copy value"
-          class="pm-json-toggle pm-json-actions"
+          class={cx(panelStyles.pmJsonToggle, panelStyles.pmJsonActions)}
           onClick={() => copyValue(props.value)}
           title="Copy JSON"
           type="button"
@@ -139,7 +141,7 @@ function JsonNode(props: JsonNodeProps): JSX.Element {
 export function JsonTree(input: JsonTreeProps): JSX.Element {
   const props = mergeProps({ defaultExpandedDepth: 2 }, input);
   return (
-    <div class="pm-json">
+    <div class={panelStyles.pmJson}>
       <JsonNode
         ancestors={NO_ANCESTORS}
         defaultExpandedDepth={props.defaultExpandedDepth}

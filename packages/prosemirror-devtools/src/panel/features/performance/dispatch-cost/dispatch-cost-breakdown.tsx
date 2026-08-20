@@ -1,5 +1,7 @@
 import { createMemo, createSignal, Show, type JSX } from "solid-js";
 
+import { panelStyles } from "../../../styles";
+
 import type { TransactionRecord } from "../../../../core/types";
 import { groupPluginTimings } from "../../../../performance/group-plugin-timings";
 import { Badge } from "../../../ui/badge";
@@ -8,7 +10,11 @@ import { getPluginRankingVisibility, type DispatchCostView } from "./model";
 import { PluginCostRanking } from "./plugin-cost-ranking";
 import { DispatchCostSummary } from "./summary";
 
-function DispatchCoverageWarning(props: { record: TransactionRecord }): JSX.Element {
+interface DispatchCoverageWarningProps {
+  record: TransactionRecord;
+}
+
+function DispatchCoverageWarning(props: DispatchCoverageWarningProps): JSX.Element {
   const message = createMemo(() => {
     if (
       props.record.customDispatchDuration == null ||
@@ -24,15 +30,19 @@ function DispatchCoverageWarning(props: { record: TransactionRecord }): JSX.Elem
       : "This custom dispatcher did not expose both phases synchronously. Public state and view calls are split when observed; deferred or externally managed work remains unattributed.";
   });
 
-  return <Show when={message()}>{(value) => <div class="pm-warning">{value()}</div>}</Show>;
+  return (
+    <Show when={message()}>{(value) => <div class={panelStyles.pmWarning}>{value()}</div>}</Show>
+  );
 }
 
-function DispatchCostViewSwitch(props: {
+interface DispatchCostViewSwitchProps {
   value: DispatchCostView;
   onChange: (view: DispatchCostView) => void;
-}): JSX.Element {
+}
+
+function DispatchCostViewSwitch(props: DispatchCostViewSwitchProps): JSX.Element {
   return (
-    <div aria-label="Dispatch cost view" class="pm-view-switch" role="group">
+    <div aria-label="Dispatch cost view" class={panelStyles.pmViewSwitch} role="group">
       <button
         aria-pressed={props.value === "ranking"}
         onClick={() => props.onChange("ranking")}
@@ -51,7 +61,11 @@ function DispatchCostViewSwitch(props: {
   );
 }
 
-export function DispatchCostBreakdown(props: { record: TransactionRecord }): JSX.Element {
+export interface DispatchCostBreakdownProps {
+  record: TransactionRecord;
+}
+
+export function DispatchCostBreakdown(props: DispatchCostBreakdownProps): JSX.Element {
   const groups = createMemo(() => groupPluginTimings(props.record.timings));
   const collapsedRanking = createMemo(() => getPluginRankingVisibility(groups(), false));
   const [view, selectView] = createSignal<DispatchCostView>("ranking");
@@ -63,10 +77,10 @@ export function DispatchCostBreakdown(props: { record: TransactionRecord }): JSX
 
   return (
     <>
-      <div class="pm-workspace-heading">
-        <span class="pm-section-title">Dispatch cost</span>
+      <div class={panelStyles.pmWorkspaceHeading}>
+        <span class={panelStyles.pmSectionTitle}>Dispatch cost</span>
         <Badge>{groups().length} plugins</Badge>
-        <span class="pm-spacer" />
+        <span class={panelStyles.pmSpacer} />
         <DispatchCostViewSwitch onChange={selectView} value={view()} />
       </div>
       <DispatchCoverageWarning record={props.record} />
@@ -75,7 +89,9 @@ export function DispatchCostBreakdown(props: { record: TransactionRecord }): JSX
         <Show
           when={groups().length > 0}
           fallback={
-            <div class="pm-plugin-timing-empty">No instrumented plugin hooks in this dispatch.</div>
+            <div class={panelStyles.pmPluginTimingEmpty}>
+              No instrumented plugin hooks in this dispatch.
+            </div>
           }
         >
           <PluginCostRanking

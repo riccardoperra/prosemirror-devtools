@@ -1,6 +1,8 @@
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { createMemo, createSignal, Index, Show, type JSX } from "solid-js";
 
+import { panelStyles } from "../../styles";
+
 import { Badge } from "../../ui/badge";
 
 export type DocumentSelectionRange = Readonly<{
@@ -71,9 +73,9 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
   );
 
   return (
-    <div class="pm-doc-tree-item">
+    <div class={panelStyles.pmDocTreeItem}>
       <div
-        class="pm-doc-row"
+        class={panelStyles.pmDocRow}
         data-editor-selection={selectionCoverage() ?? undefined}
         data-inspected={isInspected()}
         data-node-type={props.node.type.name}
@@ -82,7 +84,7 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
         <Show
           when={props.node.childCount > 0}
           fallback={
-            <span aria-hidden="true" class="pm-node-caret">
+            <span aria-hidden="true" class={panelStyles.pmNodeCaret}>
               ·
             </span>
           }
@@ -92,7 +94,7 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
             aria-label={
               expanded() ? `Collapse ${props.node.type.name}` : `Expand ${props.node.type.name}`
             }
-            class="pm-node-caret"
+            class={panelStyles.pmNodeCaret}
             onClick={() => setExpanded((current) => !current)}
             type="button"
           >
@@ -101,7 +103,7 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
         </Show>
         <button
           aria-selected={isInspected()}
-          class="pm-doc-row-main"
+          class={panelStyles.pmDocRowMain}
           onClick={() => props.onSelect(props.node, props.pos)}
           onDblClick={() => props.onReveal(props.pos)}
           onKeyDown={(event) => {
@@ -119,9 +121,9 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
           title="Inspect this node. Double-click or press R to reveal it in the editor."
           type="button"
         >
-          <span class="pm-node-name">{props.node.type.name}</span>
+          <span class={panelStyles.pmNodeName}>{props.node.type.name}</span>
           <Show when={text()}>
-            <span class="pm-node-text">
+            <span class={panelStyles.pmNodeText}>
               {JSON.stringify(text().length > 42 ? `${text().slice(0, 42)}…` : text())}
             </span>
           </Show>
@@ -131,14 +133,14 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
         </button>
         <Show when={selectionCoverage()}>
           {(coverage) => (
-            <span class="pm-node-selection-label" data-coverage={coverage()}>
+            <span class={panelStyles.pmNodeSelectionLabel} data-coverage={coverage()}>
               {coverage() === "full" ? "selected" : "partial"}
             </span>
           )}
         </Show>
         <span
           aria-label={`Open position ${range().from}, close position ${range().to}`}
-          class="pm-node-range"
+          class={panelStyles.pmNodeRange}
           title={`Node range [${range().from}, ${range().to})`}
         >
           <span>{range().from}</span>
@@ -147,7 +149,7 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
         </span>
         <button
           aria-label={`Select ${props.node.type.name} node in the editor`}
-          class="pm-node-select-action"
+          class={panelStyles.pmNodeSelectAction}
           onClick={() => {
             props.onSelect(props.node, props.pos);
             props.onSelectNode(props.node, props.pos);

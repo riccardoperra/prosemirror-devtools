@@ -7,6 +7,8 @@ import { scaleBand, scaleLinear } from "d3-scale";
 import type { ScaleLinear } from "d3-scale";
 import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 
+import { cx, panelStyles } from "../../../styles";
+
 import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../../core/types";
 import { buildDispatchPhaseBreakdown } from "../../../../performance/phase-timings";
 import { formatDateTime, formatMs } from "../../../formatters";
@@ -410,7 +412,7 @@ function initializationRow(initialization: InitializationTimelineEntry): Dispatc
   };
 }
 
-export function DispatchTimeline(props: {
+export interface DispatchTimelineProps {
   records: readonly TransactionRecord[];
   initialization: InitializationTimelineEntry | null;
   dispatchCount: number;
@@ -418,7 +420,9 @@ export function DispatchTimeline(props: {
   onSelect: (id: number) => void;
   detailThresholdMs: number | undefined;
   frameBudgetMs: number;
-}): JSX.Element {
+}
+
+export function DispatchTimeline(props: DispatchTimelineProps): JSX.Element {
   const [windowStartId, setWindowStartId] = createSignal<number | null>(null);
   const model = createMemo(() => {
     const summary = buildPerformanceSummary(props.records);
@@ -601,33 +605,33 @@ export function DispatchTimeline(props: {
   };
 
   return (
-    <section class="pm-chart-wrap">
+    <section class={panelStyles.pmChartWrap}>
       <div
         aria-label="Performance overview and dispatch navigation"
-        class="pm-chart-header pm-performance-toolbar"
+        class={cx(panelStyles.pmChartHeader, panelStyles.pmPerformanceToolbar)}
       >
-        <div aria-label="Performance summary" class="pm-chart-summary" role="list">
-          <span class="pm-chart-summary-metric" role="listitem">
+        <div aria-label="Performance summary" class={panelStyles.pmChartSummary} role="list">
+          <span class={panelStyles.pmChartSummaryMetric} role="listitem">
             <span>Dispatches</span>
             <strong>{props.dispatchCount}</strong>
             <Show when={props.records.length < props.dispatchCount}>
               <small>{props.records.length} retained</small>
             </Show>
           </span>
-          <span class="pm-chart-summary-metric" role="listitem">
+          <span class={panelStyles.pmChartSummaryMetric} role="listitem">
             <span>Average</span>
             <strong>{formatMs(model().summary.average)}</strong>
           </span>
-          <span class="pm-chart-summary-metric" role="listitem">
+          <span class={panelStyles.pmChartSummaryMetric} role="listitem">
             <span>p95</span>
             <strong>{formatMs(model().summary.percentile95)}</strong>
           </span>
-          <span class="pm-chart-summary-metric" role="listitem">
+          <span class={panelStyles.pmChartSummaryMetric} role="listitem">
             <span>Maximum</span>
             <strong>{formatMs(model().summary.maximum)}</strong>
           </span>
         </div>
-        <div aria-label="Dispatch selection" class="pm-dispatch-selection" role="group">
+        <div aria-label="Dispatch selection" class={panelStyles.pmDispatchSelection} role="group">
           <button
             aria-label="Select previous dispatch"
             disabled={!model().hasPrevious}
@@ -658,12 +662,12 @@ export function DispatchTimeline(props: {
             <span aria-hidden="true">→</span>
           </button>
         </div>
-        <span class="pm-spacer" />
-        <div aria-label="Dispatch phases" class="pm-chart-legend">
+        <span class={panelStyles.pmSpacer} />
+        <div aria-label="Dispatch phases" class={panelStyles.pmChartLegend}>
           <For each={legend}>
             {([label, color]) => (
               <span>
-                <i class="pm-legend-dot" style={{ background: color }} />
+                <i class={panelStyles.pmLegendDot} style={{ background: color }} />
                 {label.toLowerCase()}
               </span>
             )}
@@ -671,7 +675,7 @@ export function DispatchTimeline(props: {
         </div>
       </div>
       <div
-        class="pm-tanstack-chart pm-dispatch-chart"
+        class={cx(panelStyles.pmTanstackChart, panelStyles.pmDispatchChart)}
         data-detail-threshold-mode={model().fixedDetailThresholdMs === null ? "auto" : "fixed"}
         data-detail-threshold-ms={model().scale.detailThresholdMs}
         data-frame-budget-ms={model().scale.frameBudgetMs}
@@ -685,7 +689,7 @@ export function DispatchTimeline(props: {
         <Show when={model().scale.detailThresholdMs > 0}>
           <span
             aria-hidden="true"
-            class="pm-duration-detail-zone"
+            class={panelStyles.pmDurationDetailZone}
             style={{
               "inset-block-end": 2 + chartMargin.bottom + "px",
               "inset-block-start": 4 + model().scale.detailZoneTop + "px",
@@ -696,16 +700,16 @@ export function DispatchTimeline(props: {
         </Show>
         <span
           aria-hidden="true"
-          class="pm-frame-budget-reference"
+          class={panelStyles.pmFrameBudgetReference}
           style={{
             "inset-block-start": 4 + model().scale.budgetLineTop + "px",
             "inset-inline-end": 8 + chartMargin.right + "px",
             "inset-inline-start": 8 + chartMargin.left + "px",
           }}
         >
-          <span class="pm-frame-budget-label">{model().budgetLabel}</span>
+          <span class={panelStyles.pmFrameBudgetLabel}>{model().budgetLabel}</span>
         </span>
-        <div class="pm-dispatch-chart-plot">
+        <div class={panelStyles.pmDispatchChartPlot}>
           <Chart
             ariaDescription={
               (props.initialization
