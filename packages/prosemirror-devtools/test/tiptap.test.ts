@@ -9,7 +9,7 @@ import {
   dispatchTiptapTransaction,
   setupTiptapDevtools,
   type TiptapDevtoolsEditor,
-} from "../src/tiptap";
+} from "../src/adapters/tiptap";
 import { appendTextTransaction, createTestState, createTestView } from "./helpers";
 
 class TestExtensionManager {
