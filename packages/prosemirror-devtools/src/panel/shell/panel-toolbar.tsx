@@ -3,19 +3,21 @@ import type { ReactElement } from "react";
 import { usePanelAppearance, usePanelDataAccess } from "../panel-provider";
 import { useActiveInstanceId, useInstanceDescriptors } from "../store/selectors";
 
-export function PanelToolbar(): ReactElement {
+export function PanelToolbar({ embedded }: { embedded: boolean }): ReactElement {
   const { actions } = usePanelDataAccess();
   const activeInstanceId = useActiveInstanceId();
   const instances = useInstanceDescriptors();
-  const { density, themeChoice, resolvedTheme, toggleDensity, cycleTheme } = usePanelAppearance();
+  const { themeChoice, resolvedTheme, cycleTheme } = usePanelAppearance();
 
   return (
     <div className="pm-toolbar">
-      <div className="pm-brand">
-        <span className="pm-brand-mark">PM</span>
-        <span className="pm-brand-copy">ProseMirror</span>
-        {activeInstanceId ? <span className="pm-live" title="Instance connected" /> : null}
-      </div>
+      {embedded ? null : (
+        <div className="pm-brand">
+          <span className="pm-brand-mark">PM</span>
+          <span className="pm-brand-copy">ProseMirror</span>
+        </div>
+      )}
+      {activeInstanceId ? <span className="pm-live" title="Instance connected" /> : null}
       <select
         aria-label="Active ProseMirror instance"
         className="pm-instance-select"
@@ -30,25 +32,20 @@ export function PanelToolbar(): ReactElement {
           </option>
         ))}
       </select>
-      <span className="pm-spacer" />
-      <button
-        aria-label="Toggle density"
-        className="pm-icon-button"
-        onClick={toggleDensity}
-        title={`Density: ${density}`}
-        type="button"
-      >
-        ↕
-      </button>
-      <button
-        aria-label="Cycle color theme"
-        className="pm-icon-button"
-        onClick={cycleTheme}
-        title={`Theme: ${themeChoice}`}
-        type="button"
-      >
-        {resolvedTheme === "dark" ? "☾" : "☼"}
-      </button>
+      {embedded ? null : (
+        <>
+          <span className="pm-spacer" />
+          <button
+            aria-label="Cycle color theme"
+            className="pm-icon-button"
+            onClick={cycleTheme}
+            title={`Theme: ${themeChoice}`}
+            type="button"
+          >
+            {resolvedTheme === "dark" ? "☾" : "☼"}
+          </button>
+        </>
+      )}
     </div>
   );
 }

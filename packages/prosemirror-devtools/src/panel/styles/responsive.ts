@@ -27,6 +27,8 @@ export const responsiveStyles = String.raw`
   .pm-snapshot-actions { flex-wrap: wrap; }
   .pm-tabs { scrollbar-width: thin; }
   .pm-tabs::-webkit-scrollbar { display: block; block-size: 4px; }
+  .pm-header[data-embedded="true"] { display: block; }
+  .pm-header[data-embedded="true"] .pm-toolbar { border-inline-end: 0; border-block-end: 1px solid var(--pm-border); }
 }
 @container (max-width: 420px) {
   .pm-brand { display: none; }

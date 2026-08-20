@@ -16,7 +16,7 @@ plugin timing, snapshots, and a panel that plugs into TanStack Devtools.
 - Application-defined markers for collaboration, commands, and other domain-specific work.
 - State, selection, document, transaction, plugin, and schema inspectors.
 - Local snapshots that can be saved, restored, imported, and exported as JSON.
-- A compact React panel with system, light, and dark themes plus compact/comfortable density.
+- A compact React panel with system, light, and dark themes.
 - A TanStack Devtools adapter and a private Vite playground with a live editor.
 
 ## Repository architecture
@@ -191,8 +191,8 @@ lifecycle id so same-id editors in separate stores or later attachments remain i
 | Schema      | Node and mark specs plus the top node type                                                                                                                                                                                                                                              |
 | Snapshots   | Per-instance local save, restore, import, export, and delete controls                                                                                                                                                                                                                   |
 
-The toolbar also provides live instance switching, system/light/dark color modes, and two density
-levels.
+The toolbar also provides live instance switching and system/light/dark color modes in standalone
+use. Inside TanStack Devtools, the panel inherits the host theme and avoids duplicate controls.
 
 ## Understanding the performance data
 

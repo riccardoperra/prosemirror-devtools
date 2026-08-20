@@ -28,6 +28,7 @@ export function ProseMirrorDevtoolsPanel({
   className,
   style,
   styleTarget,
+  embedded = false,
 }: ProseMirrorDevtoolsPanelProps): ReactElement {
   const panels = useMemo(() => resolvePanelRegistry(extensions), [extensions]);
   return (
@@ -40,9 +41,9 @@ export function ProseMirrorDevtoolsPanel({
       styleTarget={styleTarget}
       theme={theme}
     >
-      <PanelFrame className={className} style={style}>
-        <header className="pm-header">
-          <PanelToolbar />
+      <PanelFrame className={className} embedded={embedded} style={style}>
+        <header className="pm-header" data-embedded={embedded ? "true" : undefined}>
+          <PanelToolbar embedded={embedded} />
           <PanelTabList />
         </header>
         <PanelContent

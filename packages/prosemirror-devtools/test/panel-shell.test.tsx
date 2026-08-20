@@ -21,7 +21,7 @@ afterEach(() => {
 });
 
 describe("devtools panel shell", () => {
-  it("supports roving tab focus and local appearance controls", async () => {
+  it("supports roving tab focus and a standalone theme control", async () => {
     const container = document.createElement("div");
     document.body.append(container);
     const root = createRoot(container);
@@ -35,7 +35,6 @@ describe("devtools panel shell", () => {
       const panel = container.querySelector<HTMLElement>(".pm-devtools");
       const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
       expect(tabs).toHaveLength(6);
-      expect(panel?.dataset.density).toBe("compact");
       expect(panel?.dataset.theme).toBe("light");
 
       tabs[0]?.focus();
@@ -46,11 +45,17 @@ describe("devtools panel shell", () => {
       expect(document.activeElement).toBe(tabs[1]);
 
       await act(async () => {
-        container.querySelector<HTMLButtonElement>('[aria-label="Toggle density"]')?.click();
         container.querySelector<HTMLButtonElement>('[aria-label="Cycle color theme"]')?.click();
       });
-      expect(panel?.dataset.density).toBe("comfortable");
       expect(panel?.dataset.theme).toBe("dark");
+      expect(container.querySelector('[aria-label="Toggle density"]')).toBeNull();
+
+      await act(async () => {
+        root.render(<ProseMirrorDevtoolsPanel embedded theme="light" />);
+      });
+      expect(container.querySelector(".pm-header")?.getAttribute("data-embedded")).toBe("true");
+      expect(container.querySelector(".pm-brand")).toBeNull();
+      expect(container.querySelector('[aria-label="Cycle color theme"]')).toBeNull();
     } finally {
       await act(async () => root.unmount());
     }

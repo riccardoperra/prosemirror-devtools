@@ -19,7 +19,6 @@ type PanelAppearance = Readonly<{
   resolvedTheme: "light" | "dark";
   density: PanelDensity;
   cycleTheme: () => void;
-  toggleDensity: () => void;
 }>;
 
 type PanelMeta = Readonly<{
@@ -74,7 +73,7 @@ export function PanelProvider({
 
   const [uncontrolledActivePanel, setUncontrolledActivePanel] = useState(defaultPanel);
   const [themePreference, setThemePreference] = useState(() => ({ source: theme, value: theme }));
-  const [density, setDensity] = useState<PanelDensity>("compact");
+  const density: PanelDensity = "compact";
   const panelId = useId();
   const themeChoice = themePreference.source === theme ? themePreference.value : theme;
   const resolvedTheme = useResolvedTheme(themeChoice);
@@ -90,10 +89,6 @@ export function PanelProvider({
       return { source: theme, value: nextTheme(value) };
     });
   }, [theme]);
-  const toggleDensity = useCallback(() => {
-    setDensity((current) => (current === "compact" ? "comfortable" : "compact"));
-  }, []);
-
   const selectPanel = useCallback(
     (panelId: string) => {
       if (!panels.some(({ id }) => id === panelId)) {
@@ -110,8 +105,8 @@ export function PanelProvider({
     [activePanel, panels, selectPanel],
   );
   const appearance = useMemo<PanelAppearance>(
-    () => ({ themeChoice, resolvedTheme, density, cycleTheme, toggleDensity }),
-    [themeChoice, resolvedTheme, density, cycleTheme, toggleDensity],
+    () => ({ themeChoice, resolvedTheme, density, cycleTheme }),
+    [themeChoice, resolvedTheme, cycleTheme],
   );
   const meta = useMemo<PanelMeta>(
     () => ({
