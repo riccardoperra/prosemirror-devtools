@@ -1,26 +1,28 @@
-import { useSyncExternalStore } from "react";
+import { from, type Accessor } from "solid-js";
 
 import type { DevtoolsReadable } from "../../core/data-client";
 import type { DevtoolsInstanceDescriptor, RegisteredProseMirrorInstance } from "../../core/types";
 import { usePanelDataAccess } from "../panel-provider";
 
-function useReadable<T>(readable: DevtoolsReadable<T>): T {
-  // Core already makes related writes atomic. This hook only bridges the committed external value
-  // into React; an expensive view may apply useDeferredValue to the returned value independently.
-  return useSyncExternalStore(readable.subscribe, readable, readable);
+/**
+ * Adapts a framework-neutral devtools readable to an owner-scoped Solid signal.
+ * Solid disposes the store subscription with the component owner.
+ */
+export function fromDevtoolsReadable<T>(readable: DevtoolsReadable<T>): Accessor<T> {
+  return from((setValue) => readable.subscribe(() => setValue(() => readable())), readable());
 }
 
-export function useActiveInstanceId(): string | null {
+export function useActiveInstanceId(): Accessor<string | null> {
   const { data } = usePanelDataAccess();
-  return useReadable(data.activeInstanceId);
+  return fromDevtoolsReadable(data.activeInstanceId);
 }
 
-export function useInstanceDescriptors(): readonly DevtoolsInstanceDescriptor[] {
+export function useInstanceDescriptors(): Accessor<readonly DevtoolsInstanceDescriptor[]> {
   const { data } = usePanelDataAccess();
-  return useReadable(data.instanceDescriptors);
+  return fromDevtoolsReadable(data.instanceDescriptors);
 }
 
-export function useActiveInstance(): RegisteredProseMirrorInstance | undefined {
+export function useActiveInstance(): Accessor<RegisteredProseMirrorInstance | undefined> {
   const { data } = usePanelDataAccess();
-  return useReadable(data.activeInstance);
+  return fromDevtoolsReadable(data.activeInstance);
 }

@@ -1,5 +1,13 @@
-import { createContext, use, useCallback, useEffect, useId, useMemo, useState } from "react";
-import type { ReactElement, ReactNode } from "react";
+import {
+  createContext,
+  createEffect,
+  createMemo,
+  createSignal,
+  createUniqueId,
+  useContext,
+  type Accessor,
+  type JSX,
+} from "solid-js";
 
 import { createDevtoolsDataAccess, type DevtoolsDataAccess } from "../core/data-client";
 import type { DevtoolsStore, DevtoolsTheme } from "../core/types";
@@ -9,29 +17,33 @@ import type { PanelDensity } from "./panel.types";
 import { ensurePanelStyles } from "./styles";
 
 type PanelNavigation = Readonly<{
-  activePanel: string;
-  panels: readonly ResolvedPanelDefinition[];
+  activePanel: Accessor<string>;
+  panels: Accessor<readonly ResolvedPanelDefinition[]>;
   selectPanel: (panelId: string) => void;
 }>;
 
 type PanelAppearance = Readonly<{
-  themeChoice: DevtoolsTheme;
-  resolvedTheme: "light" | "dark";
-  density: PanelDensity;
+  themeChoice: Accessor<DevtoolsTheme>;
+  resolvedTheme: Accessor<"light" | "dark">;
+  density: Accessor<PanelDensity>;
   cycleTheme: () => void;
 }>;
 
 type PanelMeta = Readonly<{
-  ownerDocument: Document;
+  ownerDocument: Accessor<Document>;
   panelId: string;
   tabPanelId: string;
   tabId: (panelId: string) => string;
 }>;
 
-const PanelNavigationContext = createContext<PanelNavigation | null>(null);
-const PanelAppearanceContext = createContext<PanelAppearance | null>(null);
-const PanelMetaContext = createContext<PanelMeta | null>(null);
-const PanelDataContext = createContext<DevtoolsDataAccess | null>(null);
+type PanelContextValue = Readonly<{
+  data: DevtoolsDataAccess;
+  navigation: PanelNavigation;
+  appearance: PanelAppearance;
+  meta: PanelMeta;
+}>;
+
+const PanelContext = createContext<PanelContextValue>();
 
 function nextTheme(theme: DevtoolsTheme): DevtoolsTheme {
   if (theme === "system") return "light";
@@ -50,16 +62,7 @@ function encodePanelId(panelId: string): string {
   }
 }
 
-export function PanelProvider({
-  store,
-  theme,
-  defaultPanel,
-  activePanel: controlledActivePanel,
-  onActivePanelChange,
-  panels,
-  styleTarget,
-  children,
-}: {
+export interface PanelProviderProps {
   store: DevtoolsStore;
   theme: DevtoolsTheme;
   defaultPanel: string;
@@ -67,85 +70,89 @@ export function PanelProvider({
   onActivePanelChange: ((panelId: string) => void) | undefined;
   panels: readonly ResolvedPanelDefinition[];
   styleTarget: Document | undefined;
-  children: ReactNode;
-}): ReactElement {
-  useEffect(() => ensurePanelStyles(styleTarget), [styleTarget]);
-
-  const [uncontrolledActivePanel, setUncontrolledActivePanel] = useState(defaultPanel);
-  const [themePreference, setThemePreference] = useState(() => ({ source: theme, value: theme }));
-  const density: PanelDensity = "compact";
-  const panelId = useId();
-  const themeChoice = themePreference.source === theme ? themePreference.value : theme;
-  const resolvedTheme = useResolvedTheme(themeChoice);
-  const requestedActivePanel = controlledActivePanel ?? uncontrolledActivePanel;
-  const activePanel = panels.some(({ id }) => id === requestedActivePanel)
-    ? requestedActivePanel
-    : (panels[0]?.id ?? "");
-  const dataAccess = useMemo(() => createDevtoolsDataAccess(store), [store]);
-
-  const cycleTheme = useCallback(() => {
-    setThemePreference((current) => {
-      const value = current.source === theme ? current.value : theme;
-      return { source: theme, value: nextTheme(value) };
-    });
-  }, [theme]);
-  const selectPanel = useCallback(
-    (panelId: string) => {
-      if (!panels.some(({ id }) => id === panelId)) {
-        throw new Error(`Cannot select unknown devtools panel "${panelId}".`);
-      }
-      if (controlledActivePanel === undefined) setUncontrolledActivePanel(panelId);
-      onActivePanelChange?.(panelId);
-    },
-    [controlledActivePanel, onActivePanelChange, panels],
-  );
-
-  const navigation = useMemo<PanelNavigation>(
-    () => ({ activePanel, panels, selectPanel }),
-    [activePanel, panels, selectPanel],
-  );
-  const appearance = useMemo<PanelAppearance>(
-    () => ({ themeChoice, resolvedTheme, density, cycleTheme }),
-    [themeChoice, resolvedTheme, cycleTheme],
-  );
-  const meta = useMemo<PanelMeta>(
-    () => ({
-      ownerDocument: styleTarget ?? document,
-      panelId,
-      tabPanelId: `${panelId}-tabpanel`,
-      tabId: (nextPanelId) => `${panelId}-tab-${encodePanelId(nextPanelId)}`,
-    }),
-    [panelId, styleTarget],
-  );
-
-  return (
-    <PanelDataContext value={dataAccess}>
-      <PanelNavigationContext value={navigation}>
-        <PanelAppearanceContext value={appearance}>
-          <PanelMetaContext value={meta}>{children}</PanelMetaContext>
-        </PanelAppearanceContext>
-      </PanelNavigationContext>
-    </PanelDataContext>
-  );
+  children: JSX.Element;
 }
 
-function requiredContext<T>(value: T | null): T {
-  if (value === null) throw new Error("Panel components must be rendered inside PanelProvider.");
+export function PanelProvider(props: PanelProviderProps): JSX.Element {
+  createEffect(() => ensurePanelStyles(props.styleTarget));
+
+  const [uncontrolledActivePanel, setUncontrolledActivePanel] = createSignal(props.defaultPanel);
+  const [themePreference, setThemePreference] = createSignal({
+    source: props.theme,
+    value: props.theme,
+  });
+  const density = (): PanelDensity => "compact";
+  const panelId = createUniqueId();
+  const ownerDocument = (): Document => props.styleTarget ?? document;
+  const themeChoice = createMemo(() => {
+    const preference = themePreference();
+    return preference.source === props.theme ? preference.value : props.theme;
+  });
+  const resolvedTheme = useResolvedTheme(themeChoice, ownerDocument);
+  const activePanel = createMemo(() => {
+    const requested = props.activePanel ?? uncontrolledActivePanel();
+    return props.panels.some(({ id }) => id === requested)
+      ? requested
+      : (props.panels[0]?.id ?? "");
+  });
+  const dataAccess = createDevtoolsDataAccess(props.store);
+
+  const cycleTheme = (): void => {
+    setThemePreference((current) => {
+      const value = current.source === props.theme ? current.value : props.theme;
+      return { source: props.theme, value: nextTheme(value) };
+    });
+  };
+  const selectPanel = (nextPanelId: string): void => {
+    if (!props.panels.some(({ id }) => id === nextPanelId)) {
+      throw new Error(`Cannot select unknown devtools panel "${nextPanelId}".`);
+    }
+    if (props.activePanel === undefined) setUncontrolledActivePanel(nextPanelId);
+    props.onActivePanelChange?.(nextPanelId);
+  };
+
+  const navigation: PanelNavigation = {
+    activePanel,
+    panels: () => props.panels,
+    selectPanel,
+  };
+  const appearance: PanelAppearance = {
+    themeChoice,
+    resolvedTheme,
+    density,
+    cycleTheme,
+  };
+  const meta: PanelMeta = {
+    ownerDocument,
+    panelId,
+    tabPanelId: `${panelId}-tabpanel`,
+    tabId: (nextPanelId) => `${panelId}-tab-${encodePanelId(nextPanelId)}`,
+  };
+  const context: PanelContextValue = { data: dataAccess, navigation, appearance, meta };
+
+  return <PanelContext.Provider value={context}>{props.children}</PanelContext.Provider>;
+}
+
+function usePanelContext(): PanelContextValue {
+  const value = useContext(PanelContext);
+  if (value === undefined) {
+    throw new Error("Panel components must be rendered inside PanelProvider.");
+  }
   return value;
 }
 
 export function usePanelDataAccess(): DevtoolsDataAccess {
-  return requiredContext(use(PanelDataContext));
+  return usePanelContext().data;
 }
 
 export function usePanelNavigation(): PanelNavigation {
-  return requiredContext(use(PanelNavigationContext));
+  return usePanelContext().navigation;
 }
 
 export function usePanelAppearance(): PanelAppearance {
-  return requiredContext(use(PanelAppearanceContext));
+  return usePanelContext().appearance;
 }
 
 export function usePanelMeta(): PanelMeta {
-  return requiredContext(use(PanelMetaContext));
+  return usePanelContext().meta;
 }

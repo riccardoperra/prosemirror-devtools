@@ -3,11 +3,8 @@
 export { ProseMirrorDevtoolsPanel } from "../panel";
 export { createProseMirrorDevtoolsPlugin } from "../plugin";
 export { useProseMirrorDevtools } from "../use-prosemirror-devtools";
-export { createReactDevtoolsExtension } from "../../panel/react-extension";
-export type {
-  ReactDevtoolsExtensionOptions,
-  ReactDevtoolsPanelExtension,
-} from "../../panel/react-extension";
+export { createReactDevtoolsExtension } from "../extension";
+export type { ReactDevtoolsExtensionOptions, ReactDevtoolsPanelExtension } from "../extension";
 export type { CreateProseMirrorDevtoolsPluginOptions } from "../../adapters/types";
 export type {
   ProseMirrorDevtoolsPanelProps,

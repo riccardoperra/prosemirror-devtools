@@ -1,34 +1,34 @@
-import { useMemo } from "react";
-import type { ReactElement } from "react";
+import { createMemo, type JSX } from "solid-js";
+
+import { cx, panelStyles } from "../../styles";
 
 import { inspectSchema } from "../../../core/serialize";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
 
-export function SchemaView({
-  instance,
-}: {
+export interface SchemaViewProps {
   instance: RegisteredProseMirrorInstance;
-}): ReactElement {
-  const editorSchema = instance.view.state.schema;
-  const schema = useMemo(() => inspectSchema(editorSchema), [editorSchema]);
+}
+
+export function SchemaView(props: SchemaViewProps): JSX.Element {
+  const schema = createMemo(() => inspectSchema(props.instance.view.state.schema));
 
   return (
-    <div className="pm-detail-columns pm-scroll">
+    <div class={cx(panelStyles.pmDetailColumns, panelStyles.pmScroll)}>
       <div>
-        <div className="pm-detail-heading">
-          <span className="pm-section-title">Nodes</span>
-          <span className="pm-spacer" />
-          <Badge tone="blue">top: {schema.topNodeType}</Badge>
+        <div class={panelStyles.pmDetailHeading}>
+          <span class={panelStyles.pmSectionTitle}>Nodes</span>
+          <span class={panelStyles.pmSpacer} />
+          <Badge tone="blue">top: {schema().topNodeType}</Badge>
         </div>
-        <JsonTree defaultExpandedDepth={1} value={schema.nodes} />
+        <JsonTree defaultExpandedDepth={1} value={schema().nodes} />
       </div>
       <div>
-        <div className="pm-detail-heading">
-          <span className="pm-section-title">Marks</span>
+        <div class={panelStyles.pmDetailHeading}>
+          <span class={panelStyles.pmSectionTitle}>Marks</span>
         </div>
-        <JsonTree defaultExpandedDepth={1} value={schema.marks} />
+        <JsonTree defaultExpandedDepth={1} value={schema().marks} />
       </div>
     </div>
   );

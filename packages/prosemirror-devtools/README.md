@@ -1,7 +1,7 @@
 # prosemirror-devtools
 
 Runtime observability for ProseMirror: inspect editor state, switch between live instances, retain
-transaction history, and find slow plugin hooks from a compact React panel or inside TanStack
+transaction history, and find slow plugin hooks from a compact Solid-rendered panel or inside TanStack
 Devtools.
 
 > Use this as development tooling. Wrapping hooks and recording serialized history adds overhead.
@@ -12,10 +12,9 @@ Devtools.
 pnpm add -D prosemirror-devtools
 ```
 
-The core entrypoint expects ProseMirror only. Framework runtimes are optional peers used by their
-matching panel adapters. Until the renderer migration, every live panel adapter also requires the
-React 19 and React DOM peers; that implementation detail will move behind Solid without changing
-the adapter APIs.
+The core entrypoint expects ProseMirror only. The built-in panel uses Solid 1, installed as a direct
+runtime dependency; React, Preact, Vue, Svelte, and Angular remain optional peers used only by their
+matching adapters.
 
 ## Quick start
 
@@ -199,7 +198,7 @@ import { createProseMirrorDevtoolsStore } from "prosemirror-devtools/core";
 
 const store = createProseMirrorDevtoolsStore();
 
-// Pass `store` to instrumentProseMirrorPlugins and attachProseMirrorDevtools too.
+// Solid example. Pass `store` to instrumentation and attachment too.
 export function EditorDiagnostics() {
   return <ProseMirrorDevtoolsPanel store={store} defaultPanel="performance" />;
 }
@@ -294,23 +293,32 @@ bundle:
 import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/react/production";
 ```
 
-## Standalone React panel
+## Standalone Solid panel
 
 ```tsx
 import { ProseMirrorDevtoolsPanel } from "prosemirror-devtools";
+import { render } from "solid-js/web";
 
-export function Diagnostics() {
-  return (
+const dispose = render(
+  () => (
     <ProseMirrorDevtoolsPanel
       defaultPanel="state"
       theme="system"
       performanceFrameBudgetMs={1000 / 60}
       className="my-devtools"
-      style={{ height: 520 }}
+      style={{ height: "520px" }}
     />
-  );
-}
+  ),
+  document.querySelector("#devtools")!,
+);
+
+// On teardown:
+dispose();
 ```
+
+Use the matching `prosemirror-devtools/<framework>` entrypoint when a framework component, lifecycle
+helper, or TanStack Devtools plugin is more convenient. Every adapter mounts this same panel
+renderer; Solid applications can also render the root component directly as shown above.
 
 `theme` accepts `"system"`, `"light"`, or `"dark"`. The panel injects its own scoped styles when
 mounted and provides an in-panel theme cycle in standalone use. TanStack-hosted panels inherit the
@@ -322,6 +330,38 @@ adapter does this automatically.
 line and acts as the minimum upper bound of its Y scale, so very fast dispatches remain visually
 small instead of filling the chart. For a 120 FPS budget use `1000 / 120`. This is a synchronous
 dispatch-time comparison; it does not measure the browser's actual frame rate.
+
+### Styling and extension themes
+
+The panel is compiled from a CSS Module and its entrypoint loads the emitted stylesheet. A custom
+host that consumes the stylesheet independently can import `prosemirror-devtools/styles.css`.
+
+Stable `--prosemirror-devtools-*` custom properties live on the panel root and are inherited by
+extension panels. The typed variable map is available from both the root and lightweight styles
+entrypoints:
+
+```tsx
+import {
+  ProseMirrorDevtoolsPanel,
+  proseMirrorDevtoolsCssVariables as cssVariables,
+} from "prosemirror-devtools";
+
+<ProseMirrorDevtoolsPanel
+  style={{
+    [cssVariables.background]: "#101114",
+    [cssVariables.surface]: "#17191e",
+    [cssVariables.accent]: "#9b8cff",
+    [cssVariables.radius]: "10px",
+  }}
+/>;
+```
+
+Use `prosemirror-devtools/styles` when an extension needs only the variable names. The map includes
+background and surface colors, borders, primary/muted text, accent, semantic status colors and
+their soft variants, shadow, typography, line height, and radius. For example, extension CSS can
+use `color: var(--prosemirror-devtools-text)` and
+`border-color: var(--prosemirror-devtools-border)` without depending on the panel's scoped class
+names.
 
 When `performanceDetailThresholdMs` is omitted, the panel averages the fastest 20% of the 60
 visible dispatches and uses four times that value as the detail threshold, capped at one quarter of
@@ -377,10 +417,11 @@ batches, and invoke a small set of host-safe actions. They do not receive transa
 internals. `host` supplies the owning document, resolved theme, density, panel navigation, and an
 abort signal.
 
-React panels can use the adapter, which the React host composes into its existing tree:
+React extension panels can use the adapter, which mounts an isolated React root through the same
+DOM extension lifecycle:
 
 ```tsx
-import { createReactDevtoolsExtension } from "prosemirror-devtools";
+import { createReactDevtoolsExtension } from "prosemirror-devtools/react";
 
 const diagnosticsExtension = createReactDevtoolsExtension({
   id: "diagnostics",
@@ -666,20 +707,22 @@ The core entry also exports:
 
 ## Package exports
 
-| Export                                        | Contents                                                                                                                  |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `prosemirror-devtools`                        | All core APIs and types plus the React panel and React extension adapter                                                  |
-| `prosemirror-devtools/core`                   | Store, session, data/extension contracts, instrumentation, serialization, inspection, and snapshots without React imports |
-| `prosemirror-devtools/performance`            | Pure interval, attribution, grouping, summary, ranking, and timeline models                                               |
-| `prosemirror-devtools/react`                  | React panel, plugin factory, registration hook, and React extension adapter                                               |
-| `prosemirror-devtools/preact`                 | Preact panel, plugin factory, and registration hook                                                                       |
-| `prosemirror-devtools/solid`                  | Solid panel, plugin factory, and registration helper                                                                      |
-| `prosemirror-devtools/vue`                    | Vue panel, plugin factory, and registration composable                                                                    |
-| `prosemirror-devtools/svelte`                 | Svelte panel and plugin factory                                                                                           |
-| `prosemirror-devtools/angular`                | Angular panel, plugin factory, and injection helper                                                                       |
-| `prosemirror-devtools/<framework>/production` | Explicitly enabled version of the matching framework adapter                                                              |
-| `prosemirror-devtools/tiptap`                 | Tiptap 3 lifecycle and native dispatch-middleware adapter                                                                 |
-| `prosemirror-devtools/package.json`           | Package metadata                                                                                                          |
+| Export                                        | Contents                                                                                                               |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `prosemirror-devtools`                        | All core APIs and types plus the native Solid-rendered panel                                                           |
+| `prosemirror-devtools/core`                   | Store, session, data/extension contracts, instrumentation, serialization, inspection, and snapshots without UI imports |
+| `prosemirror-devtools/performance`            | Pure interval, attribution, grouping, summary, ranking, and timeline models                                            |
+| `prosemirror-devtools/styles`                 | Typed names for the public, inherited panel CSS custom properties                                                      |
+| `prosemirror-devtools/styles.css`             | Compiled panel stylesheet for explicit CSS-only consumption                                                            |
+| `prosemirror-devtools/react`                  | React panel wrapper, plugin factory, registration hook, and React extension adapter                                    |
+| `prosemirror-devtools/preact`                 | Preact panel, plugin factory, and registration hook                                                                    |
+| `prosemirror-devtools/solid`                  | Solid adapter panel, plugin factory, and registration helper                                                           |
+| `prosemirror-devtools/vue`                    | Vue panel, plugin factory, and registration composable                                                                 |
+| `prosemirror-devtools/svelte`                 | Svelte panel and plugin factory                                                                                        |
+| `prosemirror-devtools/angular`                | Angular panel, plugin factory, and injection helper                                                                    |
+| `prosemirror-devtools/<framework>/production` | Explicitly enabled version of the matching framework adapter                                                           |
+| `prosemirror-devtools/tiptap`                 | Tiptap 3 lifecycle and native dispatch-middleware adapter                                                              |
+| `prosemirror-devtools/package.json`           | Package metadata                                                                                                       |
 
 ## Development
 

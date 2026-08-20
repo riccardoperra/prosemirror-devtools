@@ -1,17 +1,22 @@
-import type { ReactElement } from "react";
+import type { JSX } from "solid-js";
+
+import { panelStyles } from "../../styles";
 
 import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../core/types";
 import { DispatchInspector } from "../dispatch/dispatch-inspector";
 
-export function HistoryDispatchInspector({
-  instance,
-  record,
-}: {
+export interface HistoryDispatchInspectorProps {
   instance: RegisteredProseMirrorInstance;
   record: TransactionRecord;
-}): ReactElement {
+}
+
+export function HistoryDispatchInspector(props: HistoryDispatchInspectorProps): JSX.Element {
   return (
-    <DispatchInspector.Root className="pm-scroll" instance={instance} record={record}>
+    <DispatchInspector.Root
+      className={panelStyles.pmScroll}
+      instance={props.instance}
+      record={props.record}
+    >
       <DispatchInspector.Header />
       <DispatchInspector.Metrics />
       <DispatchInspector.DetailsWorkspace>

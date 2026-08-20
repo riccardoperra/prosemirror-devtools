@@ -1,17 +1,11 @@
-import { act } from "react";
-import { createRoot, type Root } from "react-dom/client";
 import { NodeSelection, TextSelection } from "prosemirror-state";
+import { render } from "solid-js/web";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { RegisteredProseMirrorInstance } from "../src/core";
 import { StateView } from "../src/panel/features/state/state-view";
 import { JsonTree } from "../src/panel/json-tree";
 import { createTestState, createTestView } from "./helpers";
-
-const reactTestEnvironment = globalThis as typeof globalThis & {
-  IS_REACT_ACT_ENVIRONMENT?: boolean;
-};
-const originalActEnvironment = reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT;
 
 function createInstance(
   view: RegisteredProseMirrorInstance["view"],
@@ -29,7 +23,7 @@ function createInstance(
   };
 }
 
-async function renderStateView(text: string, from = 1, to = from) {
+function renderStateView(text: string, from = 1, to = from) {
   const initialState = createTestState(text);
   const state = initialState.apply(
     initialState.tr.setSelection(TextSelection.create(initialState.doc, from, to)),
@@ -37,33 +31,23 @@ async function renderStateView(text: string, from = 1, to = from) {
   const view = createTestView(state);
   const container = document.createElement("div");
   document.body.append(container);
-  const root = createRoot(container);
+  const dispose = render(() => <StateView instance={createInstance(view)} />, container);
 
-  reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
-  await act(async () => {
-    root.render(<StateView instance={createInstance(view)} />);
-  });
-
-  return { container, root, view };
+  return { container, dispose, view };
 }
 
-async function cleanup(root: Root, view: RegisteredProseMirrorInstance["view"]) {
-  await act(async () => root.unmount());
+function cleanup(dispose: () => void, view: RegisteredProseMirrorInstance["view"]): void {
+  dispose();
   view.destroy();
 }
 
 afterEach(() => {
-  if (originalActEnvironment === undefined) {
-    delete reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT;
-  } else {
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment;
-  }
   document.body.replaceChildren();
 });
 
 describe("State panel", () => {
-  it("keeps text previews on inline nodes and shows open/close ranges", async () => {
-    const { container, root, view } = await renderStateView("hello");
+  it("keeps text previews on inline nodes and shows open/close ranges", () => {
+    const { container, dispose, view } = renderStateView("hello");
 
     try {
       const docRow = container.querySelector<HTMLElement>('[data-node-type="doc"]');
@@ -80,20 +64,18 @@ describe("State panel", () => {
         textRow?.querySelector('[aria-label="Open position 1, close position 6"]'),
       ).not.toBeNull();
     } finally {
-      await cleanup(root, view);
+      cleanup(dispose, view);
     }
   });
 
-  it("switches between structure and JSON in the document pane", async () => {
-    const { container, root, view } = await renderStateView("hello");
+  it("switches between structure and JSON in the document pane", () => {
+    const { container, dispose, view } = renderStateView("hello");
 
     try {
       expect(container.querySelector('[data-node-type="doc"]')).not.toBeNull();
       expect(container.querySelector(".pm-document-json")).toBeNull();
 
-      await act(async () => {
-        container.querySelector<HTMLButtonElement>('[aria-label="Show document JSON"]')?.click();
-      });
+      container.querySelector<HTMLButtonElement>('[aria-label="Show document JSON"]')?.click();
 
       expect(container.querySelector('[data-node-type="doc"]')).toBeNull();
       expect(container.querySelector(".pm-document-json .pm-json")?.textContent).toContain('"doc"');
@@ -107,19 +89,15 @@ describe("State panel", () => {
         ),
       ).not.toContain("Document JSON");
 
-      await act(async () => {
-        container
-          .querySelector<HTMLButtonElement>('[aria-label="Show document structure"]')
-          ?.click();
-      });
+      container.querySelector<HTMLButtonElement>('[aria-label="Show document structure"]')?.click();
       expect(container.querySelector('[data-node-type="doc"]')).not.toBeNull();
     } finally {
-      await cleanup(root, view);
+      cleanup(dispose, view);
     }
   });
 
-  it("marks fully and partially selected node rows", async () => {
-    const { container, root, view } = await renderStateView("hello", 1, 6);
+  it("marks fully and partially selected node rows", () => {
+    const { container, dispose, view } = renderStateView("hello", 1, 6);
 
     try {
       expect(
@@ -134,12 +112,12 @@ describe("State panel", () => {
         container.querySelector('[data-node-type="text"]')?.getAttribute("data-editor-selection"),
       ).toBe("full");
     } finally {
-      await cleanup(root, view);
+      cleanup(dispose, view);
     }
   });
 
-  it("selects an entire node only from its dedicated action", async () => {
-    const { container, root, view } = await renderStateView("hello");
+  it("selects an entire node only from its dedicated action", () => {
+    const { container, dispose, view } = renderStateView("hello");
 
     try {
       const paragraphRow = container.querySelector<HTMLElement>('[data-node-type="paragraph"]');
@@ -148,34 +126,29 @@ describe("State panel", () => {
         '[aria-label="Select paragraph node in the editor"]',
       );
 
-      await act(async () => inspectButton?.click());
+      inspectButton?.click();
       expect(view.state.selection).toBeInstanceOf(TextSelection);
       expect(view.state.selection.empty).toBe(true);
 
-      await act(async () => selectButton?.click());
+      selectButton?.click();
       expect(view.state.selection).toBeInstanceOf(NodeSelection);
       expect(view.state.selection.from).toBe(0);
       expect(view.state.selection.to).toBe(7);
     } finally {
-      await cleanup(root, view);
+      cleanup(dispose, view);
     }
   });
 });
 
 describe("JsonTree", () => {
-  it("renders raw circular values without preprocessing", async () => {
+  it("renders raw circular values without preprocessing", () => {
     const value: { label: string; self?: unknown } = { label: "root" };
     value.self = value;
     const container = document.createElement("div");
     document.body.append(container);
-    const root = createRoot(container);
-
-    reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
-    await act(async () => {
-      root.render(<JsonTree defaultExpandedDepth={2} value={value} />);
-    });
+    const dispose = render(() => <JsonTree defaultExpandedDepth={2} value={value} />, container);
 
     expect(container.textContent).toContain("[Circular]");
-    await act(async () => root.unmount());
+    dispose();
   });
 });

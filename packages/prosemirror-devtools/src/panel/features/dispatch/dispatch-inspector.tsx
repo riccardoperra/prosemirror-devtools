@@ -1,5 +1,6 @@
-import { createContext, use, useCallback, useMemo } from "react";
-import type { ReactElement, ReactNode } from "react";
+import { createContext, useContext, Show, type Accessor, type JSX } from "solid-js";
+
+import { cx, panelStyles } from "../../styles";
 
 import { restoreDocument } from "../../../core/snapshots";
 import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../core/types";
@@ -10,20 +11,15 @@ import { AppliedTransactions, DispatchDocuments, DispatchMarkers } from "./dispa
 import { TransactionBadges } from "./transaction-badges";
 
 interface DispatchInspectorContextValue {
-  state: {
-    record: TransactionRecord;
-  };
-  actions: {
-    restore: () => void;
-  };
-  meta: {
-    markers: TransactionRecord["markers"];
-  };
+  record: Accessor<TransactionRecord>;
+  markers: Accessor<TransactionRecord["markers"]>;
+  restore: () => void;
 }
 
-const DispatchInspectorContext = createContext<DispatchInspectorContextValue | null>(null);
+const DispatchInspectorContext = createContext<DispatchInspectorContextValue>();
+
 function useDispatchInspector(): DispatchInspectorContextValue {
-  const context = use(DispatchInspectorContext);
+  const context = useContext(DispatchInspectorContext);
   if (!context) {
     throw new Error(
       "Dispatch inspector components must be rendered inside DispatchInspector.Root.",
@@ -32,140 +28,136 @@ function useDispatchInspector(): DispatchInspectorContextValue {
   return context;
 }
 
-function DispatchInspectorRoot({
-  instance,
-  record,
-  className,
-  children,
-}: {
+interface DispatchInspectorRootProps {
   instance: RegisteredProseMirrorInstance;
   record: TransactionRecord;
-  className?: string;
-  children: ReactNode;
-}): ReactElement {
-  const markers = record.markers;
-  const view = instance.view;
-  const restore = useCallback(
-    () => restoreDocument(view, record.docAfter, record.selectionAfter),
-    [view, record],
-  );
-  const value = useMemo<DispatchInspectorContextValue>(
-    () => ({
-      state: { record },
-      actions: { restore },
-      meta: { markers },
-    }),
-    [record, restore, markers],
-  );
+  className?: string | undefined;
+  children: JSX.Element;
+}
+
+function DispatchInspectorRoot(props: DispatchInspectorRootProps): JSX.Element {
+  const value: DispatchInspectorContextValue = {
+    record: () => props.record,
+    markers: () => props.record.markers,
+    restore: () =>
+      restoreDocument(props.instance.view, props.record.docAfter, props.record.selectionAfter),
+  };
 
   return (
-    <DispatchInspectorContext value={value}>
+    <DispatchInspectorContext.Provider value={value}>
       <section
-        aria-label={`Dispatch ${record.id} inspector`}
-        className={["pm-dispatch-inspector", className].filter(Boolean).join(" ")}
+        aria-label={`Dispatch ${props.record.id} inspector`}
+        class={cx(panelStyles.pmDispatchInspector, props.className)}
       >
-        {children}
+        {props.children}
       </section>
-    </DispatchInspectorContext>
+    </DispatchInspectorContext.Provider>
   );
 }
 
-function DispatchInspectorHeader(): ReactElement {
-  const {
-    state: { record },
-    actions: { restore },
-  } = useDispatchInspector();
+function DispatchInspectorHeader(): JSX.Element {
+  const inspector = useDispatchInspector();
 
   return (
-    <header className="pm-dispatch-header">
-      <div className="pm-dispatch-identity">
-        <span className="pm-eyebrow">Selected dispatch</span>
-        <strong>#{record.id}</strong>
+    <header class={panelStyles.pmDispatchHeader}>
+      <div class={panelStyles.pmDispatchIdentity}>
+        <span class={panelStyles.pmEyebrow}>Selected dispatch</span>
+        <strong>#{inspector.record().id}</strong>
         <time
-          className="pm-row-detail pm-history-timestamp"
-          dateTime={new Date(record.timestamp).toISOString()}
-          title={formatDateTime(record.timestamp)}
+          class={cx(panelStyles.pmRowDetail, panelStyles.pmHistoryTimestamp)}
+          dateTime={new Date(inspector.record().timestamp).toISOString()}
+          title={formatDateTime(inspector.record().timestamp)}
         >
-          {formatTime(record.timestamp)}
+          {formatTime(inspector.record().timestamp)}
         </time>
       </div>
-      <div className="pm-dispatch-badges">
-        <TransactionBadges record={record} />
+      <div class={panelStyles.pmDispatchBadges}>
+        <TransactionBadges record={inspector.record()} />
       </div>
-      <span className="pm-spacer" />
-      <button className="pm-button" onClick={restore} type="button">
+      <span class={panelStyles.pmSpacer} />
+      <button class={panelStyles.pmButton} onClick={inspector.restore} type="button">
         Restore
       </button>
     </header>
   );
 }
 
-function DispatchInspectorMetrics(): ReactElement {
-  const {
-    state: { record },
-    meta: { markers },
-  } = useDispatchInspector();
+function DispatchInspectorMetrics(): JSX.Element {
+  const inspector = useDispatchInspector();
 
   return (
     <CompactMetrics
-      label={`Dispatch ${record.id} timings`}
+      label={`Dispatch ${inspector.record().id} timings`}
       metrics={[
-        { label: "Full dispatch", value: formatMs(record.totalDuration) },
-        { label: "State apply", value: formatMs(record.applyDuration) },
-        { label: "View update", value: formatMs(record.viewUpdateDuration) },
-        { label: "Steps", value: String(record.stepCount) },
+        { label: "Full dispatch", value: formatMs(inspector.record().totalDuration) },
+        { label: "State apply", value: formatMs(inspector.record().applyDuration) },
+        { label: "View update", value: formatMs(inspector.record().viewUpdateDuration) },
+        { label: "Steps", value: String(inspector.record().stepCount) },
         {
           label: "Applied transactions",
-          value: String(record.appliedTransactionCount ?? "?"),
+          value: String(inspector.record().appliedTransactionCount ?? "?"),
         },
-        { label: "Markers", value: String(markers.length) },
+        { label: "Markers", value: String(inspector.markers().length) },
       ]}
     />
   );
 }
 
-function DetailsWorkspace({ children }: { children: ReactNode }): ReactElement {
+interface DetailsWorkspaceProps {
+  children: JSX.Element;
+}
+
+function DetailsWorkspace(props: DetailsWorkspaceProps): JSX.Element {
   return (
-    <div className="pm-dispatch-workspace" data-layout="details">
-      {children}
+    <div class={panelStyles.pmDispatchWorkspace} data-layout="details">
+      {props.children}
     </div>
   );
 }
 
-function SplitWorkspace({ children }: { children: ReactNode }): ReactElement {
+interface SplitWorkspaceProps {
+  children: JSX.Element;
+}
+
+function SplitWorkspace(props: SplitWorkspaceProps): JSX.Element {
   return (
-    <div className="pm-dispatch-workspace" data-layout="split">
-      {children}
+    <div class={panelStyles.pmDispatchWorkspace} data-layout="split">
+      {props.children}
     </div>
   );
 }
 
-function PluginPane({ children }: { children: ReactNode }): ReactElement {
+interface PluginPaneProps {
+  children: JSX.Element;
+}
+
+function PluginPane(props: PluginPaneProps): JSX.Element {
   return (
-    <section aria-label="Dispatch cost" className="pm-dispatch-plugin-pane">
-      {children}
+    <section aria-label="Dispatch cost" class={panelStyles.pmDispatchPluginPane}>
+      {props.children}
     </section>
   );
 }
 
-function TransactionDetails(): ReactElement {
-  const {
-    state: { record },
-    meta: { markers },
-  } = useDispatchInspector();
+function TransactionDetails(): JSX.Element {
+  const inspector = useDispatchInspector();
 
   return (
-    <aside aria-label="Transaction details" className="pm-dispatch-detail-pane">
-      <DispatchMarkers markers={markers} />
-      <div className="pm-workspace-heading">
-        <span className="pm-section-title">Transactions</span>
-        <Badge>{record.appliedTransactionCount ?? record.transactions.length}</Badge>
-        <span className="pm-spacer" />
-        <span className="pm-row-detail">root + appended</span>
+    <aside aria-label="Transaction details" class={panelStyles.pmDispatchDetailPane}>
+      <DispatchMarkers markers={inspector.markers()} />
+      <div class={panelStyles.pmWorkspaceHeading}>
+        <span class={panelStyles.pmSectionTitle}>Transactions</span>
+        <Badge>
+          {inspector.record().appliedTransactionCount ?? inspector.record().transactions.length}
+        </Badge>
+        <span class={panelStyles.pmSpacer} />
+        <span class={panelStyles.pmRowDetail}>root + appended</span>
       </div>
-      {record.error ? <div className="pm-warning">{record.error}</div> : null}
-      <AppliedTransactions record={record} />
-      <DispatchDocuments record={record} />
+      <Show when={inspector.record().error}>
+        {(error) => <div class={panelStyles.pmWarning}>{error()}</div>}
+      </Show>
+      <AppliedTransactions record={inspector.record()} />
+      <DispatchDocuments record={inspector.record()} />
     </aside>
   );
 }

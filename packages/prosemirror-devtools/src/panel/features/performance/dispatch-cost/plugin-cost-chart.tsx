@@ -3,10 +3,11 @@ import { defineChart } from "@tanstack/charts/scene";
 import { text as textMark } from "@tanstack/charts/text";
 import { tooltip } from "@tanstack/charts/tooltip";
 import { portal } from "@tanstack/charts/tooltip/portal";
-import { Chart } from "@tanstack/react-charts";
+import { Chart } from "@tanstack/solid-charts";
 import { scaleBand, scaleLinear } from "d3-scale";
-import { useMemo } from "react";
-import type { ReactElement } from "react";
+import { createMemo, type JSX } from "solid-js";
+
+import { cx, panelStyles } from "../../../styles";
 
 import type { PluginTimingGroup } from "../../../../performance/group-plugin-timings";
 
@@ -20,15 +21,15 @@ type PluginBarDatum = {
   fill: string;
 };
 
-export function PluginCostChart({
-  groups,
-}: {
+export interface PluginCostChartProps {
   groups: readonly PluginTimingGroup[];
-}): ReactElement {
-  const definition = useMemo(() => {
-    const maximum = Math.max(...groups.map((group) => group.duration), 0.001);
-    const labels = new Map(groups.map((group) => [group.pluginKey, group.pluginLabel]));
-    const rows: PluginBarDatum[] = groups.map((group, index) => ({
+}
+
+export function PluginCostChart(props: PluginCostChartProps): JSX.Element {
+  const definition = createMemo(() => {
+    const maximum = Math.max(...props.groups.map((group) => group.duration), 0.001);
+    const labels = new Map(props.groups.map((group) => [group.pluginKey, group.pluginLabel]));
+    const rows: PluginBarDatum[] = props.groups.map((group, index) => ({
       key: group.pluginKey,
       pluginKey: group.pluginKey,
       pluginLabel: group.pluginLabel,
@@ -98,15 +99,15 @@ export function PluginCostChart({
         },
       },
     });
-  }, [groups]);
+  });
 
   return (
-    <div className="pm-tanstack-chart pm-plugin-cost-chart">
+    <div class={cx(panelStyles.pmTanstackChart, panelStyles.pmPluginCostChart)}>
       <Chart
         ariaDescription="Plugins sorted from the largest full synchronous cost to the smallest."
         ariaLabel="Plugin cost ranking"
-        definition={definition}
-        height={Math.max(112, groups.length * 28 + 24)}
+        definition={definition()}
+        height={Math.max(112, props.groups.length * 28 + 24)}
         initialWidth={520}
       />
     </div>

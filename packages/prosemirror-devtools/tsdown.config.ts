@@ -1,15 +1,18 @@
 import { defineConfig } from "tsdown";
+import solid from "unplugin-solid/rolldown";
 
 const isWatchMode = process.argv.includes("--watch");
 
 export default defineConfig({
+  plugins: [solid()],
   entry: {
     index: "src/index.ts",
     core: "src/core/index.ts",
     performance: "src/performance/index.ts",
+    "styles/index": "src/styles/index.ts",
     // The extension is usable without the panel. Keeping it as an internal
-    // entry lets production no-op adapters tree-shake the live React renderer.
-    "internal/react-extension": "src/panel/react-extension.tsx",
+    // entry lets production no-op adapters tree-shake React extension support.
+    "internal/react-extension": "src/react/extension.ts",
     "react/index": "src/react/index.ts",
     "react/production/index": "src/react/production/index.ts",
     "preact/index": "src/preact/index.ts",
@@ -27,21 +30,29 @@ export default defineConfig({
   format: "esm",
   dts: true,
   sourcemap: true,
+  css: {
+    fileName: "prosemirror-devtools.css",
+    inject: true,
+    modules: {
+      generateScopedName: "[local]_[hash]",
+      localsConvention: "camelCaseOnly",
+    },
+    splitting: false,
+    target: false,
+  },
   clean: !isWatchMode,
   // Preserve adapter NODE_ENV branches for the consuming application to fold.
   platform: "neutral",
   deps: {
-    // Keep the chart renderer in the lazy performance chunk. In particular,
-    // this prevents a consumer bundler from resolving react-charts against a
-    // second React installation when this package is linked in a workspace.
+    // Keep the chart renderer in the lazy performance chunk.
     alwaysBundle: [
       /^@tanstack\/charts(?:\/|$)/,
-      /^@tanstack\/react-charts(?:\/|$)/,
+      /^@tanstack\/solid-charts(?:\/|$)/,
       /^d3-scale(?:\/|$)/,
     ],
     onlyBundle: [
       "@tanstack/charts",
-      "@tanstack/react-charts",
+      "@tanstack/solid-charts",
       "d3-array",
       "d3-color",
       "d3-format",

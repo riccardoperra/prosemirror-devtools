@@ -1,5 +1,5 @@
-import { createElement } from "react";
-import { createRoot, type Root } from "react-dom/client";
+import { createComponent } from "solid-js";
+import { render } from "solid-js/web";
 
 import { ProseMirrorDevtoolsPanel } from "../panel/panel";
 import { resolveProseMirrorDevtoolsPanelProps } from "./panel-props";
@@ -17,31 +17,33 @@ function normalizeMountProps(props: unknown): ProseMirrorDevtoolsAdapterPanelPro
 /**
  * Framework-independent mount contract consumed by `@tanstack/devtools-utils`.
  *
- * The renderer is intentionally kept behind this class so the upcoming Solid
- * rewrite does not change any framework adapter.
+ * The Solid renderer stays behind this class so every framework adapter shares
+ * the same imperative mount contract.
  */
 export class ProseMirrorDevtoolsCore {
   readonly #initialProps: ProseMirrorDevtoolsAdapterPanelProps;
-  #root: Root | null = null;
+  #dispose: (() => void) | null = null;
 
   constructor(initialProps: ProseMirrorDevtoolsAdapterPanelProps = {}) {
     this.#initialProps = initialProps;
   }
 
   mount(element: HTMLElement, mountProps?: unknown): void {
-    if (this.#root) throw new Error("ProseMirror Devtools is already mounted.");
+    if (this.#dispose) throw new Error("ProseMirror Devtools is already mounted.");
 
     const panelProps = resolveProseMirrorDevtoolsPanelProps(
       element,
       this.#initialProps,
       normalizeMountProps(mountProps),
     );
-    this.#root = createRoot(element);
-    this.#root.render(panelProps ? createElement(ProseMirrorDevtoolsPanel, panelProps) : null);
+    this.#dispose = render(
+      () => (panelProps ? createComponent(ProseMirrorDevtoolsPanel, panelProps) : null),
+      element,
+    );
   }
 
   unmount(): void {
-    this.#root?.unmount();
-    this.#root = null;
+    this.#dispose?.();
+    this.#dispose = null;
   }
 }

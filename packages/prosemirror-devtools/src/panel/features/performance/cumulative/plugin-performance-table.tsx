@@ -1,24 +1,26 @@
-import type { ReactElement } from "react";
+import { createMemo, For, Show, type JSX } from "solid-js";
+
+import { cx, panelStyles } from "../../../styles";
 
 import type { PluginTimingSummary } from "../../../../core/types";
 import { formatMs } from "../../../formatters";
 import { hookLabel } from "../plugin-timing-formatters";
 
-export function PluginPerformanceTable({
-  summaries,
-}: {
+export interface PluginPerformanceTableProps {
   summaries: readonly PluginTimingSummary[];
-}): ReactElement {
-  const max = Math.max(...summaries.map((item) => item.total), 0.001);
+}
+
+export function PluginPerformanceTable(props: PluginPerformanceTableProps): JSX.Element {
+  const maximum = createMemo(() => Math.max(...props.summaries.map((item) => item.total), 0.001));
 
   return (
-    <details className="pm-chart-wrap pm-cumulative-hooks">
-      <summary className="pm-chart-header">
-        <span className="pm-section-title">Cumulative hook time</span>
-        <span className="pm-spacer" />
-        <span className="pm-row-detail">{summaries.length} hooks · since clear</span>
+    <details class={cx(panelStyles.pmChartWrap, panelStyles.pmCumulativeHooks)}>
+      <summary class={panelStyles.pmChartHeader}>
+        <span class={panelStyles.pmSectionTitle}>Cumulative hook time</span>
+        <span class={panelStyles.pmSpacer} />
+        <span class={panelStyles.pmRowDetail}>{props.summaries.length} hooks · since clear</span>
       </summary>
-      <table className="pm-table">
+      <table class={panelStyles.pmTable}>
         <thead>
           <tr>
             <th>Plugin / hook</th>
@@ -29,29 +31,36 @@ export function PluginPerformanceTable({
           </tr>
         </thead>
         <tbody>
-          {summaries.length === 0 ? (
-            <tr>
-              <td className="pm-muted" colSpan={5}>
-                Wrap plugins with instrumentProseMirrorPlugins to attribute their work.
-              </td>
-            </tr>
-          ) : (
-            summaries.slice(0, 25).map((item) => (
-              <tr key={`${item.pluginKey}-${item.hook}`}>
-                <td>
-                  <span className="pm-row-title">{item.pluginLabel}</span>
-                  <div className="pm-row-detail pm-mono">{hookLabel(item.hook)}</div>
-                  <div className="pm-meter">
-                    <span style={{ width: `${(item.total / max) * 100}%` }} />
-                  </div>
+          <Show
+            when={props.summaries.length > 0}
+            fallback={
+              <tr>
+                <td class={panelStyles.pmMuted} colSpan={5}>
+                  Wrap plugins with instrumentProseMirrorPlugins to attribute their work.
                 </td>
-                <td className="pm-mono">{item.count}</td>
-                <td className="pm-mono">{formatMs(item.average)}</td>
-                <td className="pm-mono">{formatMs(item.max)}</td>
-                <td className="pm-mono">{formatMs(item.total)}</td>
               </tr>
-            ))
-          )}
+            }
+          >
+            <For each={props.summaries.slice(0, 25)}>
+              {(item) => (
+                <tr>
+                  <td>
+                    <span class={panelStyles.pmRowTitle}>{item.pluginLabel}</span>
+                    <div class={cx(panelStyles.pmRowDetail, panelStyles.pmMono)}>
+                      {hookLabel(item.hook)}
+                    </div>
+                    <div class={panelStyles.pmMeter}>
+                      <span style={{ width: `${(item.total / maximum()) * 100}%` }} />
+                    </div>
+                  </td>
+                  <td class={panelStyles.pmMono}>{item.count}</td>
+                  <td class={panelStyles.pmMono}>{formatMs(item.average)}</td>
+                  <td class={panelStyles.pmMono}>{formatMs(item.max)}</td>
+                  <td class={panelStyles.pmMono}>{formatMs(item.total)}</td>
+                </tr>
+              )}
+            </For>
+          </Show>
         </tbody>
       </table>
     </details>

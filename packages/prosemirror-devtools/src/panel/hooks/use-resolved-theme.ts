@@ -1,19 +1,24 @@
-import { useEffect, useState } from "react";
+import { createEffect, createMemo, createSignal, onCleanup, type Accessor } from "solid-js";
 
 import type { DevtoolsTheme } from "../../core/types";
 
-export function useResolvedTheme(theme: DevtoolsTheme): "light" | "dark" {
-  const [prefersDark, setPrefersDark] = useState(() =>
-    typeof matchMedia === "function" ? matchMedia("(prefers-color-scheme: dark)").matches : false,
-  );
+export function useResolvedTheme(
+  theme: Accessor<DevtoolsTheme>,
+  ownerDocument: Accessor<Document>,
+): Accessor<"light" | "dark"> {
+  const [prefersDark, setPrefersDark] = createSignal(false);
 
-  useEffect(() => {
-    if (typeof matchMedia !== "function") return;
+  createEffect(() => {
+    const matchMedia = ownerDocument().defaultView?.matchMedia;
+    if (!matchMedia) return;
     const query = matchMedia("(prefers-color-scheme: dark)");
     const update = () => setPrefersDark(query.matches);
+    update();
     query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
+    onCleanup(() => query.removeEventListener("change", update));
+  });
 
-  return theme === "system" ? (prefersDark ? "dark" : "light") : theme;
+  return createMemo(() =>
+    theme() === "system" ? (prefersDark() ? "dark" : "light") : (theme() as "light" | "dark"),
+  );
 }

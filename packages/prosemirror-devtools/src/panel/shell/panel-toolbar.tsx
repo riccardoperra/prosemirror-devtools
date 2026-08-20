@@ -1,51 +1,54 @@
-import type { ReactElement } from "react";
+import { For, Show, type JSX } from "solid-js";
+
+import { panelStyles } from "../styles";
 
 import { usePanelAppearance, usePanelDataAccess } from "../panel-provider";
 import { useActiveInstanceId, useInstanceDescriptors } from "../store/selectors";
 
-export function PanelToolbar({ embedded }: { embedded: boolean }): ReactElement {
+export interface PanelToolbarProps {
+  embedded: boolean;
+}
+
+export function PanelToolbar(props: PanelToolbarProps): JSX.Element {
   const { actions } = usePanelDataAccess();
   const activeInstanceId = useActiveInstanceId();
   const instances = useInstanceDescriptors();
-  const { themeChoice, resolvedTheme, cycleTheme } = usePanelAppearance();
+  const appearance = usePanelAppearance();
 
   return (
-    <div className="pm-toolbar">
-      {embedded ? null : (
-        <div className="pm-brand">
-          <span className="pm-brand-mark">PM</span>
-          <span className="pm-brand-copy">ProseMirror</span>
+    <div class={panelStyles.pmToolbar}>
+      <Show when={!props.embedded}>
+        <div class={panelStyles.pmBrand}>
+          <span class={panelStyles.pmBrandMark}>PM</span>
+          <span class={panelStyles.pmBrandCopy}>ProseMirror</span>
         </div>
-      )}
-      {activeInstanceId ? <span className="pm-live" title="Instance connected" /> : null}
+      </Show>
+      <Show when={activeInstanceId()}>
+        <span class={panelStyles.pmLive} title="Instance connected" />
+      </Show>
       <select
         aria-label="Active ProseMirror instance"
-        className="pm-instance-select"
-        disabled={instances.length === 0}
-        onChange={(event) => actions.setActiveInstance(event.target.value)}
-        value={activeInstanceId ?? ""}
+        class={panelStyles.pmInstanceSelect}
+        disabled={instances().length === 0}
+        onChange={(event) => actions.setActiveInstance(event.currentTarget.value)}
+        value={activeInstanceId() ?? ""}
       >
-        {instances.length === 0 ? <option value="">No instances</option> : null}
-        {instances.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.label}
-          </option>
-        ))}
+        <Show when={instances().length > 0} fallback={<option value="">No instances</option>}>
+          <For each={instances()}>{(item) => <option value={item.id}>{item.label}</option>}</For>
+        </Show>
       </select>
-      {embedded ? null : (
-        <>
-          <span className="pm-spacer" />
-          <button
-            aria-label="Cycle color theme"
-            className="pm-icon-button"
-            onClick={cycleTheme}
-            title={`Theme: ${themeChoice}`}
-            type="button"
-          >
-            {resolvedTheme === "dark" ? "☾" : "☼"}
-          </button>
-        </>
-      )}
+      <Show when={!props.embedded}>
+        <span class={panelStyles.pmSpacer} />
+        <button
+          aria-label="Cycle color theme"
+          class={panelStyles.pmIconButton}
+          onClick={appearance.cycleTheme}
+          title={`Theme: ${appearance.themeChoice()}`}
+          type="button"
+        >
+          {appearance.resolvedTheme() === "dark" ? "☾" : "☼"}
+        </button>
+      </Show>
     </div>
   );
 }

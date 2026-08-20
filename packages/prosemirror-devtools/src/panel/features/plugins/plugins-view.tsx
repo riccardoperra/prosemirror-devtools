@@ -1,5 +1,6 @@
-import { useMemo } from "react";
-import type { ReactElement } from "react";
+import { createMemo, For, Show, type JSX } from "solid-js";
+
+import { cx, panelStyles } from "../../styles";
 
 import { inspectPlugins } from "../../../core/serialize";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
@@ -7,62 +8,67 @@ import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
 import { usePluginSelection } from "./use-plugin-selection";
 
-export function PluginsView({
-  instance,
-}: {
+export interface PluginsViewProps {
   instance: RegisteredProseMirrorInstance;
-}): ReactElement {
-  const plugins = useMemo(() => inspectPlugins(instance.view.state), [instance.view.state]);
+}
+
+export function PluginsView(props: PluginsViewProps): JSX.Element {
+  const plugins = createMemo(() => inspectPlugins(props.instance.view.state));
   const { query, setQuery, filtered, selected, select } = usePluginSelection(plugins);
 
   return (
-    <div className="pm-split">
-      <div className="pm-pane">
-        <div className="pm-pane-header">
+    <div class={panelStyles.pmSplit}>
+      <div class={panelStyles.pmPane}>
+        <div class={panelStyles.pmPaneHeader}>
           <input
             aria-label="Search plugins"
-            className="pm-search"
-            onChange={(event) => setQuery(event.target.value)}
+            class={panelStyles.pmSearch}
+            onInput={(event) => setQuery(event.currentTarget.value)}
             placeholder="Filter plugins…"
-            value={query}
+            value={query()}
           />
         </div>
-        <ul className="pm-list">
-          {filtered.map((plugin) => (
-            <li key={plugin.key}>
-              <button
-                aria-selected={selected?.key === plugin.key}
-                className="pm-list-row"
-                onClick={() => select(plugin.key)}
-                type="button"
-              >
-                <span className="pm-row-main">
-                  <span className="pm-row-title pm-mono">{plugin.key}</span>
-                  <span className="pm-row-detail">
-                    {plugin.props.length} props · index {plugin.index}
+        <ul class={panelStyles.pmList}>
+          <For each={filtered()}>
+            {(plugin) => (
+              <li>
+                <button
+                  aria-selected={selected()?.key === plugin.key}
+                  class={panelStyles.pmListRow}
+                  onClick={() => select(plugin.key)}
+                  type="button"
+                >
+                  <span class={panelStyles.pmRowMain}>
+                    <span class={cx(panelStyles.pmRowTitle, panelStyles.pmMono)}>{plugin.key}</span>
+                    <span class={panelStyles.pmRowDetail}>
+                      {plugin.props.length} props · index {plugin.index}
+                    </span>
                   </span>
-                </span>
-                <Badge tone={plugin.hasState ? "green" : undefined}>
-                  {plugin.hasState ? "state" : "stateless"}
-                </Badge>
-              </button>
-            </li>
-          ))}
+                  <Badge tone={plugin.hasState ? "green" : undefined}>
+                    {plugin.hasState ? "state" : "stateless"}
+                  </Badge>
+                </button>
+              </li>
+            )}
+          </For>
         </ul>
       </div>
-      <div className="pm-pane">
-        {selected ? (
-          <>
-            <div className="pm-detail-heading">
-              <span className="pm-section-title">{selected.key}</span>
-              <span className="pm-spacer" />
-              <Badge>{selected.props.join(", ") || "no props"}</Badge>
-            </div>
-            <JsonTree value={selected.state} />
-          </>
-        ) : (
-          <div className="pm-empty">No matching plugins.</div>
-        )}
+      <div class={panelStyles.pmPane}>
+        <Show
+          when={selected()}
+          fallback={<div class={panelStyles.pmEmpty}>No matching plugins.</div>}
+        >
+          {(plugin) => (
+            <>
+              <div class={panelStyles.pmDetailHeading}>
+                <span class={panelStyles.pmSectionTitle}>{plugin().key}</span>
+                <span class={panelStyles.pmSpacer} />
+                <Badge>{plugin().props.join(", ") || "no props"}</Badge>
+              </div>
+              <JsonTree value={plugin().state} />
+            </>
+          )}
+        </Show>
       </div>
     </div>
   );
