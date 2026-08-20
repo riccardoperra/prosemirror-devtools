@@ -3,7 +3,13 @@ import { defineConfig } from "tsdown";
 const isWatchMode = process.argv.includes("--watch");
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/core.ts", "src/performance.ts", "src/tanstack.tsx", "src/tiptap.ts"],
+  entry: {
+    index: "src/index.ts",
+    core: "src/core/index.ts",
+    performance: "src/performance/index.ts",
+    tanstack: "src/tanstack/index.tsx",
+    tiptap: "src/tiptap/index.ts",
+  },
   format: "esm",
   dts: true,
   sourcemap: true,

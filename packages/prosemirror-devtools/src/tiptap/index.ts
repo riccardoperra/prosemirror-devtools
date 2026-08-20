@@ -3,9 +3,9 @@ export {
   detachTiptapDevtools,
   dispatchTiptapTransaction,
   setupTiptapDevtools,
-} from "./tiptap/lifecycle";
+} from "./lifecycle";
 export type {
   TiptapDevtoolsEditor,
   TiptapDevtoolsOptions,
   TiptapDispatchTransactionProps,
-} from "./tiptap/lifecycle";
+} from "./lifecycle";
