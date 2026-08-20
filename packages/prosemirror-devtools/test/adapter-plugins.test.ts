@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createProseMirrorDevtoolsPlugin as createAngularPlugin } from "../src/angular/plugin";
-import { createProseMirrorDevtoolsPlugin as createPreactPlugin } from "../src/preact/plugin";
-import { createProseMirrorDevtoolsPlugin as createReactPlugin } from "../src/react/plugin";
-import { createProseMirrorDevtoolsPlugin as createSolidPlugin } from "../src/solid/plugin";
-import { createProseMirrorDevtoolsPlugin as createSveltePlugin } from "../src/svelte/plugin";
-import { createProseMirrorDevtoolsPlugin as createVuePlugin } from "../src/vue/plugin";
+import { createProseMirrorDevtoolsPlugin as createAngularPlugin } from "../src/adapters/angular/plugin";
+import { createProseMirrorDevtoolsPlugin as createPreactPlugin } from "../src/adapters/preact/plugin";
+import { createProseMirrorDevtoolsPlugin as createReactPlugin } from "../src/adapters/react/plugin";
+import { createProseMirrorDevtoolsPlugin as createSolidPlugin } from "../src/adapters/solid/plugin";
+import { createProseMirrorDevtoolsPlugin as createSveltePlugin } from "../src/adapters/svelte/plugin";
+import { createProseMirrorDevtoolsPlugin as createVuePlugin } from "../src/adapters/vue/plugin";
 
 describe("framework plugin adapters", () => {
   it("creates React, Preact, Solid, and Angular plugins with shared metadata", () => {

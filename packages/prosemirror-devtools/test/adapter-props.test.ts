@@ -7,7 +7,7 @@ import {
   resolveProseMirrorDevtoolsPluginMetadata,
 } from "../src/adapters/panel-props";
 import { ProseMirrorDevtoolsCore } from "../src/adapters/core";
-import { resolveProseMirrorDevtoolsSolidProps } from "../src/solid/panel";
+import { resolveProseMirrorDevtoolsSolidProps } from "../src/adapters/solid/panel";
 
 describe("adapter panel props", () => {
   it("mounts and disposes the shared Solid panel core", () => {

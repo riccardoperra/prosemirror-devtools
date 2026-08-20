@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProseMirrorDevtoolsPanel } from "../src";
 import { createProseMirrorDevtoolsStore, type DevtoolsExtension } from "../src/core";
-import { createReactDevtoolsExtension } from "../src/react/extension";
+import { createReactDevtoolsExtension } from "../src/adapters/react/extension";
 import { appendTextTransaction, createTestState, createTestView } from "./helpers";
 
 const reactTestEnvironment = globalThis as typeof globalThis & {
