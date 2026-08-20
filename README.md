@@ -18,7 +18,8 @@ plugin timing, snapshots, and a panel that plugs into TanStack Devtools.
 - Local snapshots that can be saved, restored, imported, and exported as JSON.
 - A compact Solid-rendered panel with system, light, and dark themes.
 - CSS Module styling with public, inherited theme variables for application and extension panels.
-- A TanStack Devtools adapter and a private Vite playground with a live editor.
+- TanStack Devtools adapters and private Vite playgrounds for React, Preact, Solid, Vue, Svelte,
+  and Angular.
 
 ## Repository architecture
 
@@ -29,6 +30,8 @@ plugin timing, snapshots, and a panel that plugs into TanStack Devtools.
 | [`packages/prosemirror-devtools/src/core/dispatch`](./packages/prosemirror-devtools/src/core/dispatch)   | Default and custom dispatch observation                                                   |
 | [`packages/prosemirror-devtools/src/panel/features`](./packages/prosemirror-devtools/src/panel/features) | Feature-owned Solid views and framework-neutral models                                    |
 | [`packages/tanstack-devtools-demo`](./packages/tanstack-devtools-demo)                                   | Private Vite playground with a registered editor and optional artificial plugin latency   |
+| [`packages/{preact,solid,vue,svelte,angular}-demo`](./packages)                                          | Equivalent native-framework adapter playgrounds                                           |
+| [`packages/devtools-demo-kit`](./packages/devtools-demo-kit)                                             | Framework-neutral editor and extension fixtures shared by the adapter demos               |
 | [`.changeset`](./.changeset)                                                                             | Version and release notes for the public package                                          |
 
 The runtime flow is deliberately explicit:
@@ -55,9 +58,10 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` starts the TanStack Devtools demo. Edit the playground document and open the launcher in
+`pnpm dev` starts all TanStack Devtools demos. Edit a playground document and open its launcher in
 the lower-right corner. The **slow apply** switch adds artificial plugin latency so the bar chart
-and hook aggregates are easy to inspect.
+and hook aggregates are easy to inspect. Run one package by filtering its workspace name, for
+example `pnpm --filter @prosemirror-devtools/vue-demo dev`.
 
 ## Library quick start
 

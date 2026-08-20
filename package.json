@@ -16,7 +16,7 @@
     "check": "pnpm build && pnpm test",
     "changeset": "changeset",
     "changeset:status": "changeset status --since=main",
-    "dev": "pnpm --filter prosemirror-devtools run build && pnpm --parallel --filter prosemirror-devtools --filter @prosemirror-devtools/tanstack-demo run dev",
+    "dev": "pnpm --filter prosemirror-devtools run build && pnpm --parallel --filter prosemirror-devtools --filter './packages/*-demo' run dev",
     "format": "oxfmt .",
     "format:check": "oxfmt . --check",
     "lint": "oxlint .",
