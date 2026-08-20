@@ -150,7 +150,7 @@ The optional adapter creates a plugin that inherits the TanStack shell theme:
 
 ```tsx
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/tanstack";
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/react";
 
 const prosemirrorPlugin = createProseMirrorDevtoolsPlugin({
   defaultOpen: false,
