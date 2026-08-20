@@ -313,7 +313,8 @@ export function Diagnostics() {
 ```
 
 `theme` accepts `"system"`, `"light"`, or `"dark"`. The panel injects its own scoped styles when
-mounted and provides an in-panel theme cycle plus compact/comfortable density control. Pass a
+mounted and provides an in-panel theme cycle in standalone use. TanStack-hosted panels inherit the
+host theme and omit duplicate appearance controls. Pass a
 `styleTarget` document when rendering into a popup or picture-in-picture document; the TanStack
 adapter does this automatically.
 

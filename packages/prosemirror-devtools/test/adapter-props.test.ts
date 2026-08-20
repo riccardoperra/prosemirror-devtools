@@ -46,6 +46,7 @@ describe("adapter panel props", () => {
       }),
     ).toEqual({
       defaultPanel: "performance",
+      embedded: true,
       styleTarget: foreignDocument,
       theme: "light",
     });

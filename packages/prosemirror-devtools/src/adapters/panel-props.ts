@@ -96,6 +96,7 @@ export function resolveProseMirrorDevtoolsPanelProps(
   if (!resolved.devtoolsOpen) return null;
 
   const result: ProseMirrorDevtoolsPanelProps = {
+    embedded: true,
     styleTarget: element.ownerDocument,
     theme: resolved.theme,
   };

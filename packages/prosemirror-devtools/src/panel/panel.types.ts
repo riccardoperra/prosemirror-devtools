@@ -36,4 +36,6 @@ export interface ProseMirrorDevtoolsPanelProps {
   style?: CSSProperties;
   /** Document that receives the panel stylesheet. Defaults to the current document. */
   styleTarget?: Document;
+  /** @internal Whether a devtools host already provides the surrounding chrome. */
+  embedded?: boolean;
 }
