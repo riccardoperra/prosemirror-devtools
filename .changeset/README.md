@@ -7,4 +7,5 @@ pnpm changeset
 ```
 
 Choose the affected package, select the appropriate semantic version bump, and
-write a concise release note. The private TanStack demo is excluded from releases.
+write a concise release note. The framework examples and shared demo kit are private and excluded
+from releases.
