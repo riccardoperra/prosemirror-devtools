@@ -1,13 +1,14 @@
-# Angular adapter demo
+# Angular example
 
-Runs the ProseMirror DevTools Angular adapter inside TanStack Angular Devtools.
+A private Angular CLI example showing `prosemirror-devtools/angular` inside TanStack Angular
+Devtools.
 
-The app uses the Angular CLI application builder, Angular's default zoneless change detection,
-and signal-based state, inputs, and view queries.
-
-The local CLI cache and dependency prebundling are disabled so `ng serve` keeps generated assets
-inside the active Git worktree.
+Turn on **slow apply**, edit the document, then open the launcher in the lower-right corner to
+inspect state, transactions, plugins, and performance.
 
 ```sh
 pnpm --filter @prosemirror-devtools/angular-demo dev
 ```
+
+See [`src/app/app.ts`](./src/app/app.ts) for the TanStack plugin and
+[`src/app/prosemirror-editor.ts`](./src/app/prosemirror-editor.ts) for the editor lifecycle.
