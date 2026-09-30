@@ -19,12 +19,14 @@ export function PanelToolbar(props: PanelToolbarProps): JSX.Element {
     <div class={panelStyles.pmToolbar}>
       <Show when={!props.embedded}>
         <div class={panelStyles.pmBrand}>
-          <span class={panelStyles.pmBrandMark}>PM</span>
+          <span aria-hidden="true" class={panelStyles.pmBrandMark}>
+            PM
+          </span>
           <span class={panelStyles.pmBrandCopy}>ProseMirror</span>
         </div>
       </Show>
       <Show when={activeInstanceId()}>
-        <span class={panelStyles.pmLive} title="Instance connected" />
+        <span aria-hidden="true" class={panelStyles.pmLive} title="Instance connected" />
       </Show>
       <select
         aria-label="Active ProseMirror instance"

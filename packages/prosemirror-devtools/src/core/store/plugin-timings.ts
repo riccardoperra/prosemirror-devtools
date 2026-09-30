@@ -29,6 +29,7 @@ export function recordPluginTiming(
     max: 0,
     last: 0,
   };
+  aggregate.pluginLabel = pluginLabel;
   aggregate.count += 1;
   aggregate.total += duration;
   aggregate.max = Math.max(aggregate.max, duration);

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createDiagnosticDemoPlugin } from "@prosemirror-devtools/demo-kit";
 import { baseKeymap, setBlockType, toggleMark, wrapIn } from "prosemirror-commands";
 import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
@@ -9,8 +10,10 @@ import { EditorState, Plugin, PluginKey, type Command, type Transaction } from "
 import { EditorView } from "prosemirror-view";
 import {
   attachProseMirrorDevtools,
+  createProseMirrorDevtoolsDiagnostics,
   instrumentProseMirrorPlugins,
   prosemirrorDevtoolsStore,
+  type DevtoolsDiagnosticsController,
 } from "prosemirror-devtools";
 
 const editorSchema = new Schema({
@@ -131,6 +134,7 @@ function createPlugins(
   instanceId: string,
   latencyEnabled: { current: boolean },
   onUpdate: (stats: EditorStats) => void,
+  diagnostics: DevtoolsDiagnosticsController,
 ) {
   const slowPlugin = new Plugin<{
     enabled: boolean;
@@ -189,11 +193,13 @@ function createPlugins(
     keymap(baseKeymap),
     slowPlugin,
     statsPlugin,
+    createDiagnosticDemoPlugin(),
   ];
 
   return instrumentProseMirrorPlugins(rawPlugins, {
     instanceId,
     store: prosemirrorDevtoolsStore,
+    diagnostics,
   });
 }
 
@@ -249,7 +255,7 @@ type ToolbarButtonProps = {
   command: Command;
   disabled?: boolean;
   label: string;
-  onRun: (command: Command) => void;
+  onRun: (command: Command, name: string) => void;
   shortcut?: string;
 };
 
@@ -267,7 +273,7 @@ function ToolbarButton({
       aria-pressed={active}
       className="editor-toolbar__button"
       disabled={disabled}
-      onClick={() => onRun(command)}
+      onClick={() => onRun(command, label)}
       onMouseDown={(event) => {
         event.preventDefault();
       }}
@@ -287,6 +293,7 @@ export function ProseMirrorEditor({
 }: ProseMirrorEditorProps) {
   const editorHostRef = useRef<HTMLDivElement>(null);
   const latencyEnabledRef = useRef(latencyEnabled);
+  const diagnosticsRef = useRef<DevtoolsDiagnosticsController | null>(null);
   const [editorView, setEditorView] = useState<EditorView | null>(null);
   const [stats, setStats] = useState<EditorStats>(initialStats);
 
@@ -298,10 +305,12 @@ export function ProseMirrorEditor({
       return;
     }
 
+    const diagnostics = createProseMirrorDevtoolsDiagnostics();
+    diagnosticsRef.current = diagnostics;
     const state = EditorState.create({
       schema: editorSchema,
       doc: createInitialDocument(),
-      plugins: createPlugins(instanceId, latencyEnabledRef, setStats),
+      plugins: createPlugins(instanceId, latencyEnabledRef, setStats, diagnostics),
     });
 
     const view = new EditorView(host, {
@@ -329,6 +338,7 @@ export function ProseMirrorEditor({
       view,
       store: prosemirrorDevtoolsStore,
       performanceExtension: true,
+      diagnostics,
     });
 
     setEditorView(view);
@@ -337,16 +347,22 @@ export function ProseMirrorEditor({
     return () => {
       disposeRegistration(registration);
       view.destroy();
+      diagnostics.dispose();
+      diagnosticsRef.current = null;
       setEditorView(null);
     };
   }, [customDispatch, instanceId, label]);
 
-  const run = (command: Command) => {
+  const run = (command: Command, name: string) => {
     if (!editorView) {
       return;
     }
 
-    if (command(editorView.state, editorView.dispatch, editorView)) {
+    const invoke = () => command(editorView.state, editorView.dispatch, editorView);
+    const result = diagnosticsRef.current
+      ? diagnosticsRef.current.traceCommand(name, invoke)
+      : invoke();
+    if (result) {
       editorView.focus();
     }
   };

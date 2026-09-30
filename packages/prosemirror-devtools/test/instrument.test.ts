@@ -142,6 +142,77 @@ describe("instrumentProseMirrorPlugins", () => {
     expect(second).toBe(first);
   });
 
+  it("isolates editors sharing an explicit session identifier", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const original = new Plugin({ state: { init: () => 0, apply: (_tr, value) => value } });
+    const [first] = instrumentProseMirrorPlugins([original], {
+      instanceId: "first",
+      sessionId: "shared",
+      store,
+    });
+    const [second] = instrumentProseMirrorPlugins([original], {
+      instanceId: "second",
+      sessionId: "shared",
+      store,
+    });
+    if (!first || !second) throw new Error("Expected instrumented plugins");
+
+    const firstView = { state: createTestState("", [first]) } as EditorView;
+    const secondView = { state: createTestState("", [second]) } as EditorView;
+    store.register({ id: "first", sessionId: "shared", view: firstView });
+    store.register({ id: "second", sessionId: "shared", view: secondView });
+
+    expect(first).not.toBe(second);
+    expect(store.getInstance("first")?.pluginTimings).toEqual([
+      expect.objectContaining({ hook: "state.init", count: 1 }),
+    ]);
+    expect(store.getInstance("second")?.pluginTimings).toEqual([
+      expect.objectContaining({ hook: "state.init", count: 1 }),
+    ]);
+  });
+
+  it("honors changed labels when a plugin is instrumented again", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const original = new Plugin({ state: { init: () => 0, apply: (_tr, value) => value } });
+    const [first] = instrumentProseMirrorPlugins([original], {
+      instanceId: "editor",
+      store,
+      getPluginLabel: () => "Old label",
+    });
+    if (!first) throw new Error("Expected an instrumented plugin");
+    const view = { state: createTestState("", [first]) } as EditorView;
+    store.register({ id: "editor", view });
+    const [second] = instrumentProseMirrorPlugins([original], {
+      instanceId: "editor",
+      store,
+      getPluginLabel: () => "Current label",
+    });
+    if (!second) throw new Error("Expected an instrumented plugin");
+    createTestState("", [second]);
+
+    expect(second).not.toBe(first);
+    expect(store.getInstance("editor")?.pluginTimings).toEqual([
+      expect.objectContaining({ pluginLabel: "Current label", count: 2 }),
+    ]);
+  });
+
+  it("reuses the source plugin when a wrapper moves to another editor", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const measure = vi.spyOn(store, "measurePluginHook");
+    const init = vi.fn(() => 0);
+    const original = new Plugin({ state: { init, apply: (_tr, value) => value } });
+    const [first] = instrumentProseMirrorPlugins([original], { instanceId: "first", store });
+    if (!first) throw new Error("Expected an instrumented plugin");
+    const [second] = instrumentProseMirrorPlugins([first], { instanceId: "second", store });
+    if (!second) throw new Error("Expected an instrumented plugin");
+
+    createTestState("", [second]);
+
+    expect(init).toHaveBeenCalledOnce();
+    expect(measure).toHaveBeenCalledOnce();
+    expect(measure.mock.calls[0]?.[0]).toBe("second");
+  });
+
   it("buffers state initialization and view creation timings until the editor attaches", () => {
     let clock = 50;
     vi.spyOn(performance, "now").mockImplementation(() => clock);
@@ -286,5 +357,38 @@ describe("instrumentProseMirrorPlugins", () => {
     expect(store.getInstance("editor")?.pluginTimings).toEqual(
       expect.arrayContaining([expect.objectContaining({ hook: "nodeView.update", count: 1 })]),
     );
+  });
+
+  it("preserves private-field accessors and methods on class-based NodeViews", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const view = { state: createTestState() } as EditorView;
+    store.register({ id: "editor", view });
+    class ParagraphView {
+      readonly #dom = document.createElement("p");
+      #updates = 0;
+
+      get dom() {
+        return this.#dom;
+      }
+
+      get updates() {
+        return this.#updates;
+      }
+
+      update() {
+        this.#updates += 1;
+        return true;
+      }
+    }
+    const nodeView = new ParagraphView();
+    const plugin = new Plugin({ props: { nodeViews: { paragraph: () => nodeView } } });
+    const [wrapped] = instrumentProseMirrorPlugins([plugin], { instanceId: "editor", store });
+    const factory = wrapped?.props.nodeViews?.paragraph;
+    if (!factory) throw new Error("Expected an instrumented node view factory");
+    const measured = factory(view.state.doc.firstChild!, view, () => 0, [], DecorationSet.empty);
+
+    expect(measured.dom).toBe(nodeView.dom);
+    expect(measured.update?.(view.state.doc.firstChild!, [], DecorationSet.empty)).toBe(true);
+    expect(nodeView.updates).toBe(1);
   });
 });

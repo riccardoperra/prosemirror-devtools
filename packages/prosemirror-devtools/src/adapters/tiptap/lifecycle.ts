@@ -81,11 +81,12 @@ function installPluginInstrumentation(
     isActive,
     ...(options.store ? { store: options.store } : {}),
     ...(options.getPluginLabel ? { getPluginLabel: options.getPluginLabel } : {}),
+    ...(options.diagnostics ? { diagnostics: options.diagnostics } : {}),
   };
   const originalGet = sourceDescriptor.get;
   const instrumentedGet = function instrumentedTiptapPlugins(this: object): unknown {
     const plugins = originalGet.call(this) as unknown;
-    if (!Array.isArray(plugins)) return plugins;
+    if (!isActive() || !Array.isArray(plugins)) return plugins;
 
     const instrumented = instrumentProseMirrorPlugins(plugins as Plugin[], instrumentationOptions);
     onPluginsCreated();
@@ -162,7 +163,7 @@ function createTiptapIntegration(
   let registeredView: EditorView | null = null;
 
   const registerWhenReady = (): void => {
-    if (registering) return;
+    if (!active || registering) return;
     const view = readyView(editor);
     if (!view || registeredView === view) return;
 
@@ -178,6 +179,7 @@ function createTiptapIntegration(
         id: options.id,
         view,
         sessionId,
+        ...(options.diagnostics ? { diagnostics: options.diagnostics } : {}),
         ...(options.label === undefined ? {} : { label: options.label }),
         ...(options.transactionLimit === undefined
           ? {}
@@ -236,6 +238,7 @@ function createTiptapIntegration(
       );
     },
     detach() {
+      if (!active) return;
       active = false;
       try {
         unregister?.();
@@ -243,8 +246,11 @@ function createTiptapIntegration(
         recorder = null;
         unregister = null;
         registeredView = null;
-        (options.store ?? prosemirrorDevtoolsStore).closeSession(options.id, sessionId);
-        restorePluginGetter();
+        try {
+          (options.store ?? prosemirrorDevtoolsStore).closeSession(options.id, sessionId);
+        } finally {
+          restorePluginGetter();
+        }
       }
     },
   };
@@ -276,8 +282,8 @@ export function setupTiptapDevtools(
   try {
     integration.setup();
   } catch (error) {
-    integration.detach();
     integrations.delete(editor);
+    integration.detach();
     throw error;
   }
 }
@@ -321,6 +327,6 @@ export function dispatchTiptapTransaction(
 export function detachTiptapDevtools(editor: TiptapDevtoolsEditor): void {
   const integration = integrations.get(editor);
   if (!integration) return;
-  integration.detach();
   integrations.delete(editor);
+  integration.detach();
 }

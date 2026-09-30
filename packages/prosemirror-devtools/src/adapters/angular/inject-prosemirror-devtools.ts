@@ -27,6 +27,7 @@ function registrationOptions(
   if (options.sessionId !== undefined) result.sessionId = options.sessionId;
   if (options.transactionLimit !== undefined) result.transactionLimit = options.transactionLimit;
   if (options.store !== undefined) result.store = options.store;
+  if (options.diagnostics !== undefined) result.diagnostics = options.diagnostics;
   if (options.performanceMarks !== undefined) result.performanceMarks = options.performanceMarks;
   if (options.performanceExtension !== undefined) {
     result.performanceExtension = options.performanceExtension;

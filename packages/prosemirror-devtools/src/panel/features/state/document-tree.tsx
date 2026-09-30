@@ -62,6 +62,7 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
   );
   const children = createMemo(() => {
     const result: Array<{ node: ProseMirrorNode; pos: number }> = [];
+    if (!expanded()) return result;
     props.node.forEach((child, offset) => {
       result.push({ node: child, pos: isRoot() ? offset : props.pos + 1 + offset });
     });
@@ -102,7 +103,7 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
           </button>
         </Show>
         <button
-          aria-selected={isInspected()}
+          aria-pressed={isInspected()}
           class={panelStyles.pmDocRowMain}
           onClick={() => props.onSelect(props.node, props.pos)}
           onDblClick={() => props.onReveal(props.pos)}

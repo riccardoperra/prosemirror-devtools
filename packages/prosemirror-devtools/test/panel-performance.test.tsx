@@ -469,6 +469,7 @@ describe("performance panel", () => {
         documents?.querySelector<HTMLElement>("summary")?.click();
       });
       expect(documents?.open).toBe(true);
+      await vi.waitFor(() => expect(documents?.querySelector(".pm-detail-columns")).not.toBeNull());
       expect(documents?.textContent).toContain("Before");
       expect(documents?.textContent).toContain("After");
 

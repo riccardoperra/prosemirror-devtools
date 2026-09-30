@@ -52,6 +52,28 @@ describe("adapter panel props", () => {
     });
   });
 
+  it("keeps selected navigation when the host updates props and releases controlled panels", () => {
+    const element = document.createElement("div");
+    document.body.append(element);
+    const core = new ProseMirrorDevtoolsCore();
+    core.mount(element, { defaultPanel: "state" });
+    const tabs = Array.from(element.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const schemaTab = tabs.find((tab) => tab.textContent?.includes("Schema"));
+    expect(schemaTab).toBeDefined();
+    schemaTab!.click();
+
+    core.update({ theme: "light" });
+    expect(schemaTab?.getAttribute("aria-selected")).toBe("true");
+    core.update({ activePanel: "history" });
+    expect(schemaTab?.getAttribute("aria-selected")).toBe("false");
+    core.update({});
+    expect(schemaTab?.getAttribute("aria-selected")).toBe("true");
+
+    core.unmount();
+    element.remove();
+    expect(() => core.update({})).toThrow("not mounted");
+  });
+
   it("targets the mount element document and hides a closed panel", () => {
     const foreignDocument = document.implementation.createHTMLDocument("foreign");
     const element = foreignDocument.createElement("div");

@@ -1,4 +1,5 @@
 import { NodeSelection, TextSelection } from "prosemirror-state";
+import { createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -46,6 +47,29 @@ afterEach(() => {
 });
 
 describe("State panel", () => {
+  it("returns to the root when an inspected position is removed", () => {
+    const initial = createTestState("hello");
+    const view = createTestView(
+      initial.apply(initial.tr.insert(initial.doc.content.size, initial.doc.firstChild!)),
+    );
+    const [instance, setInstance] = createSignal(createInstance(view));
+    const container = document.createElement("div");
+    document.body.append(container);
+    const dispose = render(() => <StateView instance={instance()} />, container);
+    try {
+      container
+        .querySelectorAll<HTMLButtonElement>('[data-node-type="paragraph"] .pm-doc-row-main')[1]
+        ?.click();
+      view.updateState(view.state.apply(view.state.tr.delete(0, view.state.doc.content.size)));
+      expect(() => setInstance(createInstance(view))).not.toThrow();
+      expect(
+        container.querySelector('[data-node-type="doc"]')?.getAttribute("data-inspected"),
+      ).toBe("true");
+    } finally {
+      cleanup(dispose, view);
+    }
+  });
+
   it("keeps text previews on inline nodes and shows open/close ranges", () => {
     const { container, dispose, view } = renderStateView("hello");
 

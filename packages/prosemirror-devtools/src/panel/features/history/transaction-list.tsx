@@ -40,7 +40,7 @@ export function TransactionList(props: TransactionListProps): JSX.Element {
           {(record) => (
             <li>
               <button
-                aria-selected={props.selectedId === record.id}
+                aria-pressed={props.selectedId === record.id}
                 class={cx(panelStyles.pmListRow, panelStyles.pmHistoryRow)}
                 onClick={() => props.onSelect(record.id)}
                 type="button"

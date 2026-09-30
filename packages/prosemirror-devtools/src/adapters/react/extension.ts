@@ -31,9 +31,26 @@ export function createReactDevtoolsExtension(
           ? {}
           : { requiresInstance: panel.requiresInstance }),
         mount(container, context) {
-          const root = createRoot(container);
-          root.render(panel.render(context));
-          return () => root.unmount();
+          const rootContainer = container.ownerDocument.createElement("div");
+          rootContainer.style.height = "100%";
+          container.append(rootContainer);
+          const root = createRoot(rootContainer);
+          let disposed = false;
+          const dispose = (): void => {
+            if (disposed) return;
+            disposed = true;
+            rootContainer.remove();
+            // The host may be in another React root's commit phase. Defer
+            // React cleanup, retaining its detached DOM until unmount finishes.
+            queueMicrotask(() => root.unmount());
+          };
+          try {
+            root.render(panel.render(context));
+          } catch (error) {
+            dispose();
+            throw error;
+          }
+          return dispose;
         },
       };
     }),

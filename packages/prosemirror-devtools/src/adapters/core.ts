@@ -1,4 +1,4 @@
-import { createComponent } from "solid-js";
+import { createComponent, createMemo, createSignal, mergeProps, Show } from "solid-js";
 import { render } from "solid-js/web";
 
 import { ProseMirrorDevtoolsPanel } from "../panel/panel";
@@ -23,6 +23,7 @@ function normalizeMountProps(props: unknown): ProseMirrorDevtoolsAdapterPanelPro
 export class ProseMirrorDevtoolsCore {
   readonly #initialProps: ProseMirrorDevtoolsAdapterPanelProps;
   #dispose: (() => void) | null = null;
+  #update: ((props: unknown) => void) | null = null;
 
   constructor(initialProps: ProseMirrorDevtoolsAdapterPanelProps = {}) {
     this.#initialProps = initialProps;
@@ -31,19 +32,42 @@ export class ProseMirrorDevtoolsCore {
   mount(element: HTMLElement, mountProps?: unknown): void {
     if (this.#dispose) throw new Error("ProseMirror Devtools is already mounted.");
 
-    const panelProps = resolveProseMirrorDevtoolsPanelProps(
-      element,
-      this.#initialProps,
-      normalizeMountProps(mountProps),
-    );
-    this.#dispose = render(
-      () => (panelProps ? createComponent(ProseMirrorDevtoolsPanel, panelProps) : null),
-      element,
-    );
+    const [currentProps, setCurrentProps] = createSignal(mountProps);
+    this.#dispose = render(() => {
+      // Resolve inside the Solid owner so accessor-backed host props remain
+      // reactive. Updating appearance must not reset navigation or inspectors.
+      const panelProps = createMemo(() =>
+        resolveProseMirrorDevtoolsPanelProps(
+          element,
+          this.#initialProps,
+          normalizeMountProps(currentProps()),
+        ),
+      );
+      return createComponent(Show, {
+        keyed: true,
+        get when() {
+          return panelProps() !== null;
+        },
+        get children() {
+          return createComponent(
+            ProseMirrorDevtoolsPanel,
+            mergeProps(() => panelProps() ?? {}),
+          );
+        },
+      });
+    }, element);
+    this.#update = (props) => setCurrentProps(() => props);
+  }
+
+  update(mountProps?: unknown): void {
+    if (!this.#update) throw new Error("ProseMirror Devtools is not mounted.");
+    this.#update(mountProps);
   }
 
   unmount(): void {
-    this.#dispose?.();
+    const dispose = this.#dispose;
     this.#dispose = null;
+    this.#update = null;
+    dispose?.();
   }
 }

@@ -3,10 +3,24 @@ import type { EditorState, Plugin } from "prosemirror-state";
 
 import type { PluginInspection, SchemaInspection, SerializedValue, StateInspection } from "./types";
 
+// ProseMirror documents are immutable and shared by selection-only states. Keep only a weak
+// reference to each root so revisiting a selection does not rescan its entire text.
+const documentTextSizes = new WeakMap<ProseMirrorNode, number>();
+
+function readDocumentStats(doc: ProseMirrorNode): StateInspection["stats"] {
+  let textSize = documentTextSizes.get(doc);
+  if (textSize === undefined) {
+    textSize = doc.textBetween(0, doc.content.size).length;
+    documentTextSizes.set(doc, textSize);
+  }
+  return { nodeSize: doc.nodeSize, childCount: doc.childCount, textSize };
+}
+
 export function inspectState(state: EditorState): StateInspection {
   const { $from } = state.selection;
   const activeMarks = state.storedMarks ?? $from.marks();
   let serializedDocument: SerializedValue | undefined;
+  let stats: StateInspection["stats"] | undefined;
   return {
     get doc() {
       serializedDocument ??= serializeDocument(state.doc);
@@ -22,10 +36,9 @@ export function inspectState(state: EditorState): StateInspection {
     },
     storedMarks: state.storedMarks?.map((mark) => mark.toJSON()) ?? [],
     activeMarks: activeMarks.map((mark) => mark.toJSON()),
-    stats: {
-      nodeSize: state.doc.nodeSize,
-      childCount: state.doc.childCount,
-      textSize: state.doc.textBetween(0, state.doc.content.size).length,
+    get stats() {
+      stats ??= readDocumentStats(state.doc);
+      return stats;
     },
   };
 }

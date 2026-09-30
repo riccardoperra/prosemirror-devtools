@@ -21,7 +21,11 @@ export function useDocumentSelection(view: Accessor<EditorView>): {
   const selected = createMemo<SelectedDocumentNode>(() => {
     const doc = view().state.doc;
     const current = location();
-    const currentNode = current.isRoot ? doc : doc.nodeAt(current.pos);
+    const currentNode = current.isRoot
+      ? doc
+      : current.pos >= 0 && current.pos < doc.content.size
+        ? doc.nodeAt(current.pos)
+        : null;
     return currentNode
       ? { node: currentNode, pos: current.pos, isRoot: current.isRoot }
       : { node: doc, pos: 0, isRoot: true };

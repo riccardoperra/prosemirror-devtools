@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProseMirrorDevtoolsPanel } from "../src";
 import { createProseMirrorDevtoolsStore, type DevtoolsExtension } from "../src/core";
 import { createReactDevtoolsExtension } from "../src/adapters/react/extension";
+import { BUILTIN_PANELS } from "../src/panel/panel-registry";
 import { appendTextTransaction, createTestState, createTestView } from "./helpers";
 
 const reactTestEnvironment = globalThis as typeof globalThis & {
@@ -60,7 +61,7 @@ describe("devtools panel shell", () => {
     try {
       const panel = container.querySelector<HTMLElement>(".pm-devtools");
       const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
-      expect(tabs).toHaveLength(6);
+      expect(tabs).toHaveLength(BUILTIN_PANELS.length);
       expect(panel?.dataset.theme).toBe("light");
 
       tabs[0]?.focus();
@@ -77,6 +78,104 @@ describe("devtools panel shell", () => {
       expect(container.querySelector(".pm-header")?.getAttribute("data-embedded")).toBe("true");
       expect(container.querySelector(".pm-brand")).toBeNull();
       expect(container.querySelector('[aria-label="Cycle color theme"]')).toBeNull();
+    } finally {
+      dispose();
+    }
+  });
+
+  it("supports boundary keys, wrapping and right-to-left tab navigation", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const dispose = render(() => <ProseMirrorDevtoolsPanel />, container);
+
+    try {
+      const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+      const first = tabs[0]!;
+      const last = tabs.at(-1)!;
+      const press = (key: string, options: KeyboardEventInit = {}): KeyboardEvent => {
+        const event = new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          key,
+          ...options,
+        });
+        document.activeElement?.dispatchEvent(event);
+        return event;
+      };
+
+      first.focus();
+      expect(press("End").defaultPrevented).toBe(true);
+      expect(document.activeElement).toBe(last);
+      press("ArrowRight");
+      expect(document.activeElement).toBe(first);
+      press("ArrowLeft");
+      expect(document.activeElement).toBe(last);
+      press("Home");
+      expect(document.activeElement).toBe(first);
+      expect(press("ArrowRight", { ctrlKey: true }).defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(first);
+
+      first.style.direction = "rtl";
+      press("ArrowRight");
+      expect(document.activeElement).toBe(last);
+      expect(tabs.filter((tab) => tab.tabIndex === 0)).toEqual([last]);
+    } finally {
+      dispose();
+    }
+  });
+
+  it("keeps keyboard navigation aligned when extensions change tab positions", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const [extensions, setExtensions] = createSignal<readonly DevtoolsExtension[]>([]);
+    const dispose = render(() => <ProseMirrorDevtoolsPanel extensions={extensions()} />, container);
+
+    try {
+      const state = container.querySelector<HTMLButtonElement>('[role="tab"]')!;
+      setExtensions([
+        {
+          id: "leading-extension",
+          panels: [{ id: "overview", title: "Overview", order: -1, mount() {} }],
+        },
+      ]);
+      const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+      expect(tabs[1]).toBe(state);
+      state.focus();
+      state.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+      expect(document.activeElement).toBe(tabs[2]);
+      expect(tabs[2]?.getAttribute("aria-selected")).toBe("true");
+
+      setExtensions([]);
+      document.activeElement?.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, key: "Home" }),
+      );
+      expect(document.activeElement).toBe(state);
+    } finally {
+      dispose();
+    }
+  });
+
+  it("reveals a controlled active tab within its strip without stealing focus", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const [activePanel, setActivePanel] = createSignal("state");
+    const dispose = render(
+      () => <ProseMirrorDevtoolsPanel activePanel={activePanel()} />,
+      container,
+    );
+
+    try {
+      const tabList = container.querySelector<HTMLElement>('[role="tablist"]')!;
+      const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+      const last = tabs[tabs.length - 1]!;
+      tabList.getBoundingClientRect = () => new DOMRect(0, 0, 200, 35);
+      last.getBoundingClientRect = () => new DOMRect(240, 0, 80, 35);
+      tabs[0]!.focus();
+
+      setActivePanel(BUILTIN_PANELS.at(-1)!.id);
+      expect(tabList.scrollLeft).toBe(120);
+      expect(document.activeElement).toBe(tabs[0]);
+      expect(last.getAttribute("aria-selected")).toBe("true");
     } finally {
       dispose();
     }
@@ -106,6 +205,9 @@ describe("devtools panel shell", () => {
       expect(inspector?.classList.contains("pm-scroll")).toBe(true);
       expect(inspector?.querySelector('[aria-label="Plugin cost"]')).toBeNull();
       expect(inspector?.querySelector('[aria-label="Transaction details"]')).not.toBeNull();
+      expect(
+        container.querySelector('.pm-history-list button[aria-pressed="true"]'),
+      ).not.toBeNull();
 
       container.querySelector<HTMLButtonElement>(".pm-history-list .pm-button")?.click();
       expect(container.querySelector(".pm-body")?.textContent).toContain(
@@ -161,7 +263,7 @@ describe("devtools panel shell", () => {
     let unregister = (): void => {};
 
     try {
-      expect(container.querySelectorAll('[role="tab"]')).toHaveLength(7);
+      expect(container.querySelectorAll('[role="tab"]')).toHaveLength(BUILTIN_PANELS.length + 1);
       expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("No active editor");
 
       unregister = store.register({ id: "editor", view });

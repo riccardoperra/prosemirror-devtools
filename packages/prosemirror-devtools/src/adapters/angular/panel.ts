@@ -1,4 +1,4 @@
-import { computed, effect } from "@angular/core";
+import { computed, DestroyRef, effect, inject } from "@angular/core";
 import type { DevtoolsPanelProps } from "@tanstack/devtools-utils/angular";
 
 import { ProseMirrorDevtoolsCore } from "../core";
@@ -23,15 +23,26 @@ export const ProseMirrorDevtoolsPanel: ProseMirrorDevtoolsAngularPanel = () => (
   const panelProps = computed(() => resolveProseMirrorDevtoolsAdapterPanelProps(inputs()), {
     equal: equalProseMirrorDevtoolsAdapterPanelProps,
   });
-  const panelEffect = effect((onCleanup) => {
+  const instance = new ProseMirrorDevtoolsCore();
+  let mounted = false;
+  const panelEffect = effect(() => {
     const props = panelProps();
-    const instance = new ProseMirrorDevtoolsCore(props);
-    instance.mount(panel, props);
-    onCleanup(() => instance.unmount());
+    if (mounted) {
+      instance.update(props);
+    } else {
+      instance.mount(panel, props);
+      mounted = true;
+    }
   });
 
-  return () => {
+  const dispose = (): void => {
     panelEffect.destroy();
+    instance.unmount();
     panel.remove();
+  };
+  const unregisterDestroy = inject(DestroyRef).onDestroy(dispose);
+  return () => {
+    unregisterDestroy();
+    dispose();
   };
 };

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@prosemirror-devtools/demo-kit": "workspace:*",
     "@tanstack/react-devtools": "catalog:",
     "prosemirror-commands": "catalog:",
     "prosemirror-devtools": "workspace:*",

@@ -12,7 +12,10 @@ the rest of your development tools.
 ## What you can inspect
 
 - **State** — explore the document tree, selection, active marks, and document statistics.
-- **History** — follow each dispatch, inspect steps and metadata, and restore an earlier document.
+- **History** — inspect dispatches, step diffs and position mapping, and restore an earlier document.
+- **Selection** — inspect anchor/head ancestry, boundaries, adjacent nodes, and marks.
+- **Events & commands** — trace handler outcomes, nested calls, and explicitly named commands.
+- **Decorations & node views** — inspect ranges, highlight positions, and follow lifecycle counters.
 - **Performance** — compare dispatch, state-apply, view-update, and plugin-hook timings.
 - **Plugins** — inspect plugin order, state, props, and the slowest plugin work.
 - **Schema** — browse the editor's node and mark specifications.
@@ -111,6 +114,12 @@ lifecycle and transaction middleware.
 
 For Tiptap setup, isolated stores, panel extensions, custom performance markers, and the complete
 API reference, read the [package guide](./packages/prosemirror-devtools/README.md).
+
+Events and rendering diagnostics are opt-in. Enable `diagnostics: true` or `{ limit: 200 }` on a
+devtools session, then use its `instrumentPlugins` and `attach` methods. Capture is bounded
+separately from transaction history. See the [diagnostics setup](./packages/prosemirror-devtools/README.md#optional-event-and-rendering-diagnostics)
+and the [review and remaining follow-ups](./docs/devtools-review.md). Collaboration diagnostics are
+deferred.
 
 ## Examples
 

@@ -1,4 +1,4 @@
-import { createEffect, createSignal, type Accessor } from "solid-js";
+import { createEffect, createSignal, onCleanup, type Accessor } from "solid-js";
 
 import {
   createSnapshot,
@@ -23,6 +23,10 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
 } {
   const [snapshots, setSnapshots] = createSignal<SavedSnapshot[]>(loadSnapshots(instance().id));
   const [error, setError] = createSignal<string | null>(null);
+  let disposed = false;
+  onCleanup(() => {
+    disposed = true;
+  });
 
   createEffect<string | undefined>((previousId) => {
     const instanceId = instance().id;
@@ -48,11 +52,16 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
   };
 
   const importFile = async (file: File): Promise<void> => {
+    const target = instance();
+    const isCurrent = (): boolean =>
+      !disposed && instance().id === target.id && instance().view === target.view;
     try {
-      const imported = await importSnapshotFile(file, instance());
+      const imported = await importSnapshotFile(file, target);
+      if (!isCurrent()) return;
       updateSnapshots((snapshots) => [imported, ...snapshots]);
       setError(null);
     } catch (importError) {
+      if (!isCurrent()) return;
       setError(errorMessage(importError));
     }
   };

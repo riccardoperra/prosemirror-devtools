@@ -15,11 +15,14 @@ import {
 import { EditorView } from "prosemirror-view";
 import {
   attachProseMirrorDevtools,
+  createProseMirrorDevtoolsDiagnostics,
   instrumentProseMirrorPlugins,
   prosemirrorDevtoolsStore,
   type DevtoolsExtension,
   type RegisteredProseMirrorInstance,
 } from "prosemirror-devtools";
+import { createDiagnosticDemoPlugin } from "./diagnostic-plugin";
+export { createDiagnosticDemoPlugin } from "./diagnostic-plugin";
 
 const editorSchema = new Schema({
   nodes: addListNodes(basicSchema.spec.nodes, "paragraph block*", "block"),
@@ -182,6 +185,7 @@ export function mountDemoEditor(
     undo,
     redo,
   };
+  const diagnostics = createProseMirrorDevtoolsDiagnostics();
   const plugins = instrumentProseMirrorPlugins(
     [
       history(),
@@ -195,8 +199,9 @@ export function mountDemoEditor(
       keymap(baseKeymap),
       slowPlugin,
       statsPlugin,
+      createDiagnosticDemoPlugin(),
     ],
-    { instanceId: options.instanceId, store: prosemirrorDevtoolsStore },
+    { instanceId: options.instanceId, store: prosemirrorDevtoolsStore, diagnostics },
   );
   view = new EditorView(surface, {
     state: EditorState.create({ schema: editorSchema, doc: initialDocument(), plugins }),
@@ -241,7 +246,13 @@ export function mountDemoEditor(
     if (!button) return;
     event.preventDefault();
     const command = commands[button.dataset.command ?? ""];
-    if (command?.(view.state, view.dispatch, view)) view.focus();
+    if (
+      command &&
+      diagnostics.traceCommand(button.dataset.command ?? "command", () =>
+        command(view.state, view.dispatch, view),
+      )
+    )
+      view.focus();
   };
   container.addEventListener("mousedown", onMouseDown);
   const registration = attachProseMirrorDevtools({
@@ -250,6 +261,7 @@ export function mountDemoEditor(
     view,
     store: prosemirrorDevtoolsStore,
     performanceExtension: true,
+    diagnostics,
   });
   renderStats(statsFor(view.state, 0));
 
@@ -261,6 +273,7 @@ export function mountDemoEditor(
       container.removeEventListener("mousedown", onMouseDown);
       disposeRegistration(registration);
       view.destroy();
+      diagnostics.dispose();
       container.replaceChildren();
     },
   };

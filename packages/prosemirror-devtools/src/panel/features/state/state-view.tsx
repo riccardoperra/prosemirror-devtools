@@ -29,7 +29,8 @@ export function StateView(props: StateViewProps): JSX.Element {
     from: state().selection.from,
     to: state().selection.to,
   }));
-  const selectedNodeJson = createMemo(() => selected().node.toJSON());
+  const selectedNode = createMemo(() => selected().node);
+  const selectedNodeJson = createMemo(() => selectedNode().toJSON());
   const selectionJson = createMemo(() => ({
     selection: inspection().selection,
     activeMarks: inspection().activeMarks,

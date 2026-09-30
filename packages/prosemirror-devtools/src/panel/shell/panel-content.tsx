@@ -14,8 +14,11 @@ import { panelStyles } from "../styles";
 
 import type { RegisteredProseMirrorInstance } from "../../core/types";
 import { HistoryView } from "../features/history/history-view";
+import { DecorationsView } from "../features/decorations/decorations-view";
+import { EventsView } from "../features/events/events-view";
 import { PluginsView } from "../features/plugins/plugins-view";
 import { SchemaView } from "../features/schema/schema-view";
+import { SelectionView } from "../features/selection/selection-view";
 import { SnapshotsView } from "../features/snapshots/snapshots-view";
 import { StateView } from "../features/state/state-view";
 import type { ExternalPanelDefinition } from "../panel-registry";
@@ -105,14 +108,23 @@ interface ActivePanelViewProps {
 
 function ActivePanelView(props: ActivePanelViewProps): JSX.Element {
   return (
-    <Show keyed when={props.instance.id}>
-      {(_instanceId) => (
+    <Show keyed when={props.instance.view}>
+      {(_view) => (
         <Switch>
           <Match when={props.tab === "state"}>
             <StateView instance={props.instance} />
           </Match>
           <Match when={props.tab === "history"}>
             <HistoryView instance={props.instance} onClear={props.onClearHistory} />
+          </Match>
+          <Match when={props.tab === "selection"}>
+            <SelectionView instance={props.instance} />
+          </Match>
+          <Match when={props.tab === "decorations"}>
+            <DecorationsView instance={props.instance} />
+          </Match>
+          <Match when={props.tab === "events"}>
+            <EventsView instance={props.instance} />
           </Match>
           <Match when={props.tab === "performance"}>
             <Suspense fallback={<div class={panelStyles.pmEmpty}>Loading performance tools…</div>}>
@@ -164,7 +176,7 @@ export function PanelContent(props: PanelContentProps): JSX.Element {
   );
 
   return (
-    <main
+    <div
       aria-labelledby={meta.tabId(navigation.activePanel())}
       class={panelStyles.pmBody}
       id={meta.tabPanelId}
@@ -192,6 +204,6 @@ export function PanelContent(props: PanelContentProps): JSX.Element {
           {(current) => <ExtensionPanelView definition={current()} />}
         </Show>
       </Show>
-    </main>
+    </div>
   );
 }
