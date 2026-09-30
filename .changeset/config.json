@@ -7,5 +7,13 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@prosemirror-devtools/tanstack-demo"]
+  "ignore": [
+    "@prosemirror-devtools/angular-demo",
+    "@prosemirror-devtools/demo-kit",
+    "@prosemirror-devtools/preact-demo",
+    "@prosemirror-devtools/solid-demo",
+    "@prosemirror-devtools/svelte-demo",
+    "@prosemirror-devtools/tanstack-demo",
+    "@prosemirror-devtools/vue-demo"
+  ]
 }
