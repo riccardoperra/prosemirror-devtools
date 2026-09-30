@@ -16,7 +16,7 @@
     "@angular/platform-browser": "catalog:",
     "@prosemirror-devtools/demo-kit": "workspace:*",
     "@tanstack/angular-devtools": "catalog:",
-    "prosemirror-devtools": "workspace:*",
+    "prosemirror-inspector": "workspace:*",
     "rxjs": "catalog:",
     "tslib": "catalog:"
   },

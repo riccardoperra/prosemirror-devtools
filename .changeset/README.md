@@ -17,7 +17,7 @@ and shared demo kit have `private: true`. The npm package includes the built `di
 package README, changelog, and license.
 
 Configure the repository's `NPM_TOKEN` GitHub Actions secret with an npm token authorized to
-publish `prosemirror-devtools`. GitHub Actions must also be allowed to create pull requests
+publish `prosemirror-inspector`. GitHub Actions must also be allowed to create pull requests
 in the repository settings.
 
 After a changeset is merged into `main`, the Release workflow opens or updates a version PR.
@@ -34,6 +34,6 @@ To inspect the package without publishing:
 
 ```sh
 pnpm build:package
-pnpm --filter prosemirror-devtools run publint
-pnpm --filter prosemirror-devtools pack --pack-destination /tmp/prosemirror-devtools-pack
+pnpm --filter prosemirror-inspector run publint
+pnpm --filter prosemirror-inspector pack --pack-destination /tmp/prosemirror-inspector-pack
 ```

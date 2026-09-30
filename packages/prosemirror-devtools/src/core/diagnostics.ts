@@ -238,7 +238,7 @@ export function createProseMirrorDevtoolsDiagnostics(
       try {
         listener();
       } catch (error) {
-        console.error("[prosemirror-devtools] Diagnostics subscriber failed", error);
+        console.error("[prosemirror-inspector] Diagnostics subscriber failed", error);
       }
     }
   };
@@ -444,7 +444,7 @@ export function createProseMirrorDevtoolsDiagnostics(
         try {
           listener();
         } catch (error) {
-          console.error("[prosemirror-devtools] Diagnostics subscriber failed", error);
+          console.error("[prosemirror-inspector] Diagnostics subscriber failed", error);
         }
       }
       listeners.clear();

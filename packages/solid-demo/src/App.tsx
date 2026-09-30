@@ -1,8 +1,8 @@
 import { createSignal } from "solid-js";
 import { TanStackDevtools } from "@tanstack/solid-devtools";
 import { createPlaygroundExtension } from "@prosemirror-devtools/demo-kit";
-import { prosemirrorDevtoolsStore } from "prosemirror-devtools";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/solid";
+import { prosemirrorDevtoolsStore } from "prosemirror-inspector";
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/solid";
 import { ProseMirrorEditor } from "./ProseMirrorEditor";
 
 const plugin = createProseMirrorDevtoolsPlugin({

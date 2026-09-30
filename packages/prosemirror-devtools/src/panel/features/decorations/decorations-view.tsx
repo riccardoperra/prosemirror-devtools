@@ -18,7 +18,7 @@ const PAGE_SIZE = 100;
 function sameItems<T>(left: readonly T[], right: readonly T[]): boolean {
   return left.length === right.length && left.every((item, index) => item === right[index]);
 }
-const SETUP = `import { createProseMirrorDevtoolsSession } from "prosemirror-devtools/core";
+const SETUP = `import { createProseMirrorDevtoolsSession } from "prosemirror-inspector/core";
 
 const session = createProseMirrorDevtoolsSession({
   id: "editor",

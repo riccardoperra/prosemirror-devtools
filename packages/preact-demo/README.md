@@ -1,6 +1,6 @@
 # Preact example
 
-A private Vite example showing `prosemirror-devtools/preact` inside TanStack Preact Devtools.
+A private Vite example showing `prosemirror-inspector/preact` inside TanStack Preact Devtools.
 
 Turn on **slow apply**, edit the document, then open the launcher in the lower-right corner to
 inspect state, transactions, plugins, and performance.

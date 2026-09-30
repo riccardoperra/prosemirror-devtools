@@ -33,17 +33,17 @@ describe("framework plugin adapters", () => {
     for (const plugin of [createReactPlugin(), createPreactPlugin(), createSolidPlugin()]) {
       expect(plugin).toMatchObject({
         defaultOpen: false,
-        id: "prosemirror-devtools",
-        name: "ProseMirror",
+        id: "prosemirror-inspector",
+        name: "ProseMirror Inspector",
       });
     }
 
     const angularPlugin = createAngularPlugin();
     expect(angularPlugin).toMatchObject({
       defaultOpen: false,
-      id: "prosemirror-devtools",
+      id: "prosemirror-inspector",
       inputs: {},
-      name: "ProseMirror",
+      name: "ProseMirror Inspector",
     });
     expect("inputs" in angularPlugin).toBe(true);
     if ("inputs" in angularPlugin) {

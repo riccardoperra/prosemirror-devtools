@@ -12,7 +12,7 @@
   "dependencies": {
     "@prosemirror-devtools/demo-kit": "workspace:*",
     "@tanstack/solid-devtools": "catalog:",
-    "prosemirror-devtools": "workspace:*",
+    "prosemirror-inspector": "workspace:*",
     "solid-js": "catalog:"
   },
   "devDependencies": {

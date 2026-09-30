@@ -2,8 +2,8 @@
 import { ref } from "vue";
 import { TanStackDevtools, type TanStackDevtoolsVuePlugin } from "@tanstack/vue-devtools";
 import { createPlaygroundExtension } from "@prosemirror-devtools/demo-kit";
-import { prosemirrorDevtoolsStore } from "prosemirror-devtools";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/vue";
+import { prosemirrorDevtoolsStore } from "prosemirror-inspector";
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/vue";
 import ProseMirrorEditor from "./ProseMirrorEditor.vue";
 
 const latencyEnabled = ref(false);

@@ -1,6 +1,6 @@
 # Svelte example
 
-A private Vite example showing `prosemirror-devtools/svelte` inside TanStack Svelte Devtools.
+A private Vite example showing `prosemirror-inspector/svelte` inside TanStack Svelte Devtools.
 
 Turn on **slow apply**, edit the document, then open the launcher in the lower-right corner to
 inspect state, transactions, plugins, and performance.

@@ -52,8 +52,8 @@ export function resolveProseMirrorDevtoolsPluginMetadata(
   options: CreateProseMirrorDevtoolsPluginOptions,
 ): ResolvedProseMirrorDevtoolsPluginMetadata {
   return {
-    id: options.id ?? "prosemirror-devtools",
-    name: options.name ?? "ProseMirror",
+    id: options.id ?? "prosemirror-inspector",
+    name: options.name ?? "ProseMirror Inspector",
     defaultOpen: options.defaultOpen ?? false,
   };
 }

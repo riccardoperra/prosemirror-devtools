@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/riccardoperra/prosemirror-devtools/main/packages/prosemirror-devtools/assets/logo.svg" alt="ProseMirror Devtools" width="560" />
+  <img src="https://raw.githubusercontent.com/riccardoperra/prosemirror-devtools/main/packages/prosemirror-devtools/assets/logo.svg" alt="ProseMirror Inspector" width="560" />
 </p>
 
 <p align="center">Inspect editor state. Trace transactions. Profile plugin performance.</p>
@@ -25,7 +25,7 @@ TanStack Devtools.
 ## Install
 
 ```sh
-npm install --save-dev prosemirror-devtools
+npm install --save-dev prosemirror-inspector
 ```
 
 The application must already provide `prosemirror-model`, `prosemirror-state`, `prosemirror-transform`, and
@@ -46,7 +46,7 @@ Attach the finished `EditorView`, then dispose the session during teardown.
 ```ts
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { createProseMirrorDevtoolsSession } from "prosemirror-devtools/core";
+import { createProseMirrorDevtoolsSession } from "prosemirror-inspector/core";
 
 const devtools = createProseMirrorDevtoolsSession({
   id: "main-editor",
@@ -82,7 +82,7 @@ Framework adapters export a panel renderer that works without TanStack Devtools.
 example uses the framework component in a fixed-height area of the application:
 
 ```tsx
-import { ProseMirrorDevtoolsPanel } from "prosemirror-devtools/react";
+import { ProseMirrorDevtoolsPanel } from "prosemirror-inspector/react";
 
 export function EditorDevtools() {
   return (
@@ -108,7 +108,7 @@ Create the plugin once, outside the application component, and pass it to the Ta
 
 ```tsx
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/react";
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/react";
 
 const prosemirrorDevtools = createProseMirrorDevtoolsPlugin({
   defaultOpen: false,
@@ -173,19 +173,19 @@ existing live views.
 Every framework entrypoint exports a panel renderer and a TanStack Devtools plugin factory. Most
 also provide a lifecycle helper for attaching an `EditorView`.
 
-| Framework | Entrypoint                     | Registration helper         |
-| --------- | ------------------------------ | --------------------------- |
-| React     | `prosemirror-devtools/react`   | `useProseMirrorDevtools`    |
-| Preact    | `prosemirror-devtools/preact`  | `useProseMirrorDevtools`    |
-| Solid     | `prosemirror-devtools/solid`   | `useProseMirrorDevtools`    |
-| Vue       | `prosemirror-devtools/vue`     | `useProseMirrorDevtools`    |
-| Svelte    | `prosemirror-devtools/svelte`  | Use the core session        |
-| Angular   | `prosemirror-devtools/angular` | `injectProseMirrorDevtools` |
+| Framework | Entrypoint                      | Registration helper         |
+| --------- | ------------------------------- | --------------------------- |
+| React     | `prosemirror-inspector/react`   | `useProseMirrorDevtools`    |
+| Preact    | `prosemirror-inspector/preact`  | `useProseMirrorDevtools`    |
+| Solid     | `prosemirror-inspector/solid`   | `useProseMirrorDevtools`    |
+| Vue       | `prosemirror-inspector/vue`     | `useProseMirrorDevtools`    |
+| Svelte    | `prosemirror-inspector/svelte`  | Use the core session        |
+| Angular   | `prosemirror-inspector/angular` | `injectProseMirrorDevtools` |
 
 The normal framework entrypoints render no UI and skip registration outside development mode.
 Core APIs, the native root panel, and the Tiptap helpers are not automatically disabled, so guard
 those calls with your build tool's development flag. Import
-`prosemirror-devtools/<framework>/production` only when you intentionally want a framework
+`prosemirror-inspector/<framework>/production` only when you intentionally want a framework
 adapter to stay active in a production build.
 
 ## What the panel shows
@@ -225,7 +225,7 @@ import {
   detachTiptapDevtools,
   dispatchTiptapTransaction,
   setupTiptapDevtools,
-} from "prosemirror-devtools/tiptap";
+} from "prosemirror-inspector/tiptap";
 
 export const TiptapDevtools = Extension.create({
   name: "prosemirrorDevtools",
@@ -312,8 +312,8 @@ Create a store when a test, application root, or panel must be isolated:
 import {
   createProseMirrorDevtoolsSession,
   createProseMirrorDevtoolsStore,
-} from "prosemirror-devtools/core";
-import { ProseMirrorDevtoolsPanel } from "prosemirror-devtools/react";
+} from "prosemirror-inspector/core";
+import { ProseMirrorDevtoolsPanel } from "prosemirror-inspector/react";
 
 const store = createProseMirrorDevtoolsStore();
 
@@ -342,7 +342,7 @@ Add application-specific events or synchronous spans to the dispatch that is cur
 recorded:
 
 ```ts
-import { markProseMirrorDevtools, measureProseMirrorDevtools } from "prosemirror-devtools/core";
+import { markProseMirrorDevtools, measureProseMirrorDevtools } from "prosemirror-inspector/core";
 
 markProseMirrorDevtools("main-editor", "Remote steps received", {
   category: "collaboration",
@@ -366,7 +366,7 @@ Add application-specific tabs without coupling them to a UI framework. An extens
 scoped data, safe actions, host details, and a cleanup signal.
 
 ```ts
-import type { DevtoolsExtension } from "prosemirror-devtools/core";
+import type { DevtoolsExtension } from "prosemirror-inspector/core";
 
 export const collaborationExtension: DevtoolsExtension = {
   id: "collaboration",
@@ -410,8 +410,8 @@ Devtools inherits the shell theme and avoids duplicate appearance controls.
 The panel loads scoped styles automatically. Stable `--prosemirror-devtools-*` CSS custom
 properties let applications and extension panels adjust colors, typography, shadows, and radius
 without depending on generated class names. Typed variable names are exported from
-`prosemirror-devtools/styles`; the compiled stylesheet is available as
-`prosemirror-devtools/styles.css` for custom hosts.
+`prosemirror-inspector/styles`; the compiled stylesheet is available as
+`prosemirror-inspector/styles.css` for custom hosts.
 
 ## Performance options
 
@@ -456,26 +456,26 @@ import {
   loadSnapshots,
   persistSnapshots,
   restoreSnapshot,
-} from "prosemirror-devtools/core";
+} from "prosemirror-inspector/core";
 ```
 
 ## Package exports
 
-| Export                                        | Purpose                                                                                          |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `prosemirror-devtools`                        | Core APIs plus the native Solid-rendered panel                                                   |
-| `prosemirror-devtools/core`                   | Sessions, stores, instrumentation, inspection, serialization, markers, extensions, and snapshots |
-| `prosemirror-devtools/performance`            | Framework-neutral timing, grouping, ranking, and summary helpers                                 |
-| `prosemirror-devtools/styles`                 | Typed names for the panel's public CSS custom properties                                         |
-| `prosemirror-devtools/styles.css`             | Compiled panel stylesheet for explicit CSS-only use                                              |
-| `prosemirror-devtools/react`                  | React panel, registration hook, TanStack plugin, and extension adapter                           |
-| `prosemirror-devtools/preact`                 | Preact panel, registration hook, and TanStack plugin                                             |
-| `prosemirror-devtools/solid`                  | Solid panel, registration helper, and TanStack plugin                                            |
-| `prosemirror-devtools/vue`                    | Vue panel, registration composable, and TanStack plugin                                          |
-| `prosemirror-devtools/svelte`                 | Svelte panel and TanStack plugin                                                                 |
-| `prosemirror-devtools/angular`                | Angular panel, injection helper, and TanStack plugin                                             |
-| `prosemirror-devtools/<framework>/production` | Explicit production-enabled version of a framework adapter                                       |
-| `prosemirror-devtools/tiptap`                 | Tiptap 3 lifecycle and transaction-middleware helpers                                            |
+| Export                                         | Purpose                                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `prosemirror-inspector`                        | Core APIs plus the native Solid-rendered panel                                                   |
+| `prosemirror-inspector/core`                   | Sessions, stores, instrumentation, inspection, serialization, markers, extensions, and snapshots |
+| `prosemirror-inspector/performance`            | Framework-neutral timing, grouping, ranking, and summary helpers                                 |
+| `prosemirror-inspector/styles`                 | Typed names for the panel's public CSS custom properties                                         |
+| `prosemirror-inspector/styles.css`             | Compiled panel stylesheet for explicit CSS-only use                                              |
+| `prosemirror-inspector/react`                  | React panel, registration hook, TanStack plugin, and extension adapter                           |
+| `prosemirror-inspector/preact`                 | Preact panel, registration hook, and TanStack plugin                                             |
+| `prosemirror-inspector/solid`                  | Solid panel, registration helper, and TanStack plugin                                            |
+| `prosemirror-inspector/vue`                    | Vue panel, registration composable, and TanStack plugin                                          |
+| `prosemirror-inspector/svelte`                 | Svelte panel and TanStack plugin                                                                 |
+| `prosemirror-inspector/angular`                | Angular panel, injection helper, and TanStack plugin                                             |
+| `prosemirror-inspector/<framework>/production` | Explicit production-enabled version of a framework adapter                                       |
+| `prosemirror-inspector/tiptap`                 | Tiptap 3 lifecycle and transaction-middleware helpers                                            |
 
 ## License
 

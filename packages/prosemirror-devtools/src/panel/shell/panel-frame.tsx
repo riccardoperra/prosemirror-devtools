@@ -17,7 +17,7 @@ export function PanelFrame(props: PanelFrameProps): JSX.Element {
 
   return (
     <section
-      aria-label="ProseMirror Devtools"
+      aria-label="ProseMirror Inspector"
       class={cx(panelStyles.pmDevtools, props.className)}
       data-density={appearance.density()}
       data-embedded={props.embedded ? "true" : undefined}

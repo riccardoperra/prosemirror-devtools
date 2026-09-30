@@ -1,8 +1,8 @@
 {
-  "name": "prosemirror-devtools-monorepo",
+  "name": "prosemirror-inspector-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "Development workspace for ProseMirror DevTools and its TanStack Devtools demo.",
+  "description": "Development workspace for ProseMirror Inspector and its TanStack Devtools demo.",
   "license": "MIT",
   "author": {
     "name": "Riccardo Perra",
@@ -22,20 +22,20 @@
   },
   "scripts": {
     "build": "pnpm --recursive --if-present run build",
-    "build:package": "pnpm --filter prosemirror-devtools run build",
+    "build:package": "pnpm --filter prosemirror-inspector run build",
     "check": "pnpm build && pnpm test",
     "changeset": "changeset",
     "changeset:status": "changeset status --since=main",
     "ci:publish": "changeset publish",
     "ci:version": "changeset version",
-    "dev": "pnpm --filter prosemirror-devtools run build && pnpm --parallel --filter prosemirror-devtools --filter './packages/*-demo' run dev",
+    "dev": "pnpm --filter prosemirror-inspector run build && pnpm --parallel --filter prosemirror-inspector --filter './packages/*-demo' run dev",
     "format": "oxfmt .",
     "format:check": "oxfmt . --check",
     "lint": "oxlint .",
     "lint:fix": "oxlint . --fix",
-    "release": "pnpm build:package && pnpm --filter prosemirror-devtools run publint && pnpm ci:publish",
+    "release": "pnpm build:package && pnpm --filter prosemirror-inspector run publint && pnpm ci:publish",
     "test": "pnpm --recursive --if-present run test",
-    "typecheck": "pnpm --filter prosemirror-devtools run build && pnpm --recursive --if-present run typecheck",
+    "typecheck": "pnpm --filter prosemirror-inspector run build && pnpm --recursive --if-present run typecheck",
     "version-packages": "pnpm ci:version"
   },
   "devDependencies": {

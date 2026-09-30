@@ -79,7 +79,7 @@ export function attachProseMirrorDevtools(
       }
     } catch (restoreError) {
       console.error(
-        "[prosemirror-devtools] Could not restore dispatch after attachment failed.",
+        "[prosemirror-inspector] Could not restore dispatch after attachment failed.",
         restoreError,
       );
     } finally {

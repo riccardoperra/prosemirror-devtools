@@ -85,7 +85,7 @@ function notifyDispatch(
     try {
       listener(events);
     } catch (error) {
-      console.error("[prosemirror-devtools] Dispatch subscriber failed", error);
+      console.error("[prosemirror-inspector] Dispatch subscriber failed", error);
     }
   }
 }

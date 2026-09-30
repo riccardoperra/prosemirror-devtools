@@ -5,7 +5,7 @@ import type {
   DevtoolsExtensionContext,
   DevtoolsReadable,
   RegisteredProseMirrorInstance,
-} from "prosemirror-devtools";
+} from "prosemirror-inspector";
 
 type LatestDispatch = {
   durationMs: number;

@@ -57,7 +57,7 @@ function installPluginInstrumentation(
   const manager = editor.extensionManager;
   if (!manager || (typeof manager !== "object" && typeof manager !== "function")) {
     throw new Error(
-      "[prosemirror-devtools] Tiptap editor.extensionManager is not available in onBeforeCreate.",
+      "[prosemirror-inspector] Tiptap editor.extensionManager is not available in onBeforeCreate.",
     );
   }
 
@@ -65,13 +65,13 @@ function installPluginInstrumentation(
   const sourceDescriptor = ownDescriptor ?? findPropertyDescriptor(manager, "plugins");
   if (typeof sourceDescriptor?.get !== "function") {
     throw new Error(
-      "[prosemirror-devtools] Tiptap extensionManager.plugins is not exposed as a getter. " +
+      "[prosemirror-inspector] Tiptap extensionManager.plugins is not exposed as a getter. " +
         "Set instrumentPlugins to false to attach without plugin-hook timings.",
     );
   }
   if (ownDescriptor?.configurable === false) {
     throw new Error(
-      "[prosemirror-devtools] Tiptap extensionManager.plugins cannot be instrumented because its own descriptor is not configurable.",
+      "[prosemirror-inspector] Tiptap extensionManager.plugins cannot be instrumented because its own descriptor is not configurable.",
     );
   }
 
@@ -103,7 +103,7 @@ function installPluginInstrumentation(
     Object.defineProperty(manager, "plugins", replacementDescriptor);
   } catch (error) {
     throw new Error(
-      "[prosemirror-devtools] Could not instrument Tiptap's extensionManager.plugins getter.",
+      "[prosemirror-inspector] Could not instrument Tiptap's extensionManager.plugins getter.",
       { cause: error },
     );
   }
@@ -126,7 +126,7 @@ function installPluginInstrumentation(
         Reflect.deleteProperty(manager, "plugins");
       }
     } catch (error) {
-      console.error("[prosemirror-devtools] Could not restore Tiptap's plugins getter.", error);
+      console.error("[prosemirror-inspector] Could not restore Tiptap's plugins getter.", error);
     }
   };
 }
@@ -212,7 +212,9 @@ function createTiptapIntegration(
   const requireRecorder = (operation: string): DispatchRecorder => {
     registerWhenReady();
     if (recorder) return recorder;
-    throw new Error(`[prosemirror-devtools] Tiptap's EditorView is not available in ${operation}.`);
+    throw new Error(
+      `[prosemirror-inspector] Tiptap's EditorView is not available in ${operation}.`,
+    );
   };
 
   return {
@@ -271,7 +273,7 @@ export function setupTiptapDevtools(
   if (existing) {
     if (existing.options.id !== options.id || existing.options.store !== options.store) {
       throw new Error(
-        `[prosemirror-devtools] This Tiptap editor is already configured as "${existing.options.id}".`,
+        `[prosemirror-inspector] This Tiptap editor is already configured as "${existing.options.id}".`,
       );
     }
     return;
@@ -296,7 +298,7 @@ export function attachTiptapDevtools(editor: TiptapDevtoolsEditor): void {
   const integration = integrations.get(editor);
   if (!integration) {
     throw new Error(
-      "[prosemirror-devtools] setupTiptapDevtools must be called from onBeforeCreate before attachTiptapDevtools.",
+      "[prosemirror-inspector] setupTiptapDevtools must be called from onBeforeCreate before attachTiptapDevtools.",
     );
   }
   integration.attach();
@@ -314,7 +316,7 @@ export function dispatchTiptapTransaction(
   const integration = integrations.get(editor);
   if (!integration) {
     throw new Error(
-      "[prosemirror-devtools] setupTiptapDevtools must be called from onBeforeCreate before dispatchTiptapTransaction.",
+      "[prosemirror-inspector] setupTiptapDevtools must be called from onBeforeCreate before dispatchTiptapTransaction.",
     );
   }
   integration.dispatch(props);

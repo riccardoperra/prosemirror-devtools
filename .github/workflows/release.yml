@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   release:
-    name: Version or publish prosemirror-devtools
+    name: Version or publish prosemirror-inspector
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -48,17 +48,17 @@ jobs:
         run: pnpm build:package
 
       - name: Test
-        run: pnpm --filter prosemirror-devtools run test
+        run: pnpm --filter prosemirror-inspector run test
 
       - name: Validate package
-        run: pnpm --filter prosemirror-devtools run publint
+        run: pnpm --filter prosemirror-inspector run publint
 
       - name: Create release pull request or publish
         uses: changesets/action@v2
         with:
-          commit-message: "chore: release prosemirror-devtools"
+          commit-message: "chore: release prosemirror-inspector"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-title: "chore: release prosemirror-devtools"
+          pr-title: "chore: release prosemirror-inspector"
           publish-script: pnpm ci:publish
           version-script: pnpm ci:version
         env:
