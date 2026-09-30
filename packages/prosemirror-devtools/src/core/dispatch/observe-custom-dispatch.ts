@@ -99,7 +99,7 @@ function shadowMethod(target: object, property: PropertyKey, value: unknown): Re
         Reflect.deleteProperty(target, property);
       }
     } catch (error) {
-      console.error(`[prosemirror-devtools] Could not restore ${String(property)}`, error);
+      console.error(`[prosemirror-inspector] Could not restore ${String(property)}`, error);
     }
   };
 }

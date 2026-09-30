@@ -30,7 +30,7 @@ export class ProseMirrorDevtoolsCore {
   }
 
   mount(element: HTMLElement, mountProps?: unknown): void {
-    if (this.#dispose) throw new Error("ProseMirror Devtools is already mounted.");
+    if (this.#dispose) throw new Error("ProseMirror Inspector is already mounted.");
 
     const [currentProps, setCurrentProps] = createSignal(mountProps);
     this.#dispose = render(() => {
@@ -60,7 +60,7 @@ export class ProseMirrorDevtoolsCore {
   }
 
   update(mountProps?: unknown): void {
-    if (!this.#update) throw new Error("ProseMirror Devtools is not mounted.");
+    if (!this.#update) throw new Error("ProseMirror Inspector is not mounted.");
     this.#update(mountProps);
   }
 

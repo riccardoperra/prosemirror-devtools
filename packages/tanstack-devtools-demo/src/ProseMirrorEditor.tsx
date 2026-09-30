@@ -14,7 +14,7 @@ import {
   instrumentProseMirrorPlugins,
   prosemirrorDevtoolsStore,
   type DevtoolsDiagnosticsController,
-} from "prosemirror-devtools";
+} from "prosemirror-inspector";
 
 const editorSchema = new Schema({
   nodes: addListNodes(basicSchema.spec.nodes, "paragraph block*", "block"),

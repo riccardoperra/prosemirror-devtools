@@ -291,7 +291,7 @@ describe("attachProseMirrorDevtools", () => {
     expect(view.state.doc.textContent).toBe("x");
     expect(store.getSnapshot().instances[0]?.transactions).toHaveLength(1);
     expect(consoleError).toHaveBeenCalledWith(
-      "[prosemirror-devtools] Store subscriber failed",
+      "[prosemirror-inspector] Store subscriber failed",
       subscriberError,
     );
 

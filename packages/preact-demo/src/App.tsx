@@ -1,8 +1,8 @@
 import { useState } from "preact/hooks";
 import { TanStackDevtools } from "@tanstack/preact-devtools";
 import { createPlaygroundExtension } from "@prosemirror-devtools/demo-kit";
-import { prosemirrorDevtoolsStore } from "prosemirror-devtools";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/preact";
+import { prosemirrorDevtoolsStore } from "prosemirror-inspector";
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/preact";
 import { ProseMirrorEditor } from "./ProseMirrorEditor";
 
 const plugin = createProseMirrorDevtoolsPlugin({

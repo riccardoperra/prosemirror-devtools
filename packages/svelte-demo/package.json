@@ -13,7 +13,7 @@
     "@prosemirror-devtools/demo-kit": "workspace:*",
     "@tanstack/svelte-devtools": "catalog:",
     "dayjs": "catalog:",
-    "prosemirror-devtools": "workspace:*",
+    "prosemirror-inspector": "workspace:*",
     "svelte": "catalog:"
   },
   "devDependencies": {

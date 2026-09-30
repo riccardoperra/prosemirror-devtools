@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="./packages/prosemirror-devtools/assets/logo.svg" alt="ProseMirror Devtools" width="560" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./packages/prosemirror-devtools/assets/prosemirror-inspector-logo-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="./packages/prosemirror-devtools/assets/prosemirror-inspector-logo-light.svg" />
+    <img src="./packages/prosemirror-devtools/assets/prosemirror-inspector-logo-light.svg" alt="ProseMirror Inspector" width="560" />
+  </picture>
 </p>
 
 <p align="center">Inspect editor state. Trace transactions. Profile plugin performance.</p>
@@ -15,11 +19,11 @@
 
 See what is happening inside a ProseMirror editor while you build it.
 
-ProseMirror Devtools gives you a live view of editor state, transactions, plugins, schema, and
+ProseMirror Inspector gives you a live view of editor state, transactions, plugins, schema, and
 performance. Use the panel on its own in your application or add it to TanStack Devtools alongside
 the rest of your development tools.
 
-> ProseMirror Devtools is development-only tooling. It records editor activity and adds a small
+> ProseMirror Inspector is development-only tooling. It records editor activity and adds a small
 > amount of runtime overhead.
 
 ## What you can inspect
@@ -46,7 +50,7 @@ The same panel works in two ways:
 Install the package in an application that already uses ProseMirror:
 
 ```sh
-npm install --save-dev prosemirror-devtools
+npm install --save-dev prosemirror-inspector
 ```
 
 Create a devtools session before you create the editor. Plugin instrumentation is optional, but it
@@ -55,7 +59,7 @@ is what makes per-plugin timings available.
 ```ts
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { createProseMirrorDevtoolsSession } from "prosemirror-devtools/core";
+import { createProseMirrorDevtoolsSession } from "prosemirror-inspector/core";
 
 const devtools = createProseMirrorDevtoolsSession({
   id: "main-editor",
@@ -83,7 +87,7 @@ This React example renders the panel directly in the application. Matching panel
 available for Preact, Solid, Vue, Svelte, and Angular.
 
 ```tsx
-import { ProseMirrorDevtoolsPanel } from "prosemirror-devtools/react";
+import { ProseMirrorDevtoolsPanel } from "prosemirror-inspector/react";
 
 export function EditorDevtools() {
   return (
@@ -105,7 +109,7 @@ npm install --save-dev @tanstack/react-devtools
 
 ```tsx
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/react";
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/react";
 
 const prosemirrorDevtools = createProseMirrorDevtoolsPlugin({
   defaultOpen: false,
@@ -116,12 +120,12 @@ export function App() {
 }
 ```
 
-Use `prosemirror-devtools/preact`, `/solid`, `/vue`, `/svelte`, or `/angular` with the
+Use `prosemirror-inspector/preact`, `/solid`, `/vue`, `/svelte`, or `/angular` with the
 matching TanStack Devtools package.
 
 ## Integrations
 
-ProseMirror Devtools works with ProseMirror directly and includes framework adapters for React,
+ProseMirror Inspector works with ProseMirror directly and includes framework adapters for React,
 Preact, Solid, Vue, Svelte, and Angular. A dedicated Tiptap 3 integration handles Tiptap's editor
 lifecycle and transaction middleware.
 

@@ -88,7 +88,7 @@ export function createSignalScheduler(): SignalScheduler {
     },
     end() {
       if (depth === 0) {
-        throw new Error("[prosemirror-devtools] Cannot end a signal batch that was not started.");
+        throw new Error("[prosemirror-inspector] Cannot end a signal batch that was not started.");
       }
       depth -= 1;
       publish();
@@ -118,7 +118,7 @@ export function createStoreSignal<T>(initialValue: T, scheduler: SignalScheduler
       } catch (error) {
         // Observers are independent: one integration must not prevent the remaining integrations
         // from receiving the committed value or interrupt editor execution.
-        console.error("[prosemirror-devtools] Store subscriber failed", error);
+        console.error("[prosemirror-inspector] Store subscriber failed", error);
       }
     }
   };

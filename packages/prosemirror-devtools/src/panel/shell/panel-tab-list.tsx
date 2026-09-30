@@ -19,7 +19,7 @@ export function PanelTabList(): JSX.Element {
 
   return (
     <nav
-      aria-label="ProseMirror Devtools panels"
+      aria-label="ProseMirror Inspector panels"
       aria-orientation="horizontal"
       class={panelStyles.pmTabs}
       onKeyDown={handleKeyDown}

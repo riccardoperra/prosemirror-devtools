@@ -12,7 +12,7 @@
   "dependencies": {
     "@prosemirror-devtools/demo-kit": "workspace:*",
     "@tanstack/vue-devtools": "catalog:",
-    "prosemirror-devtools": "workspace:*",
+    "prosemirror-inspector": "workspace:*",
     "vue": "catalog:"
   },
   "devDependencies": {

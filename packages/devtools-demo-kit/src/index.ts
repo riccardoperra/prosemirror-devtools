@@ -20,7 +20,7 @@ import {
   prosemirrorDevtoolsStore,
   type DevtoolsExtension,
   type RegisteredProseMirrorInstance,
-} from "prosemirror-devtools";
+} from "prosemirror-inspector";
 import { createDiagnosticDemoPlugin } from "./diagnostic-plugin";
 export { createDiagnosticDemoPlugin } from "./diagnostic-plugin";
 

@@ -1,6 +1,6 @@
 # Vue example
 
-A private Vite example showing `prosemirror-devtools/vue` inside TanStack Vue Devtools.
+A private Vite example showing `prosemirror-inspector/vue` inside TanStack Vue Devtools.
 
 Turn on **slow apply**, edit the document, then open the launcher in the lower-right corner to
 inspect state, transactions, plugins, and performance.

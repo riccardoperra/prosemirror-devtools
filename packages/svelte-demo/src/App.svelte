@@ -1,8 +1,8 @@
 <script lang="ts">
   import { TanStackDevtools } from "@tanstack/svelte-devtools";
   import { createPlaygroundExtension } from "@prosemirror-devtools/demo-kit";
-  import { prosemirrorDevtoolsStore } from "prosemirror-devtools";
-  import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/svelte";
+  import { prosemirrorDevtoolsStore } from "prosemirror-inspector";
+  import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/svelte";
   import ProseMirrorEditor from "./ProseMirrorEditor.svelte";
 
   let latencyEnabled = $state(false);

@@ -1,4 +1,4 @@
-# prosemirror-devtools
+# prosemirror-inspector
 
 ## 0.0.1
 
@@ -7,9 +7,9 @@
 - dc13c96: Refresh the package documentation with a shorter getting-started flow, clear standalone and
   TanStack Devtools hosting paths, and focused framework, Tiptap, feature, and API guidance.
 - 05d745e: Expose UI-independent plugin timing aggregation and related types from the new
-  `prosemirror-devtools/performance` feature entrypoint.
+  `prosemirror-inspector/performance` feature entrypoint.
 
-  Add dependency-free `prosemirror-devtools/tiptap` lifecycle helpers that instrument Tiptap's
+  Add dependency-free `prosemirror-inspector/tiptap` lifecycle helpers that instrument Tiptap's
   generated ProseMirror plugins, register its view, record through Tiptap 3's native transaction
   middleware, and clean up from an application-owned Tiptap extension.
 

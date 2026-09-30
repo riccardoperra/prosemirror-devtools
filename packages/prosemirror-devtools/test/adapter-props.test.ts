@@ -105,8 +105,8 @@ describe("adapter panel props", () => {
     });
     expect(resolveProseMirrorDevtoolsPluginMetadata({})).toEqual({
       defaultOpen: false,
-      id: "prosemirror-devtools",
-      name: "ProseMirror",
+      id: "prosemirror-inspector",
+      name: "ProseMirror Inspector",
     });
   });
 

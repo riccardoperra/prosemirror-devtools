@@ -1,6 +1,6 @@
 # Angular example
 
-A private Angular CLI example showing `prosemirror-devtools/angular` inside TanStack Angular
+A private Angular CLI example showing `prosemirror-inspector/angular` inside TanStack Angular
 Devtools.
 
 Turn on **slow apply**, edit the document, then open the launcher in the lower-right corner to

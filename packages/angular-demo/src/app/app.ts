@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, signal } from "@angular/core";
 import { TanStackDevtools, type TanStackDevtoolsAngularPlugin } from "@tanstack/angular-devtools";
 import { createPlaygroundExtension } from "@prosemirror-devtools/demo-kit";
-import { prosemirrorDevtoolsStore } from "prosemirror-devtools";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-devtools/angular";
+import { prosemirrorDevtoolsStore } from "prosemirror-inspector";
+import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/angular";
 import { ProseMirrorEditor } from "./prosemirror-editor";
 
 const prosemirrorPlugin = createProseMirrorDevtoolsPlugin({

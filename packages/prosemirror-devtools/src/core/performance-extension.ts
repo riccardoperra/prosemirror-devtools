@@ -49,7 +49,7 @@ export function resolvePerformanceExtensionOptions(
   if (!options) return null;
   const configured = options === true ? {} : options;
   return {
-    trackGroup: configured.trackGroup?.trim() || `ProseMirror Devtools · ${instanceLabel}`,
+    trackGroup: configured.trackGroup?.trim() || `ProseMirror Inspector · ${instanceLabel}`,
     dispatches: configured.dispatches ?? true,
     phases: configured.phases ?? true,
     customCode: configured.customCode ?? true,

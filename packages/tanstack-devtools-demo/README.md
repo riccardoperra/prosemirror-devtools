@@ -1,6 +1,6 @@
 # React example
 
-A private Vite example showing `prosemirror-devtools/react` inside TanStack React Devtools.
+A private Vite example showing `prosemirror-inspector/react` inside TanStack React Devtools.
 
 The editor includes history, keymaps, word count, a synchronous custom dispatcher, and an optional
 slow plugin. Turn on **slow apply**, edit the document, then open the launcher in the lower-right

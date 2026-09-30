@@ -31,7 +31,7 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   css: {
-    fileName: "prosemirror-devtools.css",
+    fileName: "prosemirror-inspector.css",
     inject: true,
     modules: {
       generateScopedName: "[local]_[hash]",
