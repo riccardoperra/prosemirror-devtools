@@ -1,4 +1,17 @@
-# prosemirror-devtools
+<p align="center">
+  <img src="https://raw.githubusercontent.com/riccardoperra/prosemirror-devtools/main/packages/prosemirror-devtools/assets/logo.svg" alt="ProseMirror Devtools" width="560" />
+</p>
+
+<p align="center">Inspect editor state. Trace transactions. Profile plugin performance.</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/status-work_in_progress-E58B54?style=flat-square" alt="Status: work in progress" />
+  <a href="https://github.com/riccardoperra/prosemirror-devtools/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-347C96?style=flat-square" alt="License: MIT" /></a>
+</p>
+
+> **Work in progress:** this package is still under active development. APIs, integrations, and
+> behavior may change between releases, including breaking changes. Feedback and bug reports are
+> welcome in [GitHub Issues](https://github.com/riccardoperra/prosemirror-devtools/issues).
 
 A development panel for inspecting and profiling ProseMirror editors.
 
@@ -466,4 +479,5 @@ import {
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](https://github.com/riccardoperra/prosemirror-devtools/blob/main/LICENSE) © 2026
+[Riccardo Perra](https://github.com/riccardoperra).

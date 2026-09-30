@@ -1,4 +1,17 @@
-# ProseMirror Devtools
+<p align="center">
+  <img src="./packages/prosemirror-devtools/assets/logo.svg" alt="ProseMirror Devtools" width="560" />
+</p>
+
+<p align="center">Inspect editor state. Trace transactions. Profile plugin performance.</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/status-work_in_progress-E58B54?style=flat-square" alt="Status: work in progress" />
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-347C96?style=flat-square" alt="License: MIT" /></a>
+</p>
+
+> **Work in progress:** this project is still under active development. APIs, integrations, and
+> behavior may change between releases, including breaking changes. Feedback and bug reports are
+> welcome in [GitHub Issues](https://github.com/riccardoperra/prosemirror-devtools/issues).
 
 See what is happening inside a ProseMirror editor while you build it.
 
@@ -135,4 +148,4 @@ native environment:
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](./LICENSE) © 2026 [Riccardo Perra](https://github.com/riccardoperra).
