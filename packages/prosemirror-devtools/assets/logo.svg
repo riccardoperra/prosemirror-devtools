@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="674" height="214" viewBox="0 0 674 214" role="img" aria-labelledby="title desc">
+  <title id="title">ProseMirror Devtools</title>
+  <desc id="desc">A document and magnifying glass beside a rounded, hand-drawn wordmark in petroleum blue and warm orange.</desc>
+  <defs>
+    <!-- Original letterforms drawn as paths, with no font dependency. -->
+    <path id="P" d="M8 0 10-64C47-71 53-28 10-29"/>
+    <path id="r" d="M7 0 9-42M9-29C14-40 22-45 30-40"/>
+    <path id="o" d="M22-43C-2-44-3 0 19 0C43 1 44-42 22-43Z"/>
+    <path id="s" d="M31-39C17-51-1-37 10-27C15-22 31-23 32-13C34 3 10 6 4-3"/>
+    <path id="e" d="M5-22 35-25C38-48 10-49 5-28C-1-5 16 9 34-4"/>
+    <path id="M" d="M6 0 12-65 29-20 48-64 53 0"/>
+    <path id="i" d="M9-40 7 0M10-61 10-59"/>
+    <path id="D" d="M8 0 10-64C58-67 56 3 8 0Z"/>
+    <path id="v" d="M4-42 19 0 37-42"/>
+    <path id="t" d="M17-60 13-12C11 1 19 3 26-1M4-39 28-41"/>
+    <path id="l" d="M11-65 7-10C6-3 8 1 14 0"/>
+  </defs>
+
+  <!-- Keep the palette in these two groups for easy color changes. -->
+  <g stroke="#347C96" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="rotate(-9 86 106)">
+      <path fill="#FFF8EE" d="M46 39H105L136 70V164Q136 176 124 176H46Q34 176 34 164V51Q34 39 46 39Z"/>
+      <path fill="none" d="M104 41V60Q104 71 115 71H133M55 84H111M55 107H103M55 130H83"/>
+    </g>
+  </g>
+  <g stroke="#E58B54" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="121" cy="139" r="31" fill="#FFF8EE"/>
+    <path d="M144 163 167 186" fill="none"/>
+  </g>
+
+  <g fill="none" stroke="#347C96" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(194 99)">
+    <use href="#P"/>
+    <use href="#r" x="49"/>
+    <use href="#o" x="85"/>
+    <use href="#s" x="131"/>
+    <use href="#e" x="172"/>
+    <use href="#M" x="219"/>
+    <use href="#i" x="281"/>
+    <use href="#r" x="303"/>
+    <use href="#r" x="339"/>
+    <use href="#o" x="375"/>
+    <use href="#r" x="421"/>
+  </g>
+  <g fill="none" stroke="#E58B54" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(197 179) scale(.92)">
+    <use href="#D"/>
+    <use href="#e" x="52"/>
+    <use href="#v" x="100"/>
+    <use href="#t" x="147"/>
+    <use href="#o" x="183"/>
+    <use href="#o" x="230"/>
+    <use href="#l" x="279"/>
+    <use href="#s" x="304"/>
+  </g>
+</svg>

@@ -80,6 +80,7 @@
   },
   "files": [
     "dist",
+    "assets/logo.svg",
     "CHANGELOG.md",
     "README.md",
     "LICENSE"
@@ -108,7 +109,10 @@
     "editor",
     "debugging"
   ],
-  "author": "Riccardo Perra",
+  "author": {
+    "name": "Riccardo Perra",
+    "url": "https://github.com/riccardoperra"
+  },
   "license": "MIT",
   "dependencies": {
     "@tanstack/devtools-utils": "catalog:",

@@ -4,7 +4,16 @@
   "private": true,
   "description": "Development workspace for ProseMirror DevTools and its TanStack Devtools demo.",
   "license": "MIT",
-  "author": "Riccardo Perra",
+  "author": {
+    "name": "Riccardo Perra",
+    "url": "https://github.com/riccardoperra"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/riccardoperra/prosemirror-devtools.git"
+  },
+  "homepage": "https://github.com/riccardoperra/prosemirror-devtools#readme",
+  "bugs": "https://github.com/riccardoperra/prosemirror-devtools/issues",
   "type": "module",
   "packageManager": "pnpm@11.22.0",
   "engines": {
