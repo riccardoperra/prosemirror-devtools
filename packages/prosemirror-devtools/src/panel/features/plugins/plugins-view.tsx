@@ -33,7 +33,7 @@ export function PluginsView(props: PluginsViewProps): JSX.Element {
             {(plugin) => (
               <li>
                 <button
-                  aria-selected={selected()?.key === plugin.key}
+                  aria-pressed={selected()?.key === plugin.key}
                   class={panelStyles.pmListRow}
                   onClick={() => select(plugin.key)}
                   type="button"

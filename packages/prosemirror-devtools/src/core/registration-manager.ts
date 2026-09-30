@@ -30,6 +30,7 @@ function equalRegistrationOptions(
     previous.store === next.store &&
     previous.performanceMarks === next.performanceMarks &&
     previous.performanceExtension === next.performanceExtension &&
+    previous.diagnostics === next.diagnostics &&
     previous.enabled === next.enabled
   );
 }
@@ -78,6 +79,7 @@ export function createProseMirrorDevtoolsRegistrationManager(): ProseMirrorDevto
       if (options.performanceExtension !== undefined) {
         attachOptions.performanceExtension = options.performanceExtension;
       }
+      if (options.diagnostics) attachOptions.diagnostics = options.diagnostics;
 
       attachment = attachProseMirrorDevtools(attachOptions);
       activeOptions = { ...options };

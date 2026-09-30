@@ -12,7 +12,8 @@ export interface SchemaViewProps {
 }
 
 export function SchemaView(props: SchemaViewProps): JSX.Element {
-  const schema = createMemo(() => inspectSchema(props.instance.view.state.schema));
+  const editorSchema = createMemo(() => props.instance.view.state.schema);
+  const schema = createMemo(() => inspectSchema(editorSchema()));
 
   return (
     <div class={cx(panelStyles.pmDetailColumns, panelStyles.pmScroll)}>

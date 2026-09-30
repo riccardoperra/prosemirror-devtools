@@ -43,22 +43,24 @@ function AppliedTransaction(props: AppliedTransactionProps): JSX.Element {
           {props.transaction.steps.length} {props.transaction.steps.length === 1 ? "step" : "steps"}
         </span>
       </summary>
-      <div class={panelStyles.pmTransactionPayload}>
-        <section>
-          <div class={panelStyles.pmDetailHeading}>
-            <span class={panelStyles.pmSectionTitle}>Steps</span>
-            <Badge>{props.transaction.steps.length}</Badge>
-          </div>
-          <JsonTree defaultExpandedDepth={4} value={props.transaction.steps} />
-        </section>
-        <section>
-          <div class={panelStyles.pmDetailHeading}>
-            <span class={panelStyles.pmSectionTitle}>Metadata</span>
-            <Badge>{Object.keys(props.transaction.meta).length}</Badge>
-          </div>
-          <JsonTree defaultExpandedDepth={4} value={props.transaction.meta} />
-        </section>
-      </div>
+      <Show when={open()}>
+        <div class={panelStyles.pmTransactionPayload}>
+          <section>
+            <div class={panelStyles.pmDetailHeading}>
+              <span class={panelStyles.pmSectionTitle}>Steps</span>
+              <Badge>{props.transaction.steps.length}</Badge>
+            </div>
+            <JsonTree defaultExpandedDepth={4} value={props.transaction.steps} />
+          </section>
+          <section>
+            <div class={panelStyles.pmDetailHeading}>
+              <span class={panelStyles.pmSectionTitle}>Metadata</span>
+              <Badge>{Object.keys(props.transaction.meta).length}</Badge>
+            </div>
+            <JsonTree defaultExpandedDepth={4} value={props.transaction.meta} />
+          </section>
+        </div>
+      </Show>
     </details>
   );
 }
@@ -118,20 +120,22 @@ export function DispatchDocuments(props: DispatchDocumentsProps): JSX.Element {
           <span class={panelStyles.pmSectionTitle}>Documents</span>
           <span class={panelStyles.pmRowDetail}>Before and after JSON</span>
         </summary>
-        <div class={panelStyles.pmDetailColumns}>
-          <section>
-            <div class={panelStyles.pmDetailHeading}>
-              <span class={panelStyles.pmSectionTitle}>Before</span>
-            </div>
-            <JsonTree defaultExpandedDepth={2} value={props.record.docBefore} />
-          </section>
-          <section>
-            <div class={panelStyles.pmDetailHeading}>
-              <span class={panelStyles.pmSectionTitle}>After</span>
-            </div>
-            <JsonTree defaultExpandedDepth={2} value={props.record.docAfter} />
-          </section>
-        </div>
+        <Show when={open()}>
+          <div class={panelStyles.pmDetailColumns}>
+            <section>
+              <div class={panelStyles.pmDetailHeading}>
+                <span class={panelStyles.pmSectionTitle}>Before</span>
+              </div>
+              <JsonTree defaultExpandedDepth={2} value={props.record.docBefore} />
+            </section>
+            <section>
+              <div class={panelStyles.pmDetailHeading}>
+                <span class={panelStyles.pmSectionTitle}>After</span>
+              </div>
+              <JsonTree defaultExpandedDepth={2} value={props.record.docAfter} />
+            </section>
+          </div>
+        </Show>
       </details>
     </>
   );

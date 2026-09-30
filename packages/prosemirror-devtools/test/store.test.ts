@@ -94,6 +94,20 @@ describe("createProseMirrorDevtoolsStore", () => {
     expect(store.getInstance("editor")).toBeUndefined();
   });
 
+  it("does not release a replacement registration through an older lease for the same view", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const view = viewForState();
+    const releaseOld = store.register({ id: "editor", view });
+    store.unregister("editor");
+    const releaseCurrent = store.register({ id: "editor", view });
+
+    releaseOld();
+    expect(store.getInstance("editor")?.view).toBe(view);
+
+    releaseCurrent();
+    expect(store.getInstance("editor")).toBeUndefined();
+  });
+
   it("clamps a negative transaction limit when the same view is registered again", () => {
     const store = createProseMirrorDevtoolsStore();
     let state = createTestState();
@@ -297,6 +311,26 @@ describe("createProseMirrorDevtoolsStore", () => {
         ({ record }: { record: { id: number } }) => record.id,
       ),
     ).toEqual([1, 2]);
+  });
+
+  it("does not deliver the current dispatch to subscriptions added during delivery", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const state = createTestState();
+    store.register({ id: "editor", view: viewForState(state) });
+    const replacement = vi.fn();
+    const unsubscribe = store.subscribeDispatch(() => {
+      unsubscribe();
+      store.subscribeDispatch(replacement);
+    });
+
+    const record = () => {
+      const measurement = store.beginTransaction("editor", state.tr, state, false);
+      store.finishTransaction(measurement, { stateAfter: state });
+    };
+    record();
+    expect(replacement).not.toHaveBeenCalled();
+    record();
+    expect(replacement).toHaveBeenCalledOnce();
   });
 
   it("keeps history unbounded and publishes every completed outer dispatch", () => {

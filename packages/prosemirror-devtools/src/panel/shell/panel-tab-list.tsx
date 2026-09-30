@@ -1,4 +1,4 @@
-import { For, Show, type JSX } from "solid-js";
+import { For, onCleanup, Show, type JSX } from "solid-js";
 
 import { panelStyles } from "../styles";
 
@@ -20,29 +20,33 @@ export function PanelTabList(): JSX.Element {
   return (
     <nav
       aria-label="ProseMirror Devtools panels"
+      aria-orientation="horizontal"
       class={panelStyles.pmTabs}
       onKeyDown={handleKeyDown}
       role="tablist"
     >
       <For each={navigation.panels()}>
-        {(item, index) => (
-          <button
-            aria-controls={meta.tabPanelId}
-            aria-selected={navigation.activePanel() === item.id}
-            class={panelStyles.pmTab}
-            id={meta.tabId(item.id)}
-            onClick={() => navigation.selectPanel(item.id)}
-            ref={(element) => registerTab(index(), element)}
-            role="tab"
-            tabIndex={navigation.activePanel() === item.id ? 0 : -1}
-            type="button"
-          >
-            {item.title}
-            <Show when={item.badge === "transactions"}>
-              <span class={panelStyles.pmTabCount}>{transactionCount()}</span>
-            </Show>
-          </button>
-        )}
+        {(item) => {
+          onCleanup(() => registerTab(item.id, null));
+          return (
+            <button
+              aria-controls={meta.tabPanelId}
+              aria-selected={navigation.activePanel() === item.id}
+              class={panelStyles.pmTab}
+              id={meta.tabId(item.id)}
+              onClick={() => navigation.selectPanel(item.id)}
+              ref={(element) => registerTab(item.id, element)}
+              role="tab"
+              tabIndex={navigation.activePanel() === item.id ? 0 : -1}
+              type="button"
+            >
+              {item.title}
+              <Show when={item.badge === "transactions"}>
+                <span class={panelStyles.pmTabCount}>{transactionCount()}</span>
+              </Show>
+            </button>
+          );
+        }}
       </For>
     </nav>
   );

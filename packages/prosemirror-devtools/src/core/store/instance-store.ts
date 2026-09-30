@@ -1,4 +1,5 @@
 import type { EditorView } from "prosemirror-view";
+import type { DevtoolsDiagnosticsController } from "../diagnostics";
 
 import type {
   DevtoolsDispatchEvent,
@@ -26,6 +27,7 @@ type InternalInstanceState = {
   registrationCount: number;
   transactions: TransactionRecord[];
   pluginTimings: PluginTimingAggregates;
+  diagnostics?: DevtoolsDiagnosticsController;
 };
 
 export type InternalInstance = InternalInstanceState & {
@@ -79,7 +81,7 @@ function notifyDispatch(
   listeners: ReadonlySet<DevtoolsDispatchListener>,
   events: readonly DevtoolsDispatchEvent[],
 ): void {
-  for (const listener of listeners) {
+  for (const listener of Array.from(listeners)) {
     try {
       listener(events);
     } catch (error) {
@@ -108,6 +110,7 @@ function createSnapshot(entry: InternalInstanceState): RegisteredProseMirrorInst
     transactionLimit: entry.transactionLimit,
     transactions: entry.transactions,
     pluginTimings: readPluginTimingSummaries(entry.pluginTimings),
+    ...(entry.diagnostics ? { diagnostics: entry.diagnostics } : {}),
   };
 }
 
@@ -223,11 +226,12 @@ export function createInstanceStore({
     publishNow({ instanceId: id, descriptorsChanged: true, activeInstanceChanged });
   };
 
-  const release = (id: string, view: EditorView): void => {
-    const entry = instances.get(id);
-    if (!entry || entry.view !== view) return;
+  const release = (entry: InternalInstance): void => {
+    // A forced unregister can be followed by a new registration of the very same view. An older
+    // lease belongs to its original entry, and must not tear down that replacement registration.
+    if (instances.get(entry.id) !== entry) return;
     entry.registrationCount -= 1;
-    if (entry.registrationCount <= 0) remove(id, view);
+    if (entry.registrationCount <= 0) remove(entry.id, entry.view);
   };
 
   return {
@@ -270,6 +274,7 @@ export function createInstanceStore({
           existing.transactionLimit,
         );
         existing.registrationCount += 1;
+        if (options.diagnostics) existing.diagnostics = options.diagnostics;
         if (
           existing.transactionLimit !== null &&
           existing.transactions.length > existing.transactionLimit
@@ -297,6 +302,7 @@ export function createInstanceStore({
           registrationCount: 1,
           transactions: [],
           pluginTimings,
+          ...(options.diagnostics ? { diagnostics: options.diagnostics } : {}),
         };
         entry = { ...initial, snapshot: createSnapshot(initial) };
         instances.set(options.id, entry);
@@ -310,7 +316,7 @@ export function createInstanceStore({
       return () => {
         if (!active) return;
         active = false;
-        release(options.id, options.view);
+        release(entry);
       };
     },
     unregister(id, view) {
@@ -336,9 +342,21 @@ export function createInstanceStore({
     },
     recordTransaction(entry, record, dispatch) {
       const transactions = [...entry.transactions];
-      const insertionIndex = transactions.findIndex((candidate) => candidate.id > record.id);
-      if (insertionIndex < 0) transactions.push(record);
-      else transactions.splice(insertionIndex, 0, record);
+      const latest = transactions.at(-1);
+      if (!latest || latest.id < record.id) {
+        transactions.push(record);
+      } else {
+        // Normal dispatches append in constant search time. Nested dispatches finish inside-out,
+        // so locate their insertion point without rescanning the complete retained history.
+        let low = 0;
+        let high = transactions.length;
+        while (low < high) {
+          const middle = (low + high) >>> 1;
+          if (transactions[middle]!.id <= record.id) low = middle + 1;
+          else high = middle;
+        }
+        transactions.splice(low, 0, record);
+      }
 
       const overflow =
         entry.transactionLimit === null

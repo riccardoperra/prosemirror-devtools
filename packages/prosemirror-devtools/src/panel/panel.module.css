@@ -45,12 +45,14 @@
   --pm-shadow: var(--prosemirror-devtools-shadow);
   --pm-radius: var(--prosemirror-devtools-radius);
   container-type: inline-size;
+  box-sizing: border-box;
   color: var(--pm-text);
   background: var(--pm-bg);
   color-scheme: light;
   display: flex;
   flex-direction: column;
   inline-size: 100%;
+  min-inline-size: 0;
   max-inline-size: 100%;
   block-size: 100%;
   min-block-size: 360px;
@@ -59,6 +61,9 @@
     var(--prosemirror-devtools-font-family);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
+}
+.pm-devtools[data-embedded="true"] {
+  min-block-size: 0;
 }
 .pm-devtools[data-theme="dark"] {
   --prosemirror-devtools-background: #121212;
@@ -100,6 +105,14 @@
   outline: 2px solid var(--pm-accent);
   outline-offset: 1px;
 }
+.pm-devtools [tabindex]:focus-visible {
+  outline: 2px solid var(--pm-accent);
+  outline-offset: -2px;
+}
+.pm-devtools button:disabled,
+.pm-devtools select:disabled {
+  cursor: default;
+}
 @scope (.pm-devtools) {
   .pm-header {
     flex: none;
@@ -123,6 +136,7 @@
     align-items: stretch;
   }
   .pm-toolbar {
+    min-inline-size: 0;
     min-block-size: 42px;
     display: flex;
     align-items: center;
@@ -154,6 +168,7 @@
     white-space: nowrap;
   }
   .pm-live {
+    flex: none;
     inline-size: 6px;
     block-size: 6px;
     border-radius: 50%;
@@ -165,7 +180,7 @@
   }
   .pm-instance-select {
     min-inline-size: 140px;
-    max-inline-size: min(270px, 40vw);
+    max-inline-size: 270px;
     block-size: 28px;
     border: 1px solid var(--pm-border);
     background: var(--pm-panel-2);
@@ -186,12 +201,13 @@
     white-space: nowrap;
   }
   .pm-icon-button {
+    flex: none;
     inline-size: 28px;
     padding: 0;
     color: var(--pm-muted);
   }
-  .pm-button:hover,
-  .pm-icon-button:hover {
+  .pm-button:hover:enabled,
+  .pm-icon-button:hover:enabled {
     border-color: var(--pm-border-strong);
     background: var(--pm-panel-2);
   }
@@ -204,17 +220,22 @@
     color: var(--pm-red);
   }
   .pm-tabs {
+    min-inline-size: 0;
     display: flex;
     align-items: stretch;
     gap: 16px;
     padding: 0 10px;
     overflow-x: auto;
-    scrollbar-width: none;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pm-border-strong) transparent;
   }
   .pm-tabs::-webkit-scrollbar {
-    display: none;
+    block-size: 4px;
   }
   .pm-tab {
+    flex: none;
     position: relative;
     min-block-size: 35px;
     border: 0;
@@ -222,6 +243,7 @@
     color: var(--pm-muted);
     padding: 0 1px;
     font-weight: 650;
+    white-space: nowrap;
   }
   .pm-tab:hover {
     color: var(--pm-text);
@@ -232,7 +254,7 @@
   .pm-tab::after {
     content: "";
     position: absolute;
-    inset: auto 0 -1px;
+    inset: auto 0 0;
     block-size: 2px;
     background: transparent;
   }
@@ -248,6 +270,7 @@
   }
   .pm-body {
     flex: 1;
+    min-inline-size: 0;
     block-size: auto !important;
     min-block-size: 0;
     overflow: hidden;
@@ -258,8 +281,10 @@
     overflow: auto;
   }
   .pm-scroll {
+    min-inline-size: 0;
     block-size: 100%;
     overflow: auto;
+    overscroll-behavior: contain;
     scrollbar-color: var(--pm-border-strong) transparent;
   }
   .pm-performance-view {
@@ -267,7 +292,8 @@
   }
   .pm-empty {
     block-size: 100%;
-    min-block-size: 260px;
+    min-block-size: 0;
+    overflow: auto;
     display: grid;
     place-items: center;
     color: var(--pm-muted);
@@ -297,6 +323,9 @@
     min-inline-size: 0;
     min-block-size: 0;
     overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pm-border-strong) transparent;
   }
   .pm-pane + .pm-pane {
     border-inline-start: 1px solid var(--pm-border);
@@ -308,6 +337,7 @@
     min-block-size: 35px;
     padding: 7px 9px;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 7px;
     background: color-mix(in srgb, var(--pm-panel) 94%, transparent);
@@ -431,7 +461,8 @@
   .pm-list-row:hover {
     background: var(--pm-panel-2);
   }
-  .pm-list-row[aria-selected="true"] {
+  .pm-list-row[aria-selected="true"],
+  .pm-list-row[aria-pressed="true"] {
     background: var(--pm-accent-soft);
     box-shadow: inset 2px 0 var(--pm-accent);
   }
@@ -669,6 +700,7 @@
     padding: 7px 9px;
     background: var(--pm-panel-2);
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 7px;
   }
@@ -680,6 +712,7 @@
     overflow: hidden;
   }
   .pm-history-list {
+    min-inline-size: 0;
     min-block-size: 0;
     overflow: auto;
     overscroll-behavior: contain;
@@ -1717,7 +1750,7 @@
   }
   .pm-snapshot-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr));
     gap: 8px;
     padding: 10px;
   }
@@ -1772,38 +1805,18 @@
     .pm-toolbar > .pm-spacer {
       display: none;
     }
-    .pm-body {
-      overflow: auto;
-    }
-    .pm-split {
-      block-size: auto;
-      min-block-size: 100%;
-      grid-template-columns: 1fr;
-      overflow: visible;
-    }
-    .pm-split > .pm-pane {
-      overflow: visible;
-    }
+    .pm-split,
     .pm-history-layout {
-      block-size: auto;
-      min-block-size: 100%;
       grid-template-columns: 1fr;
-      overflow: visible;
+      grid-template-rows: minmax(0, 45fr) minmax(0, 55fr);
     }
     .pm-pane + .pm-pane {
       border-inline-start: 0;
       border-block-start: 1px solid var(--pm-border);
     }
     .pm-history-list {
-      block-size: clamp(180px, 42vh, 320px);
-      overflow: auto;
       border-inline-end: 0;
       border-block-end: 1px solid var(--pm-border);
-    }
-    .pm-history-layout > .pm-dispatch-inspector {
-      block-size: auto;
-      overflow: visible;
-      scrollbar-gutter: auto;
     }
     .pm-transaction-payload,
     .pm-detail-columns {
@@ -1837,13 +1850,6 @@
     .pm-snapshot-actions {
       flex-wrap: wrap;
     }
-    .pm-tabs {
-      scrollbar-width: thin;
-    }
-    .pm-tabs::-webkit-scrollbar {
-      display: block;
-      block-size: 4px;
-    }
     .pm-header[data-embedded="true"] {
       display: block;
     }
@@ -1862,9 +1868,6 @@
     .pm-tabs {
       gap: 13px;
       padding-inline: 8px;
-    }
-    .pm-pane-header {
-      flex-wrap: wrap;
     }
     .pm-node-range,
     .pm-node-selection-label {

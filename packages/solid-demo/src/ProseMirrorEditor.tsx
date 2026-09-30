@@ -14,7 +14,10 @@ export function ProseMirrorEditor(props: { latencyEnabled: boolean }) {
       latencyEnabled: props.latencyEnabled,
     });
   });
-  createEffect(() => editor?.setLatencyEnabled(props.latencyEnabled));
+  createEffect(() => {
+    const enabled = props.latencyEnabled;
+    editor?.setLatencyEnabled(enabled);
+  });
   onCleanup(() => editor?.destroy());
 
   return <div ref={(element) => (editorHost = element)} />;

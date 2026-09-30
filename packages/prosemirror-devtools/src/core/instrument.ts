@@ -1,27 +1,36 @@
 import { Plugin } from "prosemirror-state";
 import type { PluginSpec, PluginView, StateField } from "prosemirror-state";
 import type { EditorProps, NodeView } from "prosemirror-view";
+import {
+  getDiagnosticsRecorder,
+  type DevtoolsDiagnosticsController,
+  type DevtoolsDiagnosticsRecorder,
+  type DevtoolsNodeViewTracker,
+} from "./diagnostics";
+import type { EditorState } from "prosemirror-state";
 
 import { prosemirrorDevtoolsStore } from "./store/create-devtools-store";
 import type { InstrumentPluginsOptions, PluginHook, DevtoolsStore } from "./types";
 
 type LooseFunction = (this: unknown, ...args: unknown[]) => unknown;
 type LooseRecord = Record<PropertyKey, unknown>;
+const diagnosticsIds = new WeakMap<DevtoolsDiagnosticsController, number>();
+let nextDiagnosticsId = 0;
 
 const instrumentedPlugins = new WeakMap<
   Plugin,
-  WeakMap<
-    DevtoolsStore,
-    Map<string, { plugin: WeakRef<Plugin>; isActive: (() => boolean) | undefined }>
-  >
+  WeakMap<DevtoolsStore, Map<string, WeakRef<Plugin>>>
 >();
 const instrumentedPluginMetadata = new WeakMap<
   Plugin,
   {
+    original: Plugin;
     instanceId: string;
     sessionId: string | undefined;
+    pluginLabel: string;
     isActive: (() => boolean) | undefined;
     store: DevtoolsStore;
+    diagnostics: DevtoolsDiagnosticsController | undefined;
   }
 >();
 
@@ -37,6 +46,8 @@ function defaultPluginLabel(plugin: Plugin, index: number): string {
 function wrapNodeView(
   nodeView: NodeView,
   measure: <T>(hook: PluginHook, run: () => T) => T,
+  tracker?: DevtoolsNodeViewTracker,
+  diagnosticsActive?: () => DevtoolsDiagnosticsRecorder | undefined,
 ): NodeView {
   const timedMethods = new Set([
     "update",
@@ -48,11 +59,15 @@ function wrapNodeView(
     "destroy",
   ]);
   const wrappers = new Map<PropertyKey, { source: LooseFunction; wrapped: LooseFunction }>();
+  const destroy = () => {
+    if (diagnosticsActive?.()) tracker?.run("destroy", () => {});
+  };
   return new Proxy(nodeView, {
-    get(target, property, receiver) {
-      const value = Reflect.get(target, property, receiver) as unknown;
+    get(target, property) {
+      // Accessors on class-based NodeViews may read private fields, which require the original
+      // instance as their receiver just like the lifecycle methods below.
+      const value = Reflect.get(target, property, target) as unknown;
       if (typeof property !== "string" || !timedMethods.has(property)) return value;
-      if (typeof value !== "function") return value;
       const ownDescriptor = Reflect.getOwnPropertyDescriptor(target, property);
       if (
         ownDescriptor &&
@@ -62,11 +77,17 @@ function wrapNodeView(
       ) {
         return value;
       }
+      if (property === "destroy" && value == null && tracker) return destroy;
+      if (typeof value !== "function") return value;
       const cached = wrappers.get(property);
       if (cached?.source === value) return cached.wrapped;
       const source = value as LooseFunction;
       const wrapped: LooseFunction = (...args: unknown[]) =>
-        measure(`nodeView.${property}`, () => Reflect.apply(source, target, args));
+        measure(`nodeView.${property}`, () =>
+          tracker && diagnosticsActive?.()
+            ? tracker.run(property, () => Reflect.apply(source, target, args))
+            : Reflect.apply(source, target, args),
+        );
       wrappers.set(property, { source, wrapped });
       return wrapped;
     },
@@ -77,14 +98,32 @@ function wrapProps(
   props: EditorProps<Plugin>,
   measure: <T>(hook: PluginHook, run: () => T) => T,
   originalPlugin: Plugin,
+  pluginKey: string,
+  pluginLabel: string,
+  diagnostics?: () => DevtoolsDiagnosticsRecorder | undefined,
 ): EditorProps<Plugin> {
   const wrapped: LooseRecord = { ...props };
   for (const [name, value] of Object.entries(props)) {
     if (typeof value === "function") {
       wrapped[name] = function (this: unknown, ...args: unknown[]) {
-        return measure(`props.${name}`, () =>
-          Reflect.apply(value as LooseFunction, originalPlugin, args),
-        );
+        return measure(`props.${name}`, () => {
+          const recorder = diagnostics?.();
+          const run = () => Reflect.apply(value as LooseFunction, originalPlugin, args);
+          if (recorder && name.startsWith("handle")) {
+            return recorder.traceEvent({ kind: "prop", name, pluginKey, pluginLabel }, args, run);
+          }
+          const result = run();
+          if (recorder && name === "decorations") {
+            const state = args[0] as EditorState;
+            recorder.observeDecorations(
+              pluginKey,
+              pluginLabel,
+              state.doc,
+              result as ReturnType<NonNullable<EditorProps["decorations"]>>,
+            );
+          }
+          return result;
+        });
       };
       continue;
     }
@@ -94,9 +133,17 @@ function wrapProps(
           eventName,
           typeof handler === "function"
             ? function (this: unknown, ...args: unknown[]) {
-                return measure(`props.handleDOMEvents.${eventName}`, () =>
-                  Reflect.apply(handler as LooseFunction, originalPlugin, args),
-                );
+                return measure(`props.handleDOMEvents.${eventName}`, () => {
+                  const recorder = diagnostics?.();
+                  const run = () => Reflect.apply(handler as LooseFunction, originalPlugin, args);
+                  return recorder
+                    ? recorder.traceEvent(
+                        { kind: "dom-event", name: eventName, pluginKey, pluginLabel },
+                        args,
+                        run,
+                      )
+                    : run();
+                });
               }
             : handler,
         ]),
@@ -110,9 +157,16 @@ function wrapProps(
           typeof factory === "function"
             ? function (this: unknown, ...args: unknown[]) {
                 return measure(`props.nodeViews.${nodeName}`, () => {
-                  const result = Reflect.apply(factory as LooseFunction, this, args);
+                  const tracker = diagnostics?.()?.nodeView(
+                    pluginKey,
+                    pluginLabel,
+                    nodeName,
+                    args[2],
+                  );
+                  const run = () => Reflect.apply(factory as LooseFunction, this, args);
+                  const result = tracker ? tracker.run("create", run) : run();
                   return result && typeof result === "object"
-                    ? wrapNodeView(result as NodeView, measure)
+                    ? wrapNodeView(result as NodeView, measure, tracker, diagnostics)
                     : result;
                 });
               }
@@ -124,25 +178,47 @@ function wrapProps(
   return wrapped as EditorProps<Plugin>;
 }
 
-function wrapPlugin(original: Plugin, index: number, options: InstrumentPluginsOptions): Plugin {
+function wrapPlugin(plugin: Plugin, index: number, options: InstrumentPluginsOptions): Plugin {
   const store = options.store ?? prosemirrorDevtoolsStore;
-  const metadata = instrumentedPluginMetadata.get(original);
+  const metadata = instrumentedPluginMetadata.get(plugin);
+  // A wrapper reused in another editor/session must not call the old session's instrumentation.
+  const original = metadata?.original ?? plugin;
+  const pluginLabel =
+    options.getPluginLabel?.(original, index) ?? defaultPluginLabel(original, index);
   if (
     metadata?.instanceId === options.instanceId &&
     metadata.sessionId === options.sessionId &&
+    metadata.pluginLabel === pluginLabel &&
     metadata.isActive === options.isActive &&
+    metadata.diagnostics === options.diagnostics &&
     metadata.store === store
   ) {
-    return original;
+    return plugin;
   }
-  const cacheKey = options.sessionId ?? options.instanceId;
+  let diagnosticsId = 0;
+  if (options.diagnostics) {
+    diagnosticsId = diagnosticsIds.get(options.diagnostics) ?? ++nextDiagnosticsId;
+    diagnosticsIds.set(options.diagnostics, diagnosticsId);
+  }
+  const cacheKey = JSON.stringify([
+    options.instanceId,
+    options.sessionId ?? null,
+    pluginLabel,
+    diagnosticsId,
+  ]);
   const cached = instrumentedPlugins.get(original)?.get(store)?.get(cacheKey);
-  const cachedPlugin = cached?.plugin.deref();
-  if (cachedPlugin && cached?.isActive === options.isActive) return cachedPlugin;
+  const cachedPlugin = cached?.deref();
+  if (cachedPlugin && instrumentedPluginMetadata.get(cachedPlugin)?.isActive === options.isActive) {
+    return cachedPlugin;
+  }
 
   const pluginKey = runtimePluginKey(original);
-  const pluginLabel =
-    options.getPluginLabel?.(original, index) ?? defaultPluginLabel(original, index);
+  const diagnostics = options.diagnostics
+    ? () =>
+        options.isActive && !options.isActive()
+          ? undefined
+          : getDiagnosticsRecorder(options.diagnostics)
+    : undefined;
   const measure = <T>(hook: PluginHook, run: () => T): T => {
     if (options.isActive && !options.isActive()) return run();
     return store.measurePluginHook(
@@ -193,7 +269,14 @@ function wrapPlugin(original: Plugin, index: number, options: InstrumentPluginsO
       );
   }
   if (spec.props) {
-    wrappedSpec.props = wrapProps(spec.props as EditorProps<Plugin>, measure, original);
+    wrappedSpec.props = wrapProps(
+      spec.props as EditorProps<Plugin>,
+      measure,
+      original,
+      pluginKey,
+      pluginLabel,
+      diagnostics,
+    );
   }
   if (spec.view) {
     const createView = spec.view;
@@ -224,14 +307,22 @@ function wrapPlugin(original: Plugin, index: number, options: InstrumentPluginsO
 
   const byStore = instrumentedPlugins.get(original) ?? new WeakMap();
   const bySession = byStore.get(store) ?? new Map();
-  bySession.set(cacheKey, { plugin: new WeakRef(wrapped), isActive: options.isActive });
+  // The cache must not retain isActive closures (and their editor/session) after a wrapper dies.
+  // Reclaim expired keys when a shared plugin is instrumented for a subsequent editor lifecycle.
+  for (const [key, reference] of bySession) {
+    if (!reference.deref()) bySession.delete(key);
+  }
+  bySession.set(cacheKey, new WeakRef(wrapped));
   byStore.set(store, bySession);
   instrumentedPlugins.set(original, byStore);
   instrumentedPluginMetadata.set(wrapped, {
+    original,
     instanceId: options.instanceId,
     sessionId: options.sessionId,
+    pluginLabel,
     isActive: options.isActive,
     store,
+    diagnostics: options.diagnostics,
   });
   return wrapped;
 }

@@ -38,7 +38,10 @@ export class ProseMirrorEditor {
       },
     });
 
-    effect(() => this.editor?.setLatencyEnabled(this.latencyEnabled()));
+    effect(() => {
+      const enabled = this.latencyEnabled();
+      this.editor?.setLatencyEnabled(enabled);
+    });
     destroyRef.onDestroy(() => this.editor?.destroy());
   }
 }

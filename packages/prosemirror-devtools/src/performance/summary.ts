@@ -17,11 +17,17 @@ export function buildPerformanceSummary(
   transactions: readonly Pick<TransactionRecord, "totalDuration">[],
 ): PerformanceSummary {
   const durations = transactions.map((record) => record.totalDuration);
-  const average = durations.reduce((sum, value) => sum + value, 0) / Math.max(1, durations.length);
+  let total = 0;
+  let maximum = 0;
+  for (const duration of durations) {
+    total += duration;
+    maximum = Math.max(maximum, duration);
+  }
   return {
     durations,
-    average,
+    average: total / Math.max(1, durations.length),
     percentile95: calculatePercentile95(durations),
-    maximum: Math.max(...durations, 0),
+    // History is unbounded by default; spreading it as arguments can exceed the engine's limit.
+    maximum,
   };
 }

@@ -1,5 +1,7 @@
 import type { EditorState, Plugin, Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
+import type { DevtoolsDiagnosticsController } from "./diagnostics";
+import type { RecordedStepDetails } from "./transaction-changes";
 
 export type DevtoolsTheme = "light" | "dark" | "system";
 
@@ -94,6 +96,8 @@ export interface AppliedTransactionRecord {
   selectionSet: boolean;
   storedMarksSet: boolean;
   steps: SerializedValue[];
+  /** Normalized maps and lazy per-step document changes; optional for older external records. */
+  stepDetails?: readonly RecordedStepDetails[];
   meta: Record<string, unknown>;
 }
 
@@ -138,6 +142,8 @@ export interface RegisteredProseMirrorInstance {
   transactionLimit: number | null;
   transactions: readonly TransactionRecord[];
   pluginTimings: readonly PluginTimingSummary[];
+  /** Optional bounded event, decoration, and NodeView observations. */
+  diagnostics?: DevtoolsDiagnosticsController;
 }
 
 export interface DevtoolsSnapshot {
@@ -162,6 +168,7 @@ export interface RegisterProseMirrorInstanceOptions {
    * unbounded by default. Pass `null` to remove a previously configured cap.
    */
   transactionLimit?: number | null;
+  diagnostics?: DevtoolsDiagnosticsController;
 }
 
 export interface AttachProseMirrorDevtoolsOptions extends RegisterProseMirrorInstanceOptions {
@@ -186,6 +193,7 @@ export interface InstrumentPluginsOptions {
   /** Allows a controller to stop stale lifecycle hooks after teardown. */
   isActive?: () => boolean;
   getPluginLabel?: (plugin: Plugin, index: number) => string;
+  diagnostics?: DevtoolsDiagnosticsController;
 }
 
 export interface SavedSnapshot {

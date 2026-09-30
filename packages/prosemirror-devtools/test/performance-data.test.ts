@@ -1,5 +1,6 @@
 import {
   buildDispatchPhaseBreakdown,
+  buildPerformanceSummary,
   groupPluginTimings,
   type PluginHook,
   type PluginTiming,
@@ -15,6 +16,18 @@ function timing(
 ): PluginTiming {
   return { pluginKey, pluginLabel, hook, startOffset, duration };
 }
+
+describe("buildPerformanceSummary", () => {
+  it("summarizes retained history beyond the JavaScript argument limit", () => {
+    const records = Array.from({ length: 200_000 }, (_, index) => ({ totalDuration: index % 100 }));
+
+    expect(buildPerformanceSummary(records)).toMatchObject({
+      average: 49.5,
+      percentile95: 94,
+      maximum: 99,
+    });
+  });
+});
 
 describe("groupPluginTimings", () => {
   it("returns no groups for no timing samples", () => {

@@ -9,6 +9,7 @@ export interface JsonTreeProps {
 }
 
 const NO_ANCESTORS: readonly object[] = [];
+const PAGE_SIZE = 100;
 
 function text(value: unknown, space?: number): string {
   try {
@@ -24,8 +25,12 @@ function text(value: unknown, space?: number): string {
   }
 }
 
-function copyValue(value: unknown): void {
-  void globalThis.navigator?.clipboard?.writeText(text(value, 2));
+async function copyValue(value: unknown, target: Document): Promise<void> {
+  try {
+    await target.defaultView?.navigator.clipboard?.writeText(text(value, 2));
+  } catch {
+    // Clipboard permissions can be denied by the host or browser.
+  }
 }
 
 function primitive(value: unknown): JSX.Element {
@@ -42,26 +47,34 @@ function primitive(value: unknown): JSX.Element {
   return <span class={panelStyles.pmJsonString}>{text(value)}</span>;
 }
 
-function entries(value: unknown): [string, unknown][] {
+function keys(value: unknown): string[] {
   if (value === null || typeof value !== "object") return [];
   try {
-    return Object.entries(value);
+    return Object.keys(value);
   } catch {
     return [];
   }
 }
 
-function summary(value: unknown): string {
+function readProperty(value: unknown, key: string): unknown {
+  try {
+    return (value as Record<string, unknown>)[key];
+  } catch {
+    return "[Unable to read property]";
+  }
+}
+
+function summary(value: unknown, size: number): string {
   if (Array.isArray(value)) return `Array(${value.length})`;
   if (value && typeof value === "object") {
     let type = "";
     try {
-      const candidate = (value as { type?: unknown }).type;
+      const candidate: unknown = Object.getOwnPropertyDescriptor(value, "type")?.value;
       if (typeof candidate === "string") type = ` · ${candidate}`;
     } catch {
       // A proxy may reject property access.
     }
-    return `{${entries(value).length}}${type}`;
+    return `{${size}}${type}`;
   }
   return "";
 }
@@ -79,7 +92,10 @@ function JsonNode(props: JsonNodeProps): JSX.Element {
   const circular = createMemo(() => isObject() && props.ancestors.includes(props.value as object));
   const expandable = createMemo(() => isObject() && !circular());
   const [expanded, setExpanded] = createSignal(props.depth < props.defaultExpandedDepth);
-  const children = createMemo(() => (expandable() ? entries(props.value) : []));
+  const [visibleCount, setVisibleCount] = createSignal(PAGE_SIZE);
+  // Enumerate keys without evaluating getters on collapsed or hidden children.
+  const childKeys = createMemo(() => (expandable() ? keys(props.value) : []));
+  const visibleKeys = createMemo(() => (expanded() ? childKeys().slice(0, visibleCount()) : []));
   const childAncestors = createMemo(() =>
     isObject() ? [...props.ancestors, props.value as object] : props.ancestors,
   );
@@ -89,6 +105,7 @@ function JsonNode(props: JsonNodeProps): JSX.Element {
       <div class={panelStyles.pmJsonRow} style={{ "--depth": props.depth } as JSX.CSSProperties}>
         <Show when={expandable()} fallback={<span class={panelStyles.pmJsonToggle} />}>
           <button
+            aria-expanded={expanded()}
             aria-label={expanded() ? "Collapse value" : "Expand value"}
             class={panelStyles.pmJsonToggle}
             onClick={() => setExpanded((current) => !current)}
@@ -109,12 +126,12 @@ function JsonNode(props: JsonNodeProps): JSX.Element {
             </Show>
           }
         >
-          <span class={panelStyles.pmJsonSummary}>{summary(props.value)}</span>
+          <span class={panelStyles.pmJsonSummary}>{summary(props.value, childKeys().length)}</span>
         </Show>
         <button
           aria-label="Copy value"
           class={cx(panelStyles.pmJsonToggle, panelStyles.pmJsonActions)}
-          onClick={() => copyValue(props.value)}
+          onClick={(event) => void copyValue(props.value, event.currentTarget.ownerDocument)}
           title="Copy JSON"
           type="button"
         >
@@ -122,17 +139,29 @@ function JsonNode(props: JsonNodeProps): JSX.Element {
         </button>
       </div>
       <Show when={expandable() && expanded()}>
-        <For each={children()}>
-          {([key, child]) => (
-            <JsonNode
-              ancestors={childAncestors()}
-              defaultExpandedDepth={props.defaultExpandedDepth}
-              depth={props.depth + 1}
-              name={key}
-              value={child}
-            />
-          )}
+        <For each={visibleKeys()}>
+          {(key) => {
+            const child = createMemo(() => readProperty(props.value, key));
+            return (
+              <JsonNode
+                ancestors={childAncestors()}
+                defaultExpandedDepth={props.defaultExpandedDepth}
+                depth={props.depth + 1}
+                name={key}
+                value={child()}
+              />
+            );
+          }}
         </For>
+        <Show when={childKeys().length > visibleCount()}>
+          <button
+            class={panelStyles.pmButton}
+            onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+            type="button"
+          >
+            Show more ({childKeys().length - visibleCount()} remaining)
+          </button>
+        </Show>
       </Show>
     </div>
   );

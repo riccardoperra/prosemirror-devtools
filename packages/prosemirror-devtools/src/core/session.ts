@@ -3,6 +3,11 @@ import type { EditorView } from "prosemirror-view";
 
 import { attachProseMirrorDevtools } from "./attach";
 import {
+  createProseMirrorDevtoolsDiagnostics,
+  type DevtoolsDiagnosticsController,
+  type DevtoolsDiagnosticsOptions,
+} from "./diagnostics";
+import {
   createProseMirrorDispatchRecorder,
   type ProseMirrorDispatchRecorder,
 } from "./dispatch/record-dispatch";
@@ -17,11 +22,12 @@ import type {
 
 export interface CreateProseMirrorDevtoolsSessionOptions extends Omit<
   AttachProseMirrorDevtoolsOptions,
-  "sessionId" | "view"
+  "sessionId" | "view" | "diagnostics"
 > {
   /** Primarily useful for deterministic integration tests and adapter ownership. */
   sessionId?: string;
   getPluginLabel?: (plugin: Plugin, index: number) => string;
+  diagnostics?: boolean | DevtoolsDiagnosticsOptions | DevtoolsDiagnosticsController;
 }
 
 export interface ProseMirrorDevtoolsSession {
@@ -29,6 +35,7 @@ export interface ProseMirrorDevtoolsSession {
   readonly sessionId: string;
   readonly store: DevtoolsStore;
   readonly active: boolean;
+  readonly diagnostics: DevtoolsDiagnosticsController | undefined;
   /** Explicit opt-in to per-plugin lifecycle/hook timings. */
   instrumentPlugins(plugins: readonly Plugin[]): Plugin[];
   /** Registers and patches a regular EditorView dispatcher. */
@@ -47,6 +54,21 @@ export function createProseMirrorDevtoolsSession(
 ): ProseMirrorDevtoolsSession {
   const store = options.store ?? prosemirrorDevtoolsStore;
   const sessionId = options.sessionId ?? createDevtoolsSessionId("session");
+  const suppliedDiagnostics =
+    options.diagnostics &&
+    typeof options.diagnostics === "object" &&
+    "getSnapshot" in options.diagnostics
+      ? options.diagnostics
+      : undefined;
+  const diagnostics =
+    suppliedDiagnostics ??
+    (options.diagnostics
+      ? createProseMirrorDevtoolsDiagnostics(
+          typeof options.diagnostics === "object" && !("getSnapshot" in options.diagnostics)
+            ? options.diagnostics
+            : {},
+        )
+      : undefined);
   let active = true;
   let view: EditorView | null = null;
   let attachment: AttachedProseMirrorDevtools | null = null;
@@ -59,6 +81,7 @@ export function createProseMirrorDevtoolsSession(
     view: nextView,
     store,
     sessionId,
+    ...(diagnostics ? { diagnostics } : {}),
     ...(options.label === undefined ? {} : { label: options.label }),
     ...(options.transactionLimit === undefined
       ? {}
@@ -87,6 +110,7 @@ export function createProseMirrorDevtoolsSession(
     id: options.id,
     sessionId,
     store,
+    diagnostics,
     get active() {
       return active;
     },
@@ -97,6 +121,7 @@ export function createProseMirrorDevtoolsSession(
         store,
         sessionId,
         isActive: isSessionActive,
+        ...(diagnostics ? { diagnostics } : {}),
         ...(options.getPluginLabel ? { getPluginLabel: options.getPluginLabel } : {}),
       });
     },
@@ -149,6 +174,7 @@ export function createProseMirrorDevtoolsSession(
         underlyingAttachment = null;
         view = null;
         store.closeSession(options.id, sessionId);
+        if (!suppliedDiagnostics) diagnostics?.dispose();
       }
     },
   };

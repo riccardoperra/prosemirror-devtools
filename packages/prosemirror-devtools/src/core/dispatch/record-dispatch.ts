@@ -1,5 +1,6 @@
 import type { EditorState, Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
+import { getDiagnosticsRecorder } from "../diagnostics";
 
 import { prosemirrorDevtoolsStore } from "../store/create-devtools-store";
 import { monotonicNow } from "../store/transaction-measurement";
@@ -58,6 +59,8 @@ export function recordSynchronousDispatch({
     options.performanceExtension,
     options.sessionId,
   );
+  const diagnostics = getDiagnosticsRecorder(options.diagnostics);
+  diagnostics?.recordDispatch(options.id, measurement.id);
   // Keep `undefined` distinct from `[]`: only the latter proves that ProseMirror filtered the
   // transaction. Custom dispatchers may not expose enough information to know either way.
   let appliedTransactions: readonly Transaction[] | undefined;
@@ -81,6 +84,7 @@ export function recordSynchronousDispatch({
       ...(appliedTransactions === undefined ? {} : { appliedTransactions }),
       ...(didThrow ? { error } : {}),
     });
+    diagnostics?.observeDocument(getState().doc);
   }
 }
 

@@ -1,8 +1,9 @@
 import { TextSelection } from "prosemirror-state";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createSnapshot,
+  inspectState,
   loadSnapshots,
   persistSnapshots,
   restoreDocument,
@@ -40,6 +41,30 @@ class MemoryStorage implements Storage {
 
 afterEach(() => {
   if (typeof document !== "undefined") document.body.replaceChildren();
+  vi.restoreAllMocks();
+});
+
+describe("state inspection", () => {
+  it("reads document statistics lazily and reuses text counts across selection changes", () => {
+    const state = createTestState("content");
+    const textBetween = vi.spyOn(state.doc, "textBetween");
+    const inspection = inspectState(state);
+    expect(textBetween).not.toHaveBeenCalled();
+    expect(inspection.stats.textSize).toBe(7);
+
+    const selected = state.apply(state.tr.setSelection(TextSelection.create(state.doc, 3)));
+    const selectedInspection = inspectState(selected);
+    expect(selectedInspection.selection).toMatchObject({ from: 3 });
+    expect(selectedInspection.stats.textSize).toBe(7);
+    expect(textBetween).toHaveBeenCalledOnce();
+
+    // A consumer mutating its inspection must not corrupt cached statistics for another state.
+    inspection.stats.textSize = 0;
+    expect(selectedInspection.stats.textSize).toBe(7);
+
+    const changed = selected.apply(selected.tr.insertText("!"));
+    expect(inspectState(changed).stats.textSize).toBe(8);
+  });
 });
 
 describe("snapshots", () => {

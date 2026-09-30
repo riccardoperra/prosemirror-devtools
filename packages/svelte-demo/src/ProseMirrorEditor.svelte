@@ -16,7 +16,10 @@
     });
     return () => editor?.destroy();
   });
-  $effect(() => editor?.setLatencyEnabled(latencyEnabled));
+  $effect(() => {
+    const enabled = latencyEnabled;
+    editor?.setLatencyEnabled(enabled);
+  });
 </script>
 
 <div bind:this={editorHost}></div>

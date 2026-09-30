@@ -2,7 +2,7 @@ import { Plugin, type Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createProseMirrorDevtoolsStore } from "../src/core";
+import { createProseMirrorDevtoolsDiagnostics, createProseMirrorDevtoolsStore } from "../src/core";
 import {
   attachTiptapDevtools,
   detachTiptapDevtools,
@@ -34,6 +34,58 @@ afterEach(() => {
 });
 
 describe("Tiptap lifecycle helpers", () => {
+  it("forwards diagnostics through generated plugins and native dispatch middleware", () => {
+    const diagnostics = createProseMirrorDevtoolsDiagnostics();
+    const store = createProseMirrorDevtoolsStore();
+    const plugin = new Plugin({
+      props: {
+        handleKeyDown(view) {
+          view.dispatch(view.state.tr.insertText("x"));
+          return true;
+        },
+      },
+    });
+    const manager = new TestExtensionManager([plugin]);
+    const editor = { extensionManager: manager } as unknown as TiptapDevtoolsEditor;
+    setupTiptapDevtools(editor, {
+      id: "diagnostic-editor",
+      store,
+      diagnostics,
+      performanceMarks: false,
+    });
+    const view = createTestView(createTestState(), {
+      dispatchTransaction(transaction) {
+        dispatchTiptapTransaction(editor, {
+          transaction,
+          next: (next) => view.updateState(view.state.apply(next)),
+        });
+      },
+    });
+    setEditorView(editor, view);
+    const [wrapped] = manager.plugins;
+    view.updateState(view.state.reconfigure({ plugins: [wrapped!] }));
+
+    expect(wrapped!.props.handleKeyDown?.call(wrapped!, view, new KeyboardEvent("keydown"))).toBe(
+      true,
+    );
+    expect(store.getInstance("diagnostic-editor")?.diagnostics).toBe(diagnostics);
+    expect(diagnostics.getSnapshot().events[0]).toMatchObject({
+      name: "handleKeyDown",
+      handled: true,
+      dispatches: [{ instanceId: "diagnostic-editor", id: 1 }],
+    });
+
+    detachTiptapDevtools(editor);
+    diagnostics.clearEvents();
+    // Detached wrappers still execute application handlers, but cannot reactivate diagnostics.
+    const passiveView = { state: createTestState(), dispatch: vi.fn() } as unknown as EditorView;
+    wrapped!.props.handleKeyDown?.call(wrapped!, passiveView, new KeyboardEvent("keydown"));
+    expect(passiveView.dispatch).toHaveBeenCalledOnce();
+    expect(diagnostics.getSnapshot().events).toEqual([]);
+    view.destroy();
+    diagnostics.dispose();
+  });
+
   it("instruments plugins and records through Tiptap's native dispatch middleware", () => {
     let clock = 100;
     vi.spyOn(performance, "now").mockImplementation(() => clock);
@@ -168,6 +220,53 @@ describe("Tiptap lifecycle helpers", () => {
     expect(() => attachTiptapDevtools(editor)).toThrow(
       /setupTiptapDevtools must be called from onBeforeCreate/,
     );
+    editor.view.destroy();
+  });
+
+  it("cannot reactivate a detached integration through a later plugin getter wrapper", () => {
+    const plugin = new Plugin({});
+    const manager = new TestExtensionManager([plugin]);
+    const editor: TiptapDevtoolsEditor = {
+      extensionManager: manager,
+      view: createTestView(),
+    };
+    const store = createProseMirrorDevtoolsStore();
+    setupTiptapDevtools(editor, { id: "chained-getter", store });
+    const instrumentedGetter = Object.getOwnPropertyDescriptor(manager, "plugins")!.get!;
+    const chainedGetter = function (this: object) {
+      return instrumentedGetter.call(this);
+    };
+    Object.defineProperty(manager, "plugins", { configurable: true, get: chainedGetter });
+
+    detachTiptapDevtools(editor);
+
+    expect(Object.getOwnPropertyDescriptor(manager, "plugins")?.get).toBe(chainedGetter);
+    expect(manager.plugins[0]).toBe(plugin);
+    expect(store.getSnapshot().instances).toEqual([]);
+    editor.view.destroy();
+  });
+
+  it("restores instrumentation and releases ownership when session cleanup throws", () => {
+    const manager = new TestExtensionManager([]);
+    const editor: TiptapDevtoolsEditor = {
+      extensionManager: manager,
+      view: createTestView(),
+    };
+    const store = createProseMirrorDevtoolsStore();
+    setupTiptapDevtools(editor, { id: "cleanup-error", store });
+    const closeSession = vi.spyOn(store, "closeSession").mockImplementationOnce(() => {
+      throw new Error("session cleanup failed");
+    });
+
+    expect(() => detachTiptapDevtools(editor)).toThrow("session cleanup failed");
+    expect(Object.getOwnPropertyDescriptor(manager, "plugins")).toBeUndefined();
+    expect(store.getSnapshot().instances).toEqual([]);
+    expect(() => detachTiptapDevtools(editor)).not.toThrow();
+
+    setupTiptapDevtools(editor, { id: "reattached", store });
+    expect(store.getSnapshot().instances[0]?.id).toBe("reattached");
+    detachTiptapDevtools(editor);
+    expect(closeSession).toHaveBeenCalledTimes(2);
     editor.view.destroy();
   });
 

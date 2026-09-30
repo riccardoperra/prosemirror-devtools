@@ -1,6 +1,6 @@
 import { h, type JSX } from "preact";
-import { useMemo } from "preact/hooks";
-import { createPreactPanel, type DevtoolsPanelProps } from "@tanstack/devtools-utils/preact";
+import { useEffect, useMemo, useRef } from "preact/hooks";
+import type { DevtoolsPanelProps } from "@tanstack/devtools-utils/preact";
 
 import { ProseMirrorDevtoolsCore } from "../core";
 import { resolveProseMirrorDevtoolsAdapterPanelProps } from "../panel-props";
@@ -10,11 +10,6 @@ import type {
 } from "../types";
 
 export interface ProseMirrorDevtoolsPreactInit extends ProseMirrorDevtoolsAdapterPanelProps {}
-
-const [PanelBase] = createPreactPanel<
-  ResolvedProseMirrorDevtoolsAdapterPanelProps & DevtoolsPanelProps,
-  ProseMirrorDevtoolsCore
->(ProseMirrorDevtoolsCore);
 
 export function useProseMirrorDevtoolsProps(
   options?: ProseMirrorDevtoolsAdapterPanelProps,
@@ -71,5 +66,27 @@ export function useProseMirrorDevtoolsProps(
 }
 
 export function ProseMirrorDevtoolsPanel(props: ProseMirrorDevtoolsPreactInit = {}): JSX.Element {
-  return h(PanelBase, useProseMirrorDevtoolsProps(props));
+  const host = useRef<HTMLDivElement>(null);
+  const instance = useRef<ProseMirrorDevtoolsCore | null>(null);
+  const panelProps = useProseMirrorDevtoolsProps(props);
+
+  useEffect(
+    () => () => {
+      instance.current?.unmount();
+      instance.current = null;
+    },
+    [],
+  );
+  useEffect(() => {
+    if (!host.current) return;
+    if (instance.current) {
+      instance.current.update(panelProps);
+      return;
+    }
+    const core = new ProseMirrorDevtoolsCore();
+    core.mount(host.current, panelProps);
+    instance.current = core;
+  }, [panelProps]);
+
+  return h("div", { ref: host, style: { height: "100%" } });
 }

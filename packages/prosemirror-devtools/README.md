@@ -15,7 +15,7 @@ TanStack Devtools.
 npm install --save-dev prosemirror-devtools
 ```
 
-The application must already provide `prosemirror-model`, `prosemirror-state`, and
+The application must already provide `prosemirror-model`, `prosemirror-state`, `prosemirror-transform`, and
 `prosemirror-view`. React, Preact, Vue, Svelte, and Angular are optional peers and are needed only
 when you use their matching adapters. Solid powers the native panel and is installed with the
 package.
@@ -109,6 +109,52 @@ export function App() {
 
 Inside TanStack Devtools, the panel follows the shell's theme and uses its launcher and layout.
 
+### Optional event and rendering diagnostics
+
+Enable bounded capture when creating the session, then instrument plugins before creating the
+editor state as in the quick start:
+
+```ts
+const devtools = createProseMirrorDevtoolsSession({
+  id: "main-editor",
+  diagnostics: { limit: 200 }, // `true` uses the same default.
+});
+const plugins = devtools.instrumentPlugins(rawPlugins);
+// Create the state and view with these plugins, then devtools.attach(view).
+
+function runBold() {
+  const run = () => toggleMark(schema.marks.strong)(view.state, view.dispatch, view);
+  return devtools.diagnostics ? devtools.diagnostics.traceCommand("Bold", run) : run();
+}
+```
+
+The **Events & commands** and **Decorations & node views** panels consume this capture. It is off
+by default. `limit` caps retained events, NodeViews, decoration sources, ranges per source, and
+dispatch references per event independently; it defaults to 200 and accepts 1–10,000. These limits
+are separate from transaction history. Panels render captured lists in pages of 100.
+
+Only wrapped plugin hooks are observed: diagnostics do not rerun decoration callbacks or inspect
+uninstrumented editor props. Event records include handler order, exact boolean outcomes (or
+unknown for other returns), duration, nested parent calls, errors, and synchronous dispatch IDs.
+They exclude DOM events, targets, typed text, key characters, and clipboard payloads; safe metadata
+includes event type, key code, and modifier flags. Application error messages and shallow scalar
+decoration specs can still contain application data. `traceCommand` names one synchronous call,
+preserves its return value/errors, and does not capture deferred work or discover commands
+automatically.
+
+Decoration ranges are the most recently observed result per plugin. Old-document ranges are marked
+stale, and overlays are removed on document changes or when leaving the panel. NodeView records
+retain lifecycle counts and durations without retaining their DOM.
+
+Lower-level integrations can create a controller with `createProseMirrorDevtoolsDiagnostics`, then
+pass the same `diagnostics` to `instrumentProseMirrorPlugins` and `attachProseMirrorDevtools` (or a
+framework registration hook). Tiptap's `setupTiptapDevtools` also accepts this controller. Create one
+controller per editor lifecycle. The caller disposes an externally supplied controller; sessions
+dispose controllers they create from `true` or options. Controllers expose `getSnapshot`,
+`subscribe`, `clearEvents`, and `clearNodeViews` for custom hosts.
+`clearNodeViews` removes destroyed records and resets live counters while continuing to track
+existing live views.
+
 ## Framework adapters
 
 Every framework entrypoint exports a panel renderer and a TanStack Devtools plugin factory. Most
@@ -131,17 +177,28 @@ adapter to stay active in a production build.
 
 ## What the panel shows
 
-| Panel       | Contents                                                                                           |
-| ----------- | -------------------------------------------------------------------------------------------------- |
-| State       | Document tree and positions, node JSON, selection, active marks, and document statistics           |
-| History     | Root and appended transactions, steps, metadata, before/after documents, and document restore      |
-| Performance | Dispatch timeline, apply/view phases, plugin ranking, hook timings, markers, average, p95, and max |
-| Plugins     | Searchable plugin order, state, runtime keys, and exposed editor props                             |
-| Schema      | Node specs, mark specs, and the top node type                                                      |
-| Snapshots   | Local save, restore, import, export, and delete controls                                           |
+| Panel                    | Contents                                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| State                    | Document tree and positions, node JSON, selection, active marks, and document statistics           |
+| History                  | Root/appended transactions, document restore, step diffs, changed ranges, and position mapping     |
+| Selection                | Anchor/head ancestry, offsets, boundaries, adjacent nodes, ranges, and marks                       |
+| Events & commands        | Opt-in handler outcomes, nested calls, synchronous dispatch IDs, and named commands                |
+| Decorations & node views | Opt-in ranges/specs, position overlays, and NodeView lifecycle counters                            |
+| Performance              | Dispatch timeline, apply/view phases, plugin ranking, hook timings, markers, average, p95, and max |
+| Plugins                  | Searchable plugin order, state, runtime keys, and exposed editor props                             |
+| Schema                   | Node specs, mark specs, and the top node type                                                      |
+| Snapshots                | Local save, restore, import, export, and delete controls                                           |
 
 When several editors are registered, the toolbar lets you switch the active instance without
 remounting the panel.
+
+History’s **Changes & mapping** mode uses captured step maps, including mirrors and custom steps.
+Diffs are computed for the selected step, including marks and attributes. Filtered and unobserved
+custom dispatch outcomes do not claim applied mapping results.
+
+JSON branches render 100 children at a time with **Show more**. Closed document disclosures defer
+serialization. Narrow layouts stack independently scrollable panes, embedded panels follow their
+host height, and tab navigation supports arrow keys, Home, and End.
 
 ## Tiptap 3
 
@@ -262,7 +319,9 @@ lifecycle id, so a later editor can safely reuse the same public id after the ea
 disposed.
 
 History is unbounded by default. Use `transactionLimit` when a long-running session needs a fixed
-retention cap, or clear history from the panel.
+retention cap, or clear history from the panel. Persistent before/after and intermediate step
+documents are retained until their JSON or diffs are inspected; full EditorState objects are not
+retained by history.
 
 ## Custom performance markers
 

@@ -2,6 +2,7 @@ import type { Node as ProseMirrorNode } from "prosemirror-model";
 import type { EditorState, Transaction } from "prosemirror-state";
 
 import { serializeDocument } from "../serialize";
+import { captureStepDetails } from "../transaction-changes";
 import type {
   AppliedTransactionRecord,
   DevtoolsMarker,
@@ -30,6 +31,7 @@ function readTransaction(transaction: Transaction, index: number): AppliedTransa
     selectionSet: transaction.selectionSet,
     storedMarksSet: transaction.storedMarksSet,
     steps: transaction.steps.map((step) => step.toJSON()),
+    stepDetails: captureStepDetails(transaction),
     meta: readMeta(transaction),
   };
 }

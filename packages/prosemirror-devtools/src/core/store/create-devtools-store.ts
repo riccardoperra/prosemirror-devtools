@@ -1,4 +1,5 @@
 import { createDevtoolsSessionId } from "../session-id";
+import { getDiagnosticsRecorder } from "../diagnostics";
 import type { DevtoolsStore, RegisterProseMirrorInstanceOptions } from "../types";
 import { createActiveTransactionMeasurements } from "./active-measurements";
 import { createInstanceStore } from "./instance-store";
@@ -41,7 +42,9 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
       options.sessionId ?? existing?.sessionId ?? createDevtoolsSessionId("registration");
     const initialPluginTimings =
       existing?.pluginTimings ?? pluginTimingRecorder.consumeStartupTimings(options.id, sessionId);
-    return instanceStore.register({ ...options, sessionId }, initialPluginTimings);
+    const release = instanceStore.register({ ...options, sessionId }, initialPluginTimings);
+    getDiagnosticsRecorder(options.diagnostics)?.observeDocument(options.view.state.doc);
+    return release;
   };
 
   const closeSession = (instanceId: string, sessionId: string): void => {

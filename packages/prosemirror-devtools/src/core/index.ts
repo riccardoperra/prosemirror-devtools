@@ -1,6 +1,16 @@
 export { attachProseMirrorDevtools, createProseMirrorDispatchRecorder } from "./attach";
 export type { ProseMirrorDispatchRecorder } from "./dispatch/record-dispatch";
 export { createDevtoolsDataAccess } from "./data-client";
+export { createProseMirrorDevtoolsDiagnostics } from "./diagnostics";
+export type {
+  DevtoolsDiagnosticsController,
+  DevtoolsDiagnosticsOptions,
+  DevtoolsDiagnosticsSnapshot,
+  DevtoolsDiagnosticEvent,
+  DevtoolsDecorationSource,
+  DevtoolsDecorationRange,
+  DevtoolsNodeViewRecord,
+} from "./diagnostics";
 export type * from "./data-client";
 export type * from "./extensions";
 export { instrumentProseMirrorPlugins } from "./instrument";
@@ -30,3 +40,11 @@ export {
   restoreSnapshot,
 } from "./snapshots";
 export type * from "./types";
+export { mapRecordedPosition } from "./transaction-changes";
+export type {
+  RecordedStepDetails,
+  StepChangeRange,
+  StepDocumentChange,
+  PositionMappingResult,
+  PositionMappingTrace,
+} from "./transaction-changes";

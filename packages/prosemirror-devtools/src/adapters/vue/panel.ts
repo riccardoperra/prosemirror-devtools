@@ -1,29 +1,11 @@
-import { defineComponent, h } from "vue";
-import { createVuePanel, type DevtoolsPanelProps } from "@tanstack/devtools-utils/vue";
+import { defineComponent, h, onBeforeUnmount, onMounted, shallowRef, watchEffect } from "vue";
 import type { DefineComponent } from "vue";
 
 import { ProseMirrorDevtoolsCore } from "../core";
-import {
-  equalProseMirrorDevtoolsAdapterPanelProps,
-  resolveProseMirrorDevtoolsAdapterPanelProps,
-} from "../panel-props";
-import type {
-  ProseMirrorDevtoolsAdapterPanelProps,
-  ResolvedProseMirrorDevtoolsAdapterPanelProps,
-} from "../types";
+import { resolveProseMirrorDevtoolsAdapterPanelProps } from "../panel-props";
+import type { ProseMirrorDevtoolsAdapterPanelProps } from "../types";
 
 export interface ProseMirrorDevtoolsVueInit extends ProseMirrorDevtoolsAdapterPanelProps {}
-
-class ProseMirrorDevtoolsVueCore extends ProseMirrorDevtoolsCore {
-  constructor(props: ProseMirrorDevtoolsVueInit) {
-    super(props);
-  }
-}
-
-const [PanelBase] = createVuePanel<
-  ResolvedProseMirrorDevtoolsAdapterPanelProps & DevtoolsPanelProps,
-  ProseMirrorDevtoolsVueCore
->(ProseMirrorDevtoolsVueCore);
 
 const panelProps: string[] = [
   "activePanel",
@@ -38,32 +20,31 @@ const panelProps: string[] = [
   "theme",
 ];
 
-function createPanelWrapper(
-  name: string,
-  Component: typeof PanelBase,
-): DefineComponent<ProseMirrorDevtoolsVueInit, {}, unknown> {
-  return defineComponent({
-    name,
-    props: panelProps,
-    setup(props) {
-      const adapterProps = props as unknown as ProseMirrorDevtoolsVueInit;
-      let current = resolveProseMirrorDevtoolsAdapterPanelProps(adapterProps);
-      let version = 0;
+export const ProseMirrorDevtoolsPanel = defineComponent({
+  name: "ProseMirrorDevtoolsPanel",
+  props: panelProps,
+  setup(props) {
+    const host = shallowRef<HTMLElement | null>(null);
+    const adapterProps = props as unknown as ProseMirrorDevtoolsVueInit;
+    let instance: ProseMirrorDevtoolsCore | null = null;
 
-      return () => {
+    onMounted(() => {
+      if (!host.value) return;
+      instance = new ProseMirrorDevtoolsCore();
+      instance.mount(host.value, resolveProseMirrorDevtoolsAdapterPanelProps(adapterProps));
+    });
+    watchEffect(
+      () => {
         const next = resolveProseMirrorDevtoolsAdapterPanelProps(adapterProps);
-        if (!equalProseMirrorDevtoolsAdapterPanelProps(current, next)) {
-          current = next;
-          version += 1;
-        }
-        return h(Component, {
-          devtoolsProps: current,
-          key: version,
-          props: current,
-        });
-      };
-    },
-  }) as unknown as DefineComponent<ProseMirrorDevtoolsVueInit, {}, unknown>;
-}
+        instance?.update(next);
+      },
+      { flush: "post" },
+    );
+    onBeforeUnmount(() => {
+      instance?.unmount();
+      instance = null;
+    });
 
-export const ProseMirrorDevtoolsPanel = createPanelWrapper("ProseMirrorDevtoolsPanel", PanelBase);
+    return () => h("div", { ref: host, style: { height: "100%" } });
+  },
+}) as unknown as DefineComponent<ProseMirrorDevtoolsVueInit, {}, unknown>;
