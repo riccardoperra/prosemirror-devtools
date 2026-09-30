@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="./packages/prosemirror-devtools/assets/logo.svg" alt="ProseMirror Inspector" width="560" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./packages/prosemirror-devtools/assets/prosemirror-inspector-logo-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="./packages/prosemirror-devtools/assets/prosemirror-inspector-logo-light.svg" />
+    <img src="./packages/prosemirror-devtools/assets/prosemirror-inspector-logo-light.svg" alt="ProseMirror Inspector" width="560" />
+  </picture>
 </p>
 
 <p align="center">Inspect editor state. Trace transactions. Profile plugin performance.</p>

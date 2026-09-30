@@ -80,7 +80,8 @@
   },
   "files": [
     "dist",
-    "assets/logo.svg",
+    "assets/prosemirror-inspector-logo-light.svg",
+    "assets/prosemirror-inspector-logo-dark.svg",
     "CHANGELOG.md",
     "README.md",
     "LICENSE"
