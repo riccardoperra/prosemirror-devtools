@@ -1,3 +1,4 @@
+import { readInstanceState } from "../../store/instance-state";
 import { createSnapshot, isSavedSnapshot, isSerializedDocument } from "../../../core/snapshots";
 import type { RegisteredProseMirrorInstance, SavedSnapshot } from "../../../core/types";
 
@@ -21,10 +22,11 @@ export async function importSnapshotFile(
           throw new Error("Expected a ProseMirror document or devtools snapshot JSON file.");
         })();
 
-  const importedDocument = instance.view.state.schema.nodeFromJSON(imported.doc);
-  if (importedDocument.type !== instance.view.state.schema.topNodeType) {
+  const schema = readInstanceState(instance).schema;
+  const importedDocument = schema.nodeFromJSON(imported.doc);
+  if (importedDocument.type !== schema.topNodeType) {
     throw new Error(
-      `Expected a ${instance.view.state.schema.topNodeType.name} document, received ${importedDocument.type.name}.`,
+      `Expected a ${schema.topNodeType.name} document, received ${importedDocument.type.name}.`,
     );
   }
   importedDocument.check();

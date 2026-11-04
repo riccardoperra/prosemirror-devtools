@@ -1,5 +1,11 @@
 import type { Node as ProseMirrorNode } from "prosemirror-model";
-import { AllSelection, NodeSelection, TextSelection, type Selection } from "prosemirror-state";
+import {
+  AllSelection,
+  NodeSelection,
+  TextSelection,
+  type Selection,
+  type EditorState,
+} from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { createMemo, createSignal, type Accessor } from "solid-js";
 import { useOptionalPanelInspection } from "../../panel-provider";
@@ -12,7 +18,10 @@ export type SelectedDocumentNode = Readonly<{
 
 type SelectedLocation = Readonly<{ pos: number; isRoot: boolean }>;
 
-export function useDocumentSelection(view: Accessor<EditorView>): {
+export function useDocumentSelection(
+  view: Accessor<EditorView>,
+  state: Accessor<EditorState> = () => view().state,
+): {
   selected: Accessor<SelectedDocumentNode>;
   select: (node: ProseMirrorNode, pos: number) => void;
   selectNode: (node: ProseMirrorNode, pos: number) => void;
@@ -21,7 +30,7 @@ export function useDocumentSelection(view: Accessor<EditorView>): {
   const [location, setLocation] = createSignal<SelectedLocation>({ pos: 0, isRoot: true });
   const inspection = useOptionalPanelInspection();
   const selected = createMemo<SelectedDocumentNode>(() => {
-    const doc = view().state.doc;
+    const doc = state().doc;
     const shared = inspection?.position();
     const current = inspection
       ? shared?.doc === doc
@@ -39,7 +48,7 @@ export function useDocumentSelection(view: Accessor<EditorView>): {
   });
 
   const select = (node: ProseMirrorNode, pos: number): void => {
-    const doc = view().state.doc;
+    const doc = state().doc;
     const next = { pos, isRoot: node === doc };
     if (inspection) inspection.selectPosition({ ...next, doc });
     else setLocation(next);
@@ -52,7 +61,8 @@ export function useDocumentSelection(view: Accessor<EditorView>): {
       (inspection.moment().kind !== "live" || inspection.instance()?.view !== editorView)
     )
       return;
-    const currentDoc = editorView.state.doc;
+    if (editorView.state !== state()) return;
+    const currentDoc = state().doc;
     let editorSelection: Selection;
 
     if (node === currentDoc) {
@@ -77,6 +87,7 @@ export function useDocumentSelection(view: Accessor<EditorView>): {
       (inspection.moment().kind !== "live" || inspection.instance()?.view !== view())
     )
       return;
+    if (view().state !== state()) return;
     const dom = view().nodeDOM(pos);
     const element = dom instanceof Element ? dom : dom?.parentElement;
     element?.scrollIntoView({ behavior: "smooth", block: "center" });

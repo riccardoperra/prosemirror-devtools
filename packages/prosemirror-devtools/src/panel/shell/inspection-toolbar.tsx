@@ -1,3 +1,4 @@
+import { readInstanceState } from "../store/instance-state";
 import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 
 import { usePanelInspection, usePanelMeta, usePanelNavigation } from "../panel-provider";
@@ -45,7 +46,10 @@ export function InspectionToolbar(): JSX.Element {
           ? {
               pos: position.pos,
               isRoot: position.isRoot,
-              currentDocument: position.doc === instance?.view.state.doc,
+              currentDocument:
+                !!instance &&
+                position.doc === readInstanceState(instance).doc &&
+                position.doc === instance.view.state.doc,
             }
           : null,
       },

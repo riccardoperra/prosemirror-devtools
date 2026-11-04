@@ -1,3 +1,4 @@
+import { readInstanceState } from "../../store/instance-state";
 import { DOMSerializer } from "prosemirror-model";
 import { createMemo, createSignal, Show, type JSX } from "solid-js";
 
@@ -18,10 +19,13 @@ export interface StateViewProps {
 }
 
 export function StateView(props: StateViewProps): JSX.Element {
-  const state = createMemo(() => props.instance.view.state);
+  const state = createMemo(() => readInstanceState(props.instance));
   const inspection = createMemo(() => inspectState(state()));
   const [documentView, setDocumentView] = createSignal<DocumentView>("structure");
-  const { selected, select, selectNode, reveal } = useDocumentSelection(() => props.instance.view);
+  const { selected, select, selectNode, reveal } = useDocumentSelection(
+    () => props.instance.view,
+    state,
+  );
   const selectedRange = createMemo(() => {
     const current = selected();
     return getDocumentNodeRange(current.node, current.pos, current.isRoot);

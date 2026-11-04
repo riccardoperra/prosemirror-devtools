@@ -1,3 +1,4 @@
+import { readInstanceState } from "../../store/instance-state";
 import type { ResolvedPos } from "prosemirror-model";
 import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 
@@ -31,7 +32,7 @@ export function inspectPosition(position: ResolvedPos) {
 }
 
 export function SelectionView(props: { instance: RegisteredProseMirrorInstance }): JSX.Element {
-  const state = createMemo(() => props.instance.view.state);
+  const state = createMemo(() => readInstanceState(props.instance));
   const selection = createMemo(() => state().selection);
   const [endpoint, setEndpoint] = createSignal<"anchor" | "head">("head");
   const [contextOpen, setContextOpen] = createSignal(false);

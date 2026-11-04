@@ -1,3 +1,4 @@
+import { readInstanceState } from "../../store/instance-state";
 import { createEffect, createSignal, onCleanup, type Accessor } from "solid-js";
 
 import {
@@ -47,7 +48,9 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
       !disposed &&
       target.id === current.target.id &&
       target.view === current.target.view &&
-      target.view.state === current.state
+      target.view.state === current.state &&
+      readInstanceState(target) === current.state &&
+      target.inspection?.target.generation === current.target.inspection?.target.generation
     );
   };
   onCleanup(() => {
@@ -71,16 +74,35 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
     });
   };
 
+  const committedState = (target: RegisteredProseMirrorInstance) => {
+    const state = readInstanceState(target);
+    if (target.view.state !== state) {
+      throw new Error(
+        "The editor is still rendering the latest change. Try again after it finishes.",
+      );
+    }
+    return state;
+  };
+
   const save = (): void => {
-    const current = instance();
-    const snapshot = createSnapshot(current.id, current.view);
-    updateSnapshots((snapshots) => [snapshot, ...snapshots]);
+    try {
+      const current = instance();
+      committedState(current);
+      const snapshot = createSnapshot(current.id, current.view);
+      updateSnapshots((snapshots) => [snapshot, ...snapshots]);
+      setError(null);
+    } catch (saveError) {
+      setError(errorMessage(saveError));
+    }
   };
 
   const importFile = async (file: File): Promise<void> => {
     const target = instance();
     const isCurrent = (): boolean =>
-      !disposed && instance().id === target.id && instance().view === target.view;
+      !disposed &&
+      instance().id === target.id &&
+      instance().view === target.view &&
+      instance().inspection?.target.generation === target.inspection?.target.generation;
     try {
       const imported = await importSnapshotFile(file, target);
       if (!isCurrent()) return;
@@ -95,7 +117,7 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
   const previewRestore = (snapshot: SavedSnapshot): void => {
     try {
       const target = instance();
-      const state = target.view.state;
+      const state = committedState(target);
       const prepared = prepareDocumentRestore(target.view, snapshot.doc, snapshot.selection);
       setPreview({
         snapshot,

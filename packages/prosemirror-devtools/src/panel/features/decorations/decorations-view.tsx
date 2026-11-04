@@ -1,3 +1,4 @@
+import { readInstanceState } from "../../store/instance-state";
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { createEffect, createMemo, createSignal, For, onCleanup, Show, type JSX } from "solid-js";
 
@@ -83,7 +84,7 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
   });
 
   const sources = createMemo(() => snapshot()?.decorations ?? [], undefined, { equals: sameItems });
-  const currentDocument = createMemo(() => props.instance.view.state.doc);
+  const currentDocument = createMemo(() => readInstanceState(props.instance).doc);
   const observedDocuments = new WeakMap<DevtoolsDecorationSource["ranges"], ProseMirrorNode>();
   const currentSources = createMemo(
     () => {
@@ -149,9 +150,9 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
   createEffect(() => {
     const selected = selectedRange();
     const view = props.instance.view;
-    const doc = view.state.doc;
+    const doc = currentDocument();
     if (!overlay() || mode() !== "decorations" || !selected) return;
-    if (selected.source.stale || doc !== overlayDocument) {
+    if (selected.source.stale || doc !== overlayDocument || view.state.doc !== doc) {
       resetOverlay();
       return;
     }
@@ -368,7 +369,8 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
                         onClick={() => {
                           if (overlay()) resetOverlay();
                           else {
-                            overlayDocument = props.instance.view.state.doc;
+                            if (props.instance.view.state.doc !== currentDocument()) return;
+                            overlayDocument = currentDocument();
                             setOverlayError(undefined);
                             setOverlay(true);
                           }

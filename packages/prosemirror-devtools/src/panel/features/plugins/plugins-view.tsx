@@ -1,3 +1,4 @@
+import { readInstanceState } from "../../store/instance-state";
 import { createMemo, For, Show, type JSX } from "solid-js";
 
 import { cx, panelStyles } from "../../styles";
@@ -13,7 +14,7 @@ export interface PluginsViewProps {
 }
 
 export function PluginsView(props: PluginsViewProps): JSX.Element {
-  const plugins = createMemo(() => inspectPlugins(props.instance.view.state));
+  const plugins = createMemo(() => inspectPlugins(readInstanceState(props.instance)));
   const { query, setQuery, filtered, selected, select } = usePluginSelection(plugins);
 
   return (

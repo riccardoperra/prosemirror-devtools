@@ -1,3 +1,4 @@
+import { readInstanceState } from "../../store/instance-state";
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { createMemo, createSignal, Show, type JSX } from "solid-js";
 
@@ -14,7 +15,8 @@ export interface SchemaViewProps {
 }
 
 export function SchemaView(props: SchemaViewProps): JSX.Element {
-  const editorSchema = createMemo(() => props.instance.view.state.schema);
+  const state = createMemo(() => readInstanceState(props.instance));
+  const editorSchema = createMemo(() => state().schema);
   const schema = createMemo(() => inspectSchema(editorSchema()));
   const inspection = useOptionalPanelInspection();
   const [requestedPosition, setRequestedPosition] = createSignal<{
@@ -22,28 +24,28 @@ export function SchemaView(props: SchemaViewProps): JSX.Element {
     value: string;
   }>();
   const positionText = createMemo(() => {
-    const state = props.instance.view.state;
+    const currentState = state();
     const requested = requestedPosition();
     const shared = inspection?.position();
-    return requested?.doc === state.doc
+    return requested?.doc === currentState.doc
       ? requested.value
-      : String(shared?.doc === state.doc ? shared.pos : state.selection.head);
+      : String(shared?.doc === currentState.doc ? shared.pos : currentState.selection.head);
   });
   const context = createMemo(() => {
-    const state = props.instance.view.state;
+    const currentState = state();
     const position = Number(positionText());
     if (
       !positionText().trim() ||
       !Number.isInteger(position) ||
       position < 0 ||
-      position > state.doc.content.size
+      position > currentState.doc.content.size
     )
       return undefined;
-    const resolved = state.doc.resolve(position);
+    const resolved = currentState.doc.resolve(position);
     const index = resolved.index();
     let validity = "Valid document";
     try {
-      state.doc.check();
+      currentState.doc.check();
     } catch (error) {
       validity = error instanceof Error ? error.message : String(error);
     }
@@ -54,10 +56,10 @@ export function SchemaView(props: SchemaViewProps): JSX.Element {
       documentValidity: validity,
       childIndex: index,
       insertionBoundary: resolved.textOffset === 0,
-      nodeTypesAtChildBoundary: Object.values(state.schema.nodes)
+      nodeTypesAtChildBoundary: Object.values(currentState.schema.nodes)
         .filter((type) => resolved.parent.canReplaceWith(index, index, type))
         .map(({ name }) => name),
-      allowedMarks: Object.values(state.schema.marks)
+      allowedMarks: Object.values(currentState.schema.marks)
         .filter((type) => resolved.parent.type.allowsMarkType(type))
         .map(({ name }) => name),
       activeMarks: resolved.marks().map(({ type }) => type.name),
@@ -69,11 +71,7 @@ export function SchemaView(props: SchemaViewProps): JSX.Element {
     <div class={cx(panelStyles.pmDetailColumns, panelStyles.pmScroll)}>
       <div>
         <section aria-label="Schema constraints at selected position">
-          <Show
-            when={
-              inspection?.position() && inspection.position()?.doc !== props.instance.view.state.doc
-            }
-          >
+          <Show when={inspection?.position() && inspection.position()?.doc !== state().doc}>
             <p role="status" class={panelStyles.pmPerformanceNote}>
               The inspected position belongs to an earlier document. The current selection is shown.
               No position mapping was assumed.
@@ -87,17 +85,17 @@ export function SchemaView(props: SchemaViewProps): JSX.Element {
                 class={panelStyles.pmSearch}
                 type="number"
                 min="0"
-                max={props.instance.view.state.doc.content.size}
+                max={state().doc.content.size}
                 value={positionText()}
                 onInput={(event) => {
                   setRequestedPosition({
-                    doc: props.instance.view.state.doc,
+                    doc: state().doc,
                     value: event.currentTarget.value,
                   });
                   const pos = Number(event.currentTarget.value);
                   if (event.currentTarget.value.trim())
                     inspection?.selectPosition({
-                      doc: props.instance.view.state.doc,
+                      doc: state().doc,
                       pos,
                       isRoot: false,
                     });
