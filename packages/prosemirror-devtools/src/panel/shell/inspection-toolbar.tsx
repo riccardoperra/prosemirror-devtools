@@ -122,22 +122,25 @@ export function InspectionToolbar(): JSX.Element {
           Follow live
         </button>
         <details
-          class={panelStyles.pmDocumentDisclosure}
-          style={{ width: "100%", "max-height": "260px", overflow: "auto" }}
+          class={panelStyles.pmInspectionDetails}
           aria-label="Inspectors and capture coverage"
           open={detailsOpen()}
           onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
         >
           <summary>Inspectors and capture coverage</summary>
           <Show when={detailsOpen()}>
-            <Show when={capabilities()}>
-              {(value) => <InspectionReadout result={value()} label="Capabilities and coverage" />}
-            </Show>
-            <Show when={contributions()}>
-              {(value) => (
-                <InspectionReadout result={value()} label="Semantic inspector evidence" />
-              )}
-            </Show>
+            <div class={panelStyles.pmInspectionDetailsContent}>
+              <Show when={capabilities()}>
+                {(value) => (
+                  <InspectionReadout result={value()} label="Capabilities and coverage" />
+                )}
+              </Show>
+              <Show when={contributions()}>
+                {(value) => (
+                  <InspectionReadout result={value()} label="Semantic inspector evidence" />
+                )}
+              </Show>
+            </div>
           </Show>
         </details>
       </div>

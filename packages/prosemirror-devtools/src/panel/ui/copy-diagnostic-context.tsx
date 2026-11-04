@@ -30,7 +30,7 @@ export function CopyDiagnosticContext(props: {
         Copy diagnostic context
       </button>
       <Show when={text()}>
-        <details class={panelStyles.pmDocumentDisclosure} open style={{ width: "100%" }}>
+        <details class={panelStyles.pmDiagnosticContext} open>
           <summary>Diagnostic context</summary>
           <textarea
             aria-label="Diagnostic context JSON"
@@ -39,7 +39,7 @@ export function CopyDiagnosticContext(props: {
             ref={(element) => {
               output = element;
             }}
-            style={{ width: "100%", "min-height": "100px", "box-sizing": "border-box" }}
+            class={panelStyles.pmDiagnosticContextText}
           />
           <p role="status">{status()}</p>
         </details>

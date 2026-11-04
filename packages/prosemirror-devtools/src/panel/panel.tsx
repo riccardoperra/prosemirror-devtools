@@ -53,9 +53,11 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
               class={panelStyles.pmHeader}
               data-embedded={props.embedded ? "true" : undefined}
             >
-              <PanelToolbar embedded={props.embedded} />
+              <div class={panelStyles.pmHeaderNavigation}>
+                <PanelToolbar embedded={props.embedded} />
+                <PanelTabList />
+              </div>
               <InspectionToolbar />
-              <PanelTabList />
             </header>
             <PanelContent
               performanceDetailThresholdMs={props.performanceDetailThresholdMs}

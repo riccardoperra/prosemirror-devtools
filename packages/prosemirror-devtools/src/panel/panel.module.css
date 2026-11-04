@@ -70,9 +70,73 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  flex: 0 1 auto;
+  min-block-size: 0;
+  max-block-size: 240px;
+  overflow: auto;
+  overscroll-behavior: contain;
   padding: 5px 9px;
   border-block-start: 1px solid var(--pm-border);
   font-size: 11px;
+}
+.pm-inspection-toolbar > * {
+  min-inline-size: 0;
+}
+.pm-inspection-details,
+.pm-diagnostic-context {
+  flex: 1 0 100%;
+  inline-size: 100%;
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius);
+  background: var(--pm-panel-2);
+  overflow: hidden;
+}
+.pm-inspection-details {
+  order: 20;
+}
+.pm-diagnostic-context {
+  order: 10;
+}
+.pm-inspection-details > summary,
+.pm-diagnostic-context > summary {
+  cursor: pointer;
+  padding: 6px 8px;
+  color: var(--pm-muted);
+}
+.pm-inspection-details-content {
+  max-block-size: min(180px, 28vh);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  border-block-start: 1px solid var(--pm-border);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 12px;
+}
+.pm-inspection-details-content > section {
+  min-inline-size: 0;
+}
+.pm-diagnostic-context-text {
+  display: block;
+  inline-size: calc(100% - 16px);
+  block-size: 90px;
+  min-block-size: 60px;
+  max-block-size: 140px;
+  margin: 0 8px;
+  padding: 8px;
+  resize: vertical;
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius);
+  background: var(--pm-panel);
+  color: var(--pm-text);
+  font:
+    11px/1.5 ui-monospace,
+    monospace;
+  overflow: auto;
+}
+.pm-diagnostic-context > p {
+  margin: 5px 8px;
+  color: var(--pm-muted);
 }
 .pm-devtools[data-theme="dark"] {
   --prosemirror-devtools-background: #121212;
@@ -124,13 +188,25 @@
 }
 @scope (.pm-devtools) {
   .pm-header {
-    flex: none;
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    min-block-size: 0;
+    max-block-size: 55%;
+    overflow: hidden;
     block-size: auto !important;
     background: var(--pm-panel);
     border-block-end: 1px solid var(--pm-border);
     z-index: 2;
   }
+  .pm-header-navigation {
+    flex: none;
+    min-inline-size: 0;
+  }
   .pm-header[data-embedded="true"] {
+    min-inline-size: 0;
+  }
+  .pm-header[data-embedded="true"] .pm-header-navigation {
     display: flex;
     align-items: stretch;
     min-inline-size: 0;
@@ -1859,7 +1935,7 @@
     .pm-snapshot-actions {
       flex-wrap: wrap;
     }
-    .pm-header[data-embedded="true"] {
+    .pm-header[data-embedded="true"] .pm-header-navigation {
       display: block;
     }
     .pm-header[data-embedded="true"] .pm-toolbar {
