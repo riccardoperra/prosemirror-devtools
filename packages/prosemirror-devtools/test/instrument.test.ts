@@ -1,5 +1,5 @@
 import type { EditorState } from "prosemirror-state";
-import { Plugin } from "prosemirror-state";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { DecorationSet, type EditorView } from "prosemirror-view";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -16,6 +16,113 @@ afterEach(() => {
 });
 
 describe("instrumentProseMirrorPlugins", () => {
+  it("preserves subclass behavior and private fields while measuring plugin hooks", () => {
+    const key = new PluginKey<number>("custom");
+    class CustomPlugin extends Plugin<number> {
+      label = "custom";
+      #count = 2;
+
+      get count() {
+        return this.#count;
+      }
+
+      set count(value: number) {
+        this.#count = value;
+      }
+
+      increment() {
+        return ++this.#count;
+      }
+
+      override getState(state: EditorState) {
+        const value = super.getState(state);
+        return value === undefined ? undefined : value + this.#count;
+      }
+    }
+    const original = new CustomPlugin({
+      key,
+      state: { init: () => 0, apply: (_transaction, value) => value + 1 },
+      props: { handleKeyDown: () => true },
+    });
+    const originalSpec = original.spec;
+    const originalProps = original.props;
+    const store = createProseMirrorDevtoolsStore();
+    const [wrapped] = instrumentProseMirrorPlugins([original], { instanceId: "editor", store });
+    if (!wrapped) throw new Error("Expected an instrumented plugin");
+
+    expect(wrapped).toBeInstanceOf(Plugin);
+    expect(wrapped).toBeInstanceOf(CustomPlugin);
+    if (!(wrapped instanceof CustomPlugin)) throw new Error("Expected a CustomPlugin");
+    expect(wrapped.constructor).toBe(CustomPlugin);
+    expect(wrapped.label).toBe("custom");
+    expect("label" in wrapped).toBe(true);
+    expect(Object.keys(wrapped)).toContain("label");
+    wrapped.label = "updated";
+    expect(original.label).toBe("updated");
+    expect(wrapped.count).toBe(2);
+    wrapped.count = 4;
+    expect(wrapped.increment()).toBe(5);
+    expect(original.count).toBe(5);
+    expect(wrapped.increment).toBe(wrapped.increment);
+
+    const view = createTestView(createTestState("", [wrapped]));
+    const unregister = store.register({ id: "editor", view });
+    expect(key.get(view.state)).toBe(wrapped);
+    expect(key.get(view.state)).toBeInstanceOf(CustomPlugin);
+    expect(wrapped.getState(view.state)).toBe(5);
+    expect(wrapped.getState(view.state.apply(view.state.tr))).toBe(6);
+    expect(wrapped.props.handleKeyDown?.call(wrapped, view, new KeyboardEvent("keydown"))).toBe(
+      true,
+    );
+    expect(original.spec).toBe(originalSpec);
+    expect(original.props).toBe(originalProps);
+    expect(wrapped.spec).not.toBe(originalSpec);
+    expect(wrapped.props).not.toBe(originalProps);
+    expect(store.getInstance("editor")?.pluginTimings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ hook: "state.init", count: 1 }),
+        expect.objectContaining({ hook: "state.apply", count: 1 }),
+        expect.objectContaining({ hook: "props.handleKeyDown", count: 1 }),
+      ]),
+    );
+    unregister();
+    view.destroy();
+  });
+
+  it("preserves subclass behavior when the original plugin is frozen", () => {
+    class FrozenPlugin extends Plugin<number> {
+      #count = 1;
+
+      get count() {
+        return this.#count;
+      }
+
+      increment() {
+        return ++this.#count;
+      }
+    }
+    const original = Object.freeze(
+      new FrozenPlugin({
+        state: { init: () => 0, apply: (_transaction, value) => value + 1 },
+        props: { handleKeyDown: () => true },
+      }),
+    );
+    const [wrapped] = instrumentProseMirrorPlugins([original], { instanceId: "frozen" });
+    expect(wrapped).toBeInstanceOf(FrozenPlugin);
+    if (!(wrapped instanceof FrozenPlugin)) throw new Error("Expected a FrozenPlugin");
+
+    expect(wrapped.count).toBe(1);
+    expect(wrapped.increment()).toBe(2);
+    const view = createTestView(createTestState("", [wrapped]));
+    expect(wrapped.getState(view.state)).toBe(0);
+    expect(wrapped.getState(view.state.apply(view.state.tr))).toBe(1);
+    expect(wrapped.props.handleKeyDown?.call(wrapped, view, new KeyboardEvent("keydown"))).toBe(
+      true,
+    );
+    expect(original.count).toBe(2);
+    view.destroy();
+  });
+
   it("preserves generated keys, plugin state, and hook returns while aggregating timings", () => {
     let clock = 100;
     let applyCount = 0;
