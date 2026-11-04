@@ -2,6 +2,7 @@ import type { Node as ProseMirrorNode } from "prosemirror-model";
 import type { Decoration, DecorationSource } from "prosemirror-view";
 
 import { monotonicNow } from "./store/transaction-measurement";
+import type { CaptureBudgets } from "../inspection/types";
 
 type SafeMetadata = Readonly<Record<string, string | number | boolean | null>>;
 
@@ -22,7 +23,12 @@ export interface DevtoolsDiagnosticEvent {
   handled: boolean | null;
   error: string | null;
   metadata: SafeMetadata;
-  dispatches: readonly { instanceId: string; id: number }[];
+  dispatches: readonly {
+    instanceId: string;
+    id: number;
+    sessionId?: string;
+    generation?: number;
+  }[];
 }
 
 export interface DevtoolsDecorationRange {
@@ -62,6 +68,16 @@ export interface DevtoolsDiagnosticsSnapshot {
   events: readonly DevtoolsDiagnosticEvent[];
   decorations: readonly DevtoolsDecorationSource[];
   nodeViews: readonly DevtoolsNodeViewRecord[];
+  retention?: {
+    readonly paused: boolean;
+    readonly events: {
+      readonly observed: number;
+      readonly discarded: number;
+      readonly firstRetainedId: number | null;
+    };
+    readonly decorations: { readonly truncated: boolean };
+    readonly nodeViews: { readonly observed: number; readonly discarded: number };
+  };
 }
 
 export interface DevtoolsDiagnosticsController {
@@ -72,6 +88,9 @@ export interface DevtoolsDiagnosticsController {
   clearNodeViews(): void;
   /** Trace one synchronous command invocation. Deferred work is outside this trace. */
   traceCommand<T>(name: string, run: () => T): T;
+  setCapturePaused?(paused: boolean): void;
+  configureBudgets?(budgets: Pick<CaptureBudgets, "events" | "decorations" | "nodeViews">): void;
+  getBudgets?(): Pick<CaptureBudgets, "events" | "decorations" | "nodeViews">;
   dispose(): void;
 }
 
@@ -94,7 +113,7 @@ export interface DevtoolsDiagnosticsRecorder {
     nodeType: string,
     getPos: unknown,
   ): DevtoolsNodeViewTracker;
-  recordDispatch(instanceId: string, id: number): void;
+  recordDispatch(instanceId: string, id: number, sessionId?: string, generation?: number): void;
   observeDocument(doc: ProseMirrorNode): void;
 }
 
@@ -181,10 +200,15 @@ export function createProseMirrorDevtoolsDiagnostics(
     ? Math.max(1, Math.min(10_000, Math.floor(options.limit!)))
     : 200;
   let disposed = false;
+  let paused = false;
+  let budgets = { events: limit, decorations: limit, nodeViews: limit };
   let version = 0;
   let nextEventId = 0;
   let nextNodeViewId = 0;
   let events: DevtoolsDiagnosticEvent[] = [];
+  let discardedEvents = 0;
+  let discardedNodeViews = 0;
+  let truncatedDecorations = false;
   const activeEvents: DevtoolsDiagnosticEvent[] = [];
   const decorations = new Map<
     string,
@@ -233,6 +257,16 @@ export function createProseMirrorDevtoolsDiagnostics(
           entry.published = { ...value, position };
         return entry.published;
       }),
+      retention: {
+        paused,
+        events: {
+          observed: nextEventId,
+          discarded: discardedEvents,
+          firstRetainedId: events[0]?.id ?? null,
+        },
+        decorations: { truncated: truncatedDecorations },
+        nodeViews: { observed: nextNodeViewId, discarded: discardedNodeViews },
+      },
     };
     for (const listener of [...listeners]) {
       try {
@@ -244,7 +278,7 @@ export function createProseMirrorDevtoolsDiagnostics(
   };
 
   const traceEvent = <T>(source: EventSource, args: readonly unknown[], run: () => T): T => {
-    if (disposed) return run();
+    if (disposed || paused) return run();
     const startedAt = monotonicNow();
     const event: DevtoolsDiagnosticEvent = {
       ...source,
@@ -268,9 +302,11 @@ export function createProseMirrorDevtoolsDiagnostics(
     } finally {
       const index = activeEvents.lastIndexOf(event);
       if (index >= 0) activeEvents.splice(index, 1);
-      if (!disposed) {
+      if (!disposed && !paused) {
         event.duration = Math.max(0, monotonicNow() - startedAt);
-        events = [...events, event].sort((a, b) => a.id - b.id).slice(-limit);
+        const completed = [...events, event].sort((a, b) => a.id - b.id);
+        discardedEvents += Math.max(0, completed.length - budgets.events);
+        events = completed.slice(-budgets.events);
         publish();
       }
     }
@@ -278,10 +314,18 @@ export function createProseMirrorDevtoolsDiagnostics(
 
   const recorder: DevtoolsDiagnosticsRecorder = {
     traceEvent,
-    recordDispatch(instanceId, id) {
-      if (disposed) return;
+    recordDispatch(instanceId, id, sessionId, generation) {
+      if (disposed || paused) return;
       for (const event of activeEvents)
-        event.dispatches = [...event.dispatches, { instanceId, id }].slice(-limit);
+        event.dispatches = [
+          ...event.dispatches,
+          {
+            instanceId,
+            id,
+            ...(sessionId === undefined ? {} : { sessionId }),
+            ...(generation === undefined ? {} : { generation }),
+          },
+        ].slice(-budgets.events);
     },
     observeDocument(doc) {
       if (disposed) return;
@@ -289,18 +333,24 @@ export function createProseMirrorDevtoolsDiagnostics(
       publish();
     },
     observeDecorations(pluginKey, pluginLabel, doc, source) {
-      if (disposed) return;
+      if (disposed || paused) return;
       try {
         const ranges: DevtoolsDecorationRange[] = [];
         const appendSet = (set: {
           find(start?: number, end?: number, predicate?: (spec: unknown) => boolean): Decoration[];
         }): void => {
-          if (ranges.length >= limit) return;
-          let remaining = limit - ranges.length;
+          if (ranges.length >= budgets.decorations) {
+            truncatedDecorations = true;
+            return;
+          }
+          let remaining = budgets.decorations - ranges.length;
           // The predicate bounds the temporary result array as well as retained ranges.
           for (const decoration of set
-            .find(undefined, undefined, () => remaining-- > 0)
-            .slice(0, limit - ranges.length)) {
+            .find(undefined, undefined, () => {
+              if (remaining <= 0) truncatedDecorations = true;
+              return remaining-- > 0;
+            })
+            .slice(0, budgets.decorations - ranges.length)) {
             // ProseMirror exposes these variant flags at runtime, though not in its public typings.
             const flags = decoration as Decoration & { inline?: boolean; widget?: boolean };
             ranges.push({
@@ -334,7 +384,10 @@ export function createProseMirrorDevtoolsDiagnostics(
             ranges,
           },
         });
-        while (decorations.size > limit) decorations.delete(decorations.keys().next().value!);
+        while (decorations.size > budgets.decorations) {
+          truncatedDecorations = true;
+          decorations.delete(decorations.keys().next().value!);
+        }
         publish();
       } catch {
         // Custom DecorationSource implementations remain usable even if they cannot be inspected.
@@ -343,7 +396,7 @@ export function createProseMirrorDevtoolsDiagnostics(
     nodeView(pluginKey, pluginLabel, nodeType, getPos) {
       const id = ++nextNodeViewId;
       let positionReader = typeof getPos === "function" ? (getPos as () => unknown) : undefined;
-      if (!disposed) {
+      if (!disposed && !paused) {
         const now = Date.now();
         nodeViews.set(id, {
           value: {
@@ -363,12 +416,15 @@ export function createProseMirrorDevtoolsDiagnostics(
           },
           ...(positionReader ? { getPos: new WeakRef(positionReader) } : {}),
         });
-        while (nodeViews.size > limit) nodeViews.delete(nodeViews.keys().next().value!);
+        while (nodeViews.size > budgets.nodeViews) {
+          discardedNodeViews += 1;
+          nodeViews.delete(nodeViews.keys().next().value!);
+        }
       }
       return {
         run<T>(operation: string, run: () => T): T {
           const entry = nodeViews.get(id);
-          if (disposed || !entry) return run();
+          if (disposed || paused || !entry) return run();
           const startedAt = monotonicNow();
           delete entry.published;
           if (operation === "update") entry.value.updates += 1;
@@ -399,6 +455,25 @@ export function createProseMirrorDevtoolsDiagnostics(
   };
 
   const controller: DevtoolsDiagnosticsController = {
+    getBudgets: () => ({ ...budgets }),
+    setCapturePaused(value) {
+      paused = value;
+      publish();
+    },
+    configureBudgets(value) {
+      budgets = { ...value };
+      discardedEvents += Math.max(0, events.length - budgets.events);
+      events = events.slice(-budgets.events);
+      while (decorations.size > budgets.decorations) {
+        truncatedDecorations = true;
+        decorations.delete(decorations.keys().next().value!);
+      }
+      while (nodeViews.size > budgets.nodeViews) {
+        discardedNodeViews += 1;
+        nodeViews.delete(nodeViews.keys().next().value!);
+      }
+      publish();
+    },
     getSnapshot: () => snapshot,
     subscribe(listener) {
       if (disposed) return () => {};
@@ -408,12 +483,14 @@ export function createProseMirrorDevtoolsDiagnostics(
       };
     },
     clearEvents() {
+      discardedEvents += events.length;
       events = [];
       publish();
     },
     clearNodeViews() {
       for (const [id, entry] of nodeViews) {
         if (entry.value.destroyed) {
+          discardedNodeViews += 1;
           nodeViews.delete(id);
         } else {
           entry.value = {

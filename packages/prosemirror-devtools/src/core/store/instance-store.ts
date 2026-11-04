@@ -1,5 +1,9 @@
 import type { EditorView } from "prosemirror-view";
+import type { EditorState } from "prosemirror-state";
 import type { DevtoolsDiagnosticsController } from "../diagnostics";
+import type { CaptureStatus, InspectionTarget, ProseMirrorInspector } from "../../inspection/types";
+import { appendCaptureGap, resolveCaptureProfile } from "../capture";
+import { getInspectionStateId } from "../state-id";
 
 import type {
   DevtoolsDispatchEvent,
@@ -28,6 +32,12 @@ type InternalInstanceState = {
   transactions: TransactionRecord[];
   pluginTimings: PluginTimingAggregates;
   diagnostics?: DevtoolsDiagnosticsController;
+  target: InspectionTarget;
+  revision: number;
+  capture: CaptureStatus;
+  inspectors: readonly ProseMirrorInspector[];
+  getState: () => EditorState;
+  releaseDiagnostics?: () => void;
 };
 
 export type InternalInstance = InternalInstanceState & {
@@ -53,6 +63,12 @@ export interface InstanceStore {
   unregister(id: string, view?: EditorView): void;
   setActiveInstance(id: string): void;
   clearTransactions(id: string): void;
+  pauseCapture(id: string, sessionId?: string): void;
+  resumeCapture(id: string, sessionId?: string): void;
+  recordGap(
+    entry: InternalInstance,
+    options: { id: number; beforeState: EditorState; stateAfter: EditorState },
+  ): void;
   recordTransaction(
     entry: InternalInstance,
     record: TransactionRecord,
@@ -111,13 +127,22 @@ function createSnapshot(entry: InternalInstanceState): RegisteredProseMirrorInst
     transactions: entry.transactions,
     pluginTimings: readPluginTimingSummaries(entry.pluginTimings),
     ...(entry.diagnostics ? { diagnostics: entry.diagnostics } : {}),
+    inspection: {
+      target: entry.target,
+      revision: entry.revision,
+      capture: entry.capture,
+      inspectors: entry.inspectors,
+      getState: entry.getState,
+    },
   };
 }
 
 export function createInstanceStore({
+  sourceId,
   clearRecords,
   onRemove,
 }: {
+  sourceId: string;
   clearRecords(records: readonly TransactionRecord[]): void;
   onRemove(instanceId: string): void;
 }): InstanceStore {
@@ -133,6 +158,7 @@ export function createInstanceStore({
 
   let activeInstanceId: string | null = null;
   let version = 0;
+  let nextGeneration = 0;
   // Nested dispatches complete inside-out, which is not their invocation order. Keep their capture
   // sequence until the outermost batch can publish the complete group.
   const queuedDispatches: Array<{
@@ -182,6 +208,7 @@ export function createInstanceStore({
     entry: InternalInstance,
     dispatch?: { sequence: number; event: DevtoolsDispatchEvent },
   ): void => {
+    entry.revision += 1;
     refresh(entry);
     rebuildSnapshot();
     instanceSignal(entry.id).set(entry.snapshot);
@@ -218,6 +245,7 @@ export function createInstanceStore({
   const remove = (id: string, view?: EditorView): void => {
     const entry = instances.get(id);
     if (!entry || (view && entry.view !== view)) return;
+    entry.releaseDiagnostics?.();
     clearRecords(entry.transactions);
     instances.delete(id);
     onRemove(id);
@@ -232,6 +260,42 @@ export function createInstanceStore({
     if (instances.get(entry.id) !== entry) return;
     entry.registrationCount -= 1;
     if (entry.registrationCount <= 0) remove(entry.id, entry.view);
+  };
+
+  const recordRemoved = (
+    entry: InternalInstance,
+    records: readonly TransactionRecord[],
+    reason: "evicted" | "cleared",
+  ): void => {
+    clearRecords(records);
+    for (const record of records) {
+      const next = appendCaptureGap(
+        entry.capture.gaps,
+        {
+          reason,
+          firstDispatchId: record.id,
+          lastDispatchId: record.id,
+          stateBeforeId: record.inspection?.stateBeforeId ?? 0,
+          stateAfterId: record.inspection?.stateAfterId ?? 0,
+        },
+        entry.capture.profile.budgets.gaps,
+      );
+      entry.capture = {
+        ...entry.capture,
+        gaps: next.gaps,
+        omittedGapCount: entry.capture.omittedGapCount + next.omitted,
+      };
+    }
+  };
+
+  const setCapturePaused = (id: string, paused: boolean, sessionId?: string): void => {
+    const entry = instances.get(id);
+    if (!entry || (sessionId !== undefined && entry.sessionId !== sessionId)) return;
+    const kind = paused ? "paused" : "recording";
+    if (entry.capture.kind === kind) return;
+    entry.capture = { ...entry.capture, kind };
+    entry.diagnostics?.setCapturePaused?.(paused);
+    publishRecordedUpdate(entry);
   };
 
   return {
@@ -273,8 +337,22 @@ export function createInstanceStore({
           options.transactionLimit,
           existing.transactionLimit,
         );
+        if (options.captureProfile !== undefined || options.transactionLimit !== undefined) {
+          const profile = resolveCaptureProfile(
+            options.captureProfile ?? existing.capture.profile,
+            options.transactionLimit,
+          );
+          existing.capture = { ...existing.capture, profile };
+          existing.transactionLimit = profile.budgets.transactions;
+        }
+        if (options.inspectors !== undefined) existing.inspectors = options.inspectors;
+        if (options.getState !== undefined) existing.getState = options.getState;
         existing.registrationCount += 1;
-        if (options.diagnostics) existing.diagnostics = options.diagnostics;
+        if (options.diagnostics && options.diagnostics !== existing.diagnostics) {
+          existing.releaseDiagnostics?.();
+          delete existing.releaseDiagnostics;
+          existing.diagnostics = options.diagnostics;
+        }
         if (
           existing.transactionLimit !== null &&
           existing.transactions.length > existing.transactionLimit
@@ -283,13 +361,21 @@ export function createInstanceStore({
             0,
             existing.transactions.length - existing.transactionLimit,
           );
-          clearRecords(removed);
+          recordRemoved(existing, removed, "evicted");
           existing.transactions = existing.transactions.slice(-existing.transactionLimit);
         }
         existing.updatedAt = registeredAt;
         entry = existing;
         refresh(entry);
       } else {
+        const resolved = resolveCaptureProfile(options.captureProfile, options.transactionLimit);
+        const profile =
+          options.captureProfile === undefined
+            ? {
+                ...resolved,
+                budgets: { ...resolved.budgets, ...options.diagnostics?.getBudgets?.() },
+              }
+            : resolved;
         const initial = {
           id: options.id,
           sessionId: options.sessionId,
@@ -298,7 +384,22 @@ export function createInstanceStore({
           registeredAt,
           updatedAt: registeredAt,
           dispatchCount: 0,
-          transactionLimit: resolveTransactionLimit(options.transactionLimit, null),
+          transactionLimit: profile.budgets.transactions,
+          target: {
+            sourceId,
+            editorId: options.id,
+            sessionId: options.sessionId,
+            generation: ++nextGeneration,
+          },
+          revision: 0,
+          capture: {
+            kind: "recording",
+            profile,
+            gaps: [],
+            omittedGapCount: 0,
+          } satisfies CaptureStatus,
+          inspectors: options.inspectors ?? [],
+          getState: options.getState ?? (() => options.view.state),
           registrationCount: 1,
           transactions: [],
           pluginTimings,
@@ -306,6 +407,13 @@ export function createInstanceStore({
         };
         entry = { ...initial, snapshot: createSnapshot(initial) };
         instances.set(options.id, entry);
+      }
+      if (options.captureProfile !== undefined)
+        entry.diagnostics?.configureBudgets?.(entry.capture.profile.budgets);
+      if (entry.diagnostics && !entry.releaseDiagnostics) {
+        entry.releaseDiagnostics = entry.diagnostics.subscribe(() => {
+          if (instances.get(entry.id) === entry) publishRecordedUpdate(entry);
+        });
       }
 
       const activeInstanceChanged = activeInstanceId === null;
@@ -333,12 +441,35 @@ export function createInstanceStore({
     clearTransactions(id) {
       const entry = instances.get(id);
       if (!entry) return;
-      clearRecords(entry.transactions);
+      recordRemoved(entry, entry.transactions, "cleared");
       entry.transactions = [];
       entry.pluginTimings.clear();
       entry.updatedAt = Date.now();
+      entry.revision += 1;
       refresh(entry);
       publishNow({ instanceId: id });
+    },
+    pauseCapture: (id, sessionId) => setCapturePaused(id, true, sessionId),
+    resumeCapture: (id, sessionId) => setCapturePaused(id, false, sessionId),
+    recordGap(entry, { id, beforeState, stateAfter }) {
+      const next = appendCaptureGap(
+        entry.capture.gaps,
+        {
+          reason: "paused",
+          firstDispatchId: id,
+          lastDispatchId: id,
+          stateBeforeId: getInspectionStateId(beforeState),
+          stateAfterId: getInspectionStateId(stateAfter),
+        },
+        entry.capture.profile.budgets.gaps,
+      );
+      entry.capture = {
+        ...entry.capture,
+        gaps: next.gaps,
+        omittedGapCount: entry.capture.omittedGapCount + next.omitted,
+      };
+      entry.updatedAt = Date.now();
+      publishRecordedUpdate(entry);
     },
     recordTransaction(entry, record, dispatch) {
       const transactions = [...entry.transactions];
@@ -362,7 +493,7 @@ export function createInstanceStore({
         entry.transactionLimit === null
           ? 0
           : Math.max(0, transactions.length - entry.transactionLimit);
-      if (overflow > 0) clearRecords(transactions.splice(0, overflow));
+      if (overflow > 0) recordRemoved(entry, transactions.splice(0, overflow), "evicted");
       entry.transactions = transactions;
       entry.updatedAt = Date.now();
       publishRecordedUpdate(entry, dispatch);

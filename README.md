@@ -135,8 +135,11 @@ API reference, read the [package guide](./packages/prosemirror-devtools/README.m
 Events and rendering diagnostics are opt-in. Enable `diagnostics: true` or `{ limit: 200 }` on a
 devtools session, then use its `instrumentPlugins` and `attach` methods. Capture is bounded
 separately from transaction history. See the [diagnostics setup](./packages/prosemirror-devtools/README.md#optional-event-and-rendering-diagnostics)
-and the [review and remaining follow-ups](./docs/devtools-review.md). Collaboration diagnostics are
-deferred.
+and the [review and remaining follow-ups](./docs/devtools-review.md). Official collaboration and Yjs
+semantic providers are available through optional package entrypoints.
+
+For the proposed product roadmap, parallel workstreams, dependencies, and agent skills, read the
+[product and architecture plan](./docs/product-roadmap.md).
 
 ## Examples
 

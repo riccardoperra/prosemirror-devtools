@@ -31,6 +31,8 @@ type TiptapIntegration = Readonly<{
   options: TiptapDevtoolsOptions;
   setup: () => void;
   attach: () => void;
+  suspend: () => void;
+  resume: () => void;
   dispatch: (props: TiptapDispatchTransactionProps) => void;
   detach: () => void;
 }>;
@@ -155,24 +157,34 @@ function createTiptapIntegration(
   options: TiptapDevtoolsOptions,
 ): TiptapIntegration {
   const sessionId = options.sessionId ?? createDevtoolsSessionId("tiptap");
-  let active = true;
+  let phase: "active" | "suspended" | "disposed" = "active";
   let recorder: DispatchRecorder | null = null;
   let registering = false;
   let restorePluginGetter = (): void => {};
   let unregister: (() => void) | null = null;
   let registeredView: EditorView | null = null;
 
+  const releaseRecorder = (): void => {
+    const previousRecorder = recorder;
+    const previousUnregister = unregister;
+    recorder = null;
+    unregister = null;
+    registeredView = null;
+    try {
+      previousRecorder?.dispose();
+    } finally {
+      previousUnregister?.();
+    }
+  };
+
   const registerWhenReady = (): void => {
-    if (!active || registering) return;
+    if (phase !== "active" || registering) return;
     const view = readyView(editor);
     if (!view || registeredView === view) return;
 
     registering = true;
     try {
-      unregister?.();
-      recorder = null;
-      unregister = null;
-      registeredView = null;
+      releaseRecorder();
 
       const store = options.store ?? prosemirrorDevtoolsStore;
       const registrationOptions = {
@@ -180,6 +192,9 @@ function createTiptapIntegration(
         view,
         sessionId,
         ...(options.diagnostics ? { diagnostics: options.diagnostics } : {}),
+        ...(options.inspectors === undefined ? {} : { inspectors: options.inspectors }),
+        ...(options.getState === undefined ? {} : { getState: options.getState }),
+        ...(options.captureProfile === undefined ? {} : { captureProfile: options.captureProfile }),
         ...(options.label === undefined ? {} : { label: options.label }),
         ...(options.transactionLimit === undefined
           ? {}
@@ -225,29 +240,41 @@ function createTiptapIntegration(
           editor,
           options,
           sessionId,
-          () => active,
+          () => phase === "active",
           registerWhenReady,
         );
       }
       registerWhenReady();
     },
     attach() {
+      if (phase !== "active") return;
       requireRecorder("attachTiptapDevtools");
     },
+    suspend() {
+      if (phase !== "active") return;
+      phase = "suspended";
+      releaseRecorder();
+    },
+    resume() {
+      if (phase === "disposed") return;
+      phase = "active";
+      requireRecorder("resumeTiptapDevtools");
+    },
     dispatch(props) {
+      if (phase !== "active") {
+        props.next(props.transaction);
+        return;
+      }
       requireRecorder("dispatchTiptapTransaction").record(props.transaction, () =>
         props.next(props.transaction),
       );
     },
     detach() {
-      if (!active) return;
-      active = false;
+      if (phase === "disposed") return;
+      phase = "disposed";
       try {
-        unregister?.();
+        releaseRecorder();
       } finally {
-        recorder = null;
-        unregister = null;
-        registeredView = null;
         try {
           (options.store ?? prosemirrorDevtoolsStore).closeSession(options.id, sessionId);
         } finally {
@@ -331,4 +358,20 @@ export function detachTiptapDevtools(editor: TiptapDevtoolsEditor): void {
   if (!integration) return;
   integrations.delete(editor);
   integration.detach();
+}
+
+/** Releases registration during React cleanup without invalidating existing plugin wrappers. */
+export function suspendTiptapDevtools(editor: TiptapDevtoolsEditor): void {
+  integrations.get(editor)?.suspend();
+}
+
+/** Resumes a suspended editor from the setup of its framework effect. */
+export function resumeTiptapDevtools(editor: TiptapDevtoolsEditor): void {
+  const integration = integrations.get(editor);
+  if (!integration) {
+    throw new Error(
+      "[prosemirror-inspector] setupTiptapDevtools must run before resumeTiptapDevtools.",
+    );
+  }
+  integration.resume();
 }

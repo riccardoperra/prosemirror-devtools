@@ -1,5 +1,9 @@
 export { attachProseMirrorDevtools, createProseMirrorDispatchRecorder } from "./attach";
-export type { ProseMirrorDispatchRecorder } from "./dispatch/record-dispatch";
+export type {
+  ProseMirrorDispatchRecorder,
+  ProseMirrorDispatchRecorderOptions,
+} from "./dispatch/record-dispatch";
+export { createBoundedCaptureProfile } from "./capture";
 export { createDevtoolsDataAccess } from "./data-client";
 export { createProseMirrorDevtoolsDiagnostics } from "./diagnostics";
 export type {
@@ -33,6 +37,8 @@ export {
 } from "./store/create-devtools-store";
 export { inspectPlugins, inspectSchema, inspectState, serializeDocument } from "./serialize";
 export {
+  compareSnapshots,
+  prepareDocumentRestore,
   createSnapshot,
   loadSnapshots,
   persistSnapshots,
@@ -40,6 +46,12 @@ export {
   restoreSnapshot,
 } from "./snapshots";
 export type * from "./types";
+export type * from "../inspection/types";
+export { createProseMirrorInspectionClient } from "../inspection/client";
+export { inspectionQueryCatalog } from "../inspection/catalog";
+export { createPluginStateInspector } from "../inspection/providers";
+export type { PluginStateInspectorOptions } from "../inspection/providers";
+export { serializeInspectionValue, defaultInspectionLimits } from "../inspection/serialization";
 export { mapRecordedPosition } from "./transaction-changes";
 export type {
   RecordedStepDetails,

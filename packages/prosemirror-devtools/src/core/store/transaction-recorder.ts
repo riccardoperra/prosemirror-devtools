@@ -6,6 +6,10 @@ import type { ActiveTransactionMeasurements } from "./active-measurements";
 import type { InstanceStore } from "./instance-store";
 import type { PerformanceEntryStore } from "./performance-entries";
 import { createTransactionRecord } from "./transaction-record";
+import { getInspectionStateId } from "../state-id";
+import { readTransactionProvenance } from "./transaction-measurement";
+import { serializeInspectorEvidence } from "../../inspection/serialization";
+import type { InspectionEvidence } from "../../inspection/types";
 
 /**
  * Records ProseMirror transactions and owns their notification batch boundary.
@@ -40,16 +44,37 @@ export function createTransactionRecorder({
       try {
         const registered = instanceStore.getEntry(instanceId);
         const instance = !sessionId || registered?.sessionId === sessionId ? registered : undefined;
-        return activeMeasurements.begin({
+        const measurement = activeMeasurements.begin({
           instanceId,
           sessionId: sessionId ?? registered?.sessionId ?? createDevtoolsSessionId("orphan"),
           id: instance ? ++instance.dispatchCount : 0,
+          generation: instance?.target.generation ?? null,
           instanceLabel: instance?.label ?? instanceId,
           transaction,
           beforeState,
-          performanceMarks,
-          ...(performanceExtension === undefined ? {} : { performanceExtension }),
+          performanceMarks: performanceMarks && instance?.capture.kind !== "paused",
+          captureDetailed: instance?.capture.kind !== "paused",
+          parentDispatchId: activeMeasurements.current(instanceId, sessionId)?.id ?? null,
+          ...(performanceExtension === undefined || instance?.capture.kind === "paused"
+            ? {}
+            : { performanceExtension }),
         });
+        if (instance?.capture.kind === "recording") {
+          const internal = activeMeasurements.current(instanceId, instance.sessionId);
+          for (const inspector of instance.inspectors) {
+            const capture = inspector.captureBefore;
+            if (capture && internal) {
+              internal.beforeProjections.set(
+                inspector.descriptor.id,
+                serializeInspectorEvidence(
+                  () => capture({ state: beforeState, transaction, target: instance.target }),
+                  instance.capture.profile.budgets.projections,
+                ),
+              );
+            }
+          }
+        }
+        return measurement;
       } catch (error) {
         // Setup failure means finishTransaction will never receive this measurement, so release the
         // batch here rather than suppressing future notifications indefinitely.
@@ -62,10 +87,56 @@ export function createTransactionRecorder({
       try {
         const { internal, totalDuration } = activeMeasurements.finish(measurement);
         const instance = instanceStore.getEntry(internal.instanceId);
-        if (!instance || instance.sessionId !== internal.sessionId) {
+        if (
+          !instance ||
+          instance.sessionId !== internal.sessionId ||
+          instance.target.generation !== internal.generation
+        ) {
           if (internal.measureName) globalThis.performance?.clearMeasures?.(internal.measureName);
           return null;
         }
+        if (!internal.captureDetailed) {
+          instanceStore.recordGap(instance, {
+            id: internal.id,
+            beforeState: internal.beforeState,
+            stateAfter: result.stateAfter,
+          });
+          return null;
+        }
+
+        const applicationStatus =
+          result.appliedTransactions === undefined
+            ? "unknown"
+            : result.appliedTransactions.length === 0
+              ? "filtered"
+              : "applied";
+        const projections = instance.inspectors.map((inspector) => {
+          const capture = inspector.capture;
+          const beforeProjection = internal.beforeProjections.get(inspector.descriptor.id);
+          return {
+            id: inspector.descriptor.id,
+            version: inspector.descriptor.version,
+            evidence: capture
+              ? serializeInspectorEvidence(
+                  () =>
+                    capture({
+                      beforeState: internal.beforeState,
+                      stateAfter: result.stateAfter,
+                      transaction: internal.transaction,
+                      appliedTransactions: result.appliedTransactions,
+                      dispatchId: internal.id,
+                      applicationStatus,
+                      target: instance.target,
+                      ...(beforeProjection ? { beforeProjection } : {}),
+                    }),
+                  instance.capture.profile.budgets.projections,
+                )
+              : ({
+                  kind: "unsupported",
+                  reason: "This inspector does not capture historical projections.",
+                } satisfies InspectionEvidence),
+          };
+        });
 
         const record = createTransactionRecord({
           id: internal.id,
@@ -83,6 +154,16 @@ export function createTransactionRecorder({
           markers: internal.markers,
           measureName: internal.measureName,
           error: result.error,
+          didThrow: Object.hasOwn(result, "error"),
+          captureError: result.captureError,
+          inspection: {
+            revision: instance.revision + 1,
+            stateBeforeId: getInspectionStateId(internal.beforeState),
+            stateAfterId: getInspectionStateId(result.stateAfter),
+            parentDispatchId: internal.parentDispatchId,
+            projections,
+            provenance: readTransactionProvenance(internal, result.appliedTransactions),
+          },
         });
         performanceEntries.emit(record, internal);
         instanceStore.recordTransaction(instance, record, {

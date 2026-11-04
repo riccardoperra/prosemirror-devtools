@@ -2,6 +2,7 @@ import type { Node as ProseMirrorNode } from "prosemirror-model";
 import type { EditorState, Transaction } from "prosemirror-state";
 
 import { serializeDocument } from "../serialize";
+import { describeInspectionError } from "../../inspection/serialization";
 import { captureStepDetails } from "../transaction-changes";
 import type {
   AppliedTransactionRecord,
@@ -12,27 +13,61 @@ import type {
 } from "../types";
 
 type SerializedDocuments = Pick<TransactionRecord, "docBefore" | "docAfter">;
+const recordedDocuments = new WeakMap<
+  TransactionRecord,
+  { before: ProseMirrorNode; after: ProseMirrorNode }
+>();
 
-function formatError(error: unknown): string | null {
-  if (error == null) return null;
-  return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+export function getRecordedTransactionDocument(
+  record: TransactionRecord,
+  phase: "before" | "after",
+): ProseMirrorNode | undefined {
+  return recordedDocuments.get(record)?.[phase];
 }
 
 function readMeta(transaction: Transaction): Record<string, unknown> {
-  const meta = (transaction as unknown as { meta?: Record<string, unknown> }).meta;
-  return meta ? { ...meta } : {};
+  const descriptor = Object.getOwnPropertyDescriptor(transaction, "meta");
+  if (descriptor && !("value" in descriptor))
+    throw new TypeError("Transaction metadata is an accessor.");
+  const meta: unknown = descriptor?.value;
+  const result: Record<string, unknown> = {};
+  if (meta === null || typeof meta !== "object") return result;
+  for (const key of Object.keys(meta)) {
+    const field = Object.getOwnPropertyDescriptor(meta, key);
+    if (!field || !("value" in field))
+      throw new TypeError("Transaction metadata contains an accessor.");
+    Object.defineProperty(result, key, {
+      value: field.value,
+      enumerable: true,
+      configurable: true,
+    });
+  }
+  return result;
 }
 
 function readTransaction(transaction: Transaction, index: number): AppliedTransactionRecord {
+  const errors: string[] = [];
+  const read = <T>(run: () => T, fallback: T): T => {
+    try {
+      return run();
+    } catch (error) {
+      errors.push(describeInspectionError(error));
+      return fallback;
+    }
+  };
+  const steps = read(() => transaction.steps.map((step) => step.toJSON()), []);
+  const stepDetails = read(() => captureStepDetails(transaction), undefined);
+  const meta = read(() => readMeta(transaction), {});
   return {
     index,
     appended: index > 0,
     docChanged: transaction.docChanged,
     selectionSet: transaction.selectionSet,
     storedMarksSet: transaction.storedMarksSet,
-    steps: transaction.steps.map((step) => step.toJSON()),
-    stepDetails: captureStepDetails(transaction),
-    meta: readMeta(transaction),
+    steps,
+    ...(stepDetails ? { stepDetails } : {}),
+    meta,
+    ...(errors.length > 0 ? { captureError: errors.join("; ") } : {}),
   };
 }
 
@@ -52,6 +87,9 @@ export function createTransactionRecord({
   markers,
   measureName,
   error,
+  inspection,
+  didThrow = false,
+  captureError,
 }: {
   id: number;
   instanceId: string;
@@ -72,32 +110,50 @@ export function createTransactionRecord({
   markers: readonly DevtoolsMarker[];
   measureName: string | null;
   error: unknown;
+  inspection?: TransactionRecord["inspection"];
+  didThrow?: boolean;
+  captureError?: unknown;
 }): TransactionRecord {
   const applicationKnown = appliedTransactions !== undefined;
   const applied = appliedTransactions ? Array.from(appliedTransactions) : [];
   const observedTransactions = applicationKnown ? applied : [rootTransaction];
   // Capture the small ProseMirror JSON payloads now; only full documents stay lazy.
   const transactionDetails = observedTransactions.map(readTransaction);
-  const selectionBefore = beforeState.selection.toJSON();
-  const selectionAfter = stateAfter.selection.toJSON();
-  let beforeDoc: ProseMirrorNode | null = beforeState.doc;
-  let afterDoc: ProseMirrorNode | null = stateAfter.doc;
-  let documents: SerializedDocuments | null = null;
-
-  const readDocuments = (): SerializedDocuments => {
-    if (documents) return documents;
-    const docBefore = serializeDocument(beforeDoc as ProseMirrorNode);
-    documents = {
-      docBefore,
-      docAfter: beforeDoc === afterDoc ? docBefore : serializeDocument(afterDoc as ProseMirrorNode),
-    };
-    // The serialized values replace the raw document roots after the first read.
-    beforeDoc = null;
-    afterDoc = null;
-    return documents;
+  const captureErrors = transactionDetails.flatMap((transaction) =>
+    transaction.captureError ? [transaction.captureError] : [],
+  );
+  if (captureError !== undefined) captureErrors.push(describeInspectionError(captureError));
+  const readSelection = (state: EditorState): TransactionRecord["selectionAfter"] => {
+    try {
+      return state.selection.toJSON();
+    } catch (error) {
+      captureErrors.push(describeInspectionError(error));
+      return null;
+    }
+  };
+  const selectionBefore = readSelection(beforeState);
+  const selectionAfter = readSelection(stateAfter);
+  let documents:
+    | { kind: "pending"; before: ProseMirrorNode; after: ProseMirrorNode }
+    | { kind: "serialized"; value: SerializedDocuments } = {
+    kind: "pending",
+    before: beforeState.doc,
+    after: stateAfter.doc,
   };
 
-  return {
+  const readDocuments = (): SerializedDocuments => {
+    if (documents.kind === "serialized") return documents.value;
+    const docBefore = serializeDocument(documents.before);
+    const value = {
+      docBefore,
+      docAfter:
+        documents.before === documents.after ? docBefore : serializeDocument(documents.after),
+    };
+    documents = { kind: "serialized", value };
+    return value;
+  };
+
+  const record: TransactionRecord = {
     id,
     instanceId,
     sessionId,
@@ -134,6 +190,10 @@ export function createTransactionRecord({
     timings,
     markers,
     measureName,
-    error: formatError(error),
+    error: didThrow ? describeInspectionError(error) : null,
+    ...(captureErrors.length > 0 ? { captureErrors } : {}),
+    ...(inspection ? { inspection } : {}),
   };
+  recordedDocuments.set(record, { before: beforeState.doc, after: stateAfter.doc });
+  return record;
 }

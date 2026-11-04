@@ -8,7 +8,7 @@ export function createMarkerRecorder(
   return {
     addMarker(instanceId, label, options = {}) {
       const measurement = activeMeasurements.current(instanceId);
-      if (!measurement) return false;
+      if (!measurement?.captureDetailed) return false;
       measurement.markers.push({
         label,
         category: options.category ?? null,
@@ -21,7 +21,7 @@ export function createMarkerRecorder(
     },
     measureMarker(instanceId, label, run, options = {}) {
       const measurement = activeMeasurements.current(instanceId);
-      if (!measurement) return run();
+      if (!measurement?.captureDetailed) return run();
       const startedAt = monotonicNow();
       const marker: DevtoolsMarker = {
         label,

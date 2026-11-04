@@ -1,7 +1,16 @@
-import { createComponent, createMemo, createSignal, mergeProps, Show } from "solid-js";
+import {
+  createComponent,
+  createMemo,
+  createSignal,
+  mergeProps,
+  Show,
+  type Accessor,
+  type JSX,
+} from "solid-js";
 import { render } from "solid-js/web";
 
 import { ProseMirrorDevtoolsPanel } from "../panel/panel";
+import type { ProseMirrorDevtoolsPanelProps } from "../panel/panel.types";
 import { resolveProseMirrorDevtoolsPanelProps } from "./panel-props";
 import type { ProseMirrorDevtoolsAdapterPanelProps } from "./types";
 
@@ -30,19 +39,25 @@ export class ProseMirrorDevtoolsCore {
   }
 
   mount(element: HTMLElement, mountProps?: unknown): void {
-    if (this.#dispose) throw new Error("ProseMirror Inspector is already mounted.");
-
     const [currentProps, setCurrentProps] = createSignal(mountProps);
-    this.#dispose = render(() => {
+    this.mountWithProps(element, () =>
+      resolveProseMirrorDevtoolsPanelProps(
+        element,
+        this.#initialProps,
+        normalizeMountProps(currentProps()),
+      ),
+    );
+    this.#update = (props) => setCurrentProps(() => props);
+  }
+
+  mountWithProps(
+    element: HTMLElement,
+    resolveProps: Accessor<ProseMirrorDevtoolsPanelProps | null>,
+  ): void {
+    this.mountView(element, () => {
       // Resolve inside the Solid owner so accessor-backed host props remain
       // reactive. Updating appearance must not reset navigation or inspectors.
-      const panelProps = createMemo(() =>
-        resolveProseMirrorDevtoolsPanelProps(
-          element,
-          this.#initialProps,
-          normalizeMountProps(currentProps()),
-        ),
-      );
+      const panelProps = createMemo(resolveProps);
       return createComponent(Show, {
         keyed: true,
         get when() {
@@ -55,8 +70,12 @@ export class ProseMirrorDevtoolsCore {
           );
         },
       });
-    }, element);
-    this.#update = (props) => setCurrentProps(() => props);
+    });
+  }
+
+  mountView(element: HTMLElement, view: Accessor<JSX.Element>): void {
+    if (this.#dispose) throw new Error("ProseMirror Inspector is already mounted.");
+    this.#dispose = render(view, element);
   }
 
   update(mountProps?: unknown): void {

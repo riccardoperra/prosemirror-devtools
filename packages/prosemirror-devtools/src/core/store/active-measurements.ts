@@ -13,11 +13,14 @@ export interface ActiveTransactionMeasurements {
     instanceId: string;
     sessionId: string;
     id: number;
+    generation: number | null;
     instanceLabel: string;
     transaction: Transaction;
     beforeState: EditorState;
     performanceMarks: boolean;
     performanceExtension?: boolean | DevtoolsPerformanceExtensionOptions;
+    captureDetailed?: boolean;
+    parentDispatchId?: number | null;
   }): TransactionMeasurement;
   finish(measurement: TransactionMeasurement): {
     internal: InternalTransactionMeasurement;
