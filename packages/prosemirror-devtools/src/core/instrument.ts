@@ -298,12 +298,46 @@ function wrapPlugin(plugin: Plugin, index: number, options: InstrumentPluginsOpt
       });
   }
 
-  const wrapped = new Plugin(wrappedSpec);
+  const facade = new Plugin(wrappedSpec);
   // A PluginSpec without an explicit PluginKey receives an internal generated key.
   // Reusing the original string keeps state lookup stable for originalPlugin.getState.
   if (!spec.key) {
-    (wrapped as unknown as { key: string }).key = runtimePluginKey(original);
+    (facade as unknown as { key: string }).key = runtimePluginKey(original);
   }
+  Object.setPrototypeOf(facade, Object.getPrototypeOf(original));
+  const bindings = new Map<PropertyKey, { source: LooseFunction; bound: LooseFunction }>();
+  const wrapped = new Proxy(facade, {
+    get(target, property) {
+      if (Object.hasOwn(target, property)) return Reflect.get(target, property, target);
+      const value: unknown = Reflect.get(original, property, original);
+      if (typeof value !== "function" || property === "constructor") return value;
+      const cached = bindings.get(property);
+      if (cached?.source === value) return cached.bound;
+      const source = value as LooseFunction;
+      const bound = source.bind(original);
+      bindings.set(property, { source, bound });
+      return bound;
+    },
+    set(target, property, value) {
+      const receiver = Object.hasOwn(target, property) ? target : original;
+      return Reflect.set(receiver, property, value, receiver);
+    },
+    has(target, property) {
+      return Reflect.has(target, property) || Reflect.has(original, property);
+    },
+    ownKeys(target) {
+      const keys = Reflect.ownKeys(target);
+      return Reflect.isExtensible(target)
+        ? [...new Set([...keys, ...Reflect.ownKeys(original)])]
+        : keys;
+    },
+    getOwnPropertyDescriptor(target, property) {
+      const descriptor = Reflect.getOwnPropertyDescriptor(target, property);
+      if (descriptor || !Reflect.isExtensible(target)) return descriptor;
+      const originalDescriptor = Reflect.getOwnPropertyDescriptor(original, property);
+      return originalDescriptor ? { ...originalDescriptor, configurable: true } : undefined;
+    },
+  });
 
   const byStore = instrumentedPlugins.get(original) ?? new WeakMap();
   const bySession = byStore.get(store) ?? new Map();
