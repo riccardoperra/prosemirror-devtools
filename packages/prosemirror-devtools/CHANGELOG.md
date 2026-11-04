@@ -1,5 +1,11 @@
 # prosemirror-inspector
 
+## 0.0.2
+
+### Patch Changes
+
+- cd09438: Preserve plugin subclass prototypes during instrumentation so `instanceof` checks and custom fields, accessors, and methods continue to work, including methods that use private fields.
+
 ## 0.0.1
 
 ### Patch Changes
