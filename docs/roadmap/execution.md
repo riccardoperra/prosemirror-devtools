@@ -6,14 +6,14 @@ opzioni L1-L3 mantengono le condizioni di introduzione del piano. La pubblicazio
 ## Verifiche complessive
 
 - Baseline main `448ddbe`, 162 test in 32 file.
-- Versione integrata, 241 test in 50 file.
-- Suite browser su server nuovi, 14 test passati con Chrome 156.0.8078.80 e Playwright 1.64.1.
+- Versione integrata, 246 test in 51 file.
+- Suite browser su server nuovi, 16 test passati con Chrome 156.0.8078.80 e Playwright 1.64.1.
 - Build e controlli dei tipi dei package nel workspace di 13 progetti. Typecheck rigoroso anche degli scenari browser.
 - Lint, formato, reference generate, formato delle tre skill e publint.
 - Archivio installato in un consumer temporaneo. Core, agent e recordings importano senza browser e senza Tiptap, Yjs, Angular, history o collab installati.
 - Chrome DevTools MCP 1.12.0 connesso con profilo isolato. Discovery, documento, selezione sullo stesso punto e verdetto passano senza evaluate_script.
 
-Il primo ramo ha 215 test in 45 file e il secondo 224 test in 48 file. Entrambi compilano e
+Il primo ramo ha 215 test in 45 file e il secondo 229 test in 49 file. Entrambi compilano e
 verificano i consumer disponibili nel proprio stato. Il terzo aggiunge le prove complete dei
 consumer, delle input rules, degli strumenti agentici e del browser.
 
@@ -43,7 +43,7 @@ consumer, delle input rules, degli strumenti agentici e del browser.
 | D3 Yjs                             | Verificato               | Y.Doc e Tiptap Collaboration reali. yjs-inspector e V3 verificano undo locale che preserva il peer.                                                  |
 | E1 ProseMirror minimo              | Verificato               | Standalone con lista, history, profili e teardown. V2/V5/V6/V7 e test del mount.                                                                     |
 | E2 Tiptap reale                    | Verificato               | Tiptap 3.31.4 reale. tiptap-native copre Strict Mode, remount, entrambi i profili e plugin dinamici.                                                 |
-| E3 React ProseMirror reale         | Verificato               | React ProseMirror 3.2.11 controllato. Test nativi e tre remount browser senza doppia applicazione.                                                   |
+| E3 React ProseMirror reale         | Verificato               | React ProseMirror 3.2.11 controllato. Test nativi, pannelli live sul modello aggiornato e tre remount browser senza doppia applicazione.             |
 | E4 Inspector Tiptap                | Verificato               | Provider attivo nel consumer Tiptap. tiptap-inspector verifica storage, priorità, opzioni e associazioni esplicite.                                  |
 | F1 Catalogo degli strumenti        | Verificato               | Catalogo e strumenti comuni. Reference generate e verificate da docs:check.                                                                          |
 | F2 Query serializzabili            | Verificato               | Risposte limitate e serializzabili. Test agent-tools, client e conformance MCP reale.                                                                |
@@ -58,7 +58,7 @@ consumer, delle input rules, degli strumenti agentici e del browser.
 | H2 Export diagnostico              | Verificato               | Export via query comuni, massimo 25 dispatch e 2 MB. Test recordings e file realmente scaricato.                                                     |
 | H3 Import e lettura offline        | Verificato               | Import rigoroso e source offline. V4 importa dopo remount, legge prima/dopo e conserva il viewer su file invalido.                                   |
 | I1 Matrice di supporto             | Verificato               | Matrice distinta per editor, host, profilo e release. Versioni native bloccate e installazione pulita.                                               |
-| I2 Scenari browser comuni          | Verificato               | 14 test browser su quattro consumer. Viewport stretto, due editor, due host, remount, produzione e import.                                           |
+| I2 Scenari browser comuni          | Verificato               | 16 test browser su quattro consumer. Viewport stretto, due editor, due host, remount, produzione e import.                                           |
 | I3 Compatibilità delle skill       | Verificato               | Protocollo e link delle skill verificati. Reference dal catalogo, forward test e contesti live/offline distinti.                                     |
 | I4 Adapter e produzione            | Verificato               | Build e tipi di tutti i 13 progetti. Test adapter, consumer nativi e quattro preview di produzione. Nessuna parità SSR generale dichiarata.          |
 | I5 Allineamento di ogni incremento | Verificato               | README, guide, matrice, reference e note di rilascio aggiornati. Nuove API indicate come non pubblicate.                                             |

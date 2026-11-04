@@ -12,6 +12,14 @@ famiglie di modelli.
 | Il budget di una lettura per intervallo ripartiva da zero per ogni nodo fratello.                                                                    | Una sola visita condivide il budget fra tutti i nodi dello scope.                                                                                                                              | `inspection-client.test.ts` verifica l'interruzione su un documento di 1.000 paragrafi. |
 | Un serializer opaco poteva diventare una proiezione storica disponibile e completa.                                                                  | Un confine non osservabile conserva il suo stato di errore. Le liste di proiezioni dichiarano copertura parziale.                                                                              | Test dei due confini del plugin e verifiche semantiche inconcludenti.                   |
 
+L'ultima verifica dello stack ha riprodotto un quarto difetto nel consumer React controllato.
+L'editor mostrava `AlphaZ`, ma State e Selection conservavano il modello precedente. I pannelli
+leggono ora il modello autorevole della sessione. Le azioni sul DOM e il restore richiedono anche
+che la view abbia completato il commit. La correzione non forza un aggiornamento della view.
+Cinque test del pannello coprono lo stato prima del commit. Due nuovi scenari Chrome verificano
+State e Selection contro lo stesso documento e la stessa selezione delle query pubbliche.
+Il test preesistente del restore usa ora un remount reale con una nuova registrazione.
+
 Un secondo agente ha rieseguito i quattro repro originali sugli ingressi pubblici costruiti.
 I quattro casi sono corretti. Sono passati anche 33 test mirati e otto controlli aggiuntivi
 sull'ingresso pubblico della verifica delle prove annidate.
