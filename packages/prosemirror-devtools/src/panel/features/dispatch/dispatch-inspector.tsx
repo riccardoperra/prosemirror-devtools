@@ -89,43 +89,46 @@ function DispatchInspectorHeader(): JSX.Element {
         </button>
       </header>
       <Show when={inspection}>
-        <nav class={panelStyles.pmPaneHeader} aria-label="Related dispatch evidence">
-          <For
-            each={[
-              { panel: "history", title: "Transactions" },
-              { panel: "performance", title: "Performance" },
-              { panel: "state", title: "Document after dispatch" },
-              { panel: "decorations", title: "Rendering evidence" },
-            ]}
-          >
-            {({ panel, title }) => (
-              <button
-                class={panelStyles.pmButton}
-                type="button"
-                onClick={() =>
-                  inspection?.selectTransaction({
-                    instanceId: inspector.record().instanceId,
-                    id: inspector.record().id,
-                    panel,
-                  })
-                }
-              >
-                {title}
-              </button>
-            )}
-          </For>
-          <For each={plugins()}>
-            {([key, label]) => (
-              <button
-                class={panelStyles.pmButton}
-                type="button"
-                onClick={() => inspection?.selectPlugin(key)}
-              >
-                Plugin {label}
-              </button>
-            )}
-          </For>
-        </nav>
+        <details class={panelStyles.pmDispatchRelated}>
+          <summary>Related evidence</summary>
+          <nav class={panelStyles.pmDispatchRelatedLinks} aria-label="Related dispatch evidence">
+            <For
+              each={[
+                { panel: "history", title: "Transactions" },
+                { panel: "performance", title: "Performance" },
+                { panel: "state", title: "Document after dispatch" },
+                { panel: "decorations", title: "Rendering evidence" },
+              ]}
+            >
+              {({ panel, title }) => (
+                <button
+                  class={panelStyles.pmButton}
+                  type="button"
+                  onClick={() =>
+                    inspection?.selectTransaction({
+                      instanceId: inspector.record().instanceId,
+                      id: inspector.record().id,
+                      panel,
+                    })
+                  }
+                >
+                  {title}
+                </button>
+              )}
+            </For>
+            <For each={plugins()}>
+              {([key, label]) => (
+                <button
+                  class={panelStyles.pmButton}
+                  type="button"
+                  onClick={() => inspection?.selectPlugin(key)}
+                >
+                  Plugin {label}
+                </button>
+              )}
+            </For>
+          </nav>
+        </details>
       </Show>
     </>
   );

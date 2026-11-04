@@ -856,6 +856,25 @@
     z-index: 2;
     inset-block-start: 0;
   }
+  .pm-dispatch-related {
+    border-block-end: 1px solid var(--pm-border);
+    background: var(--pm-panel);
+  }
+  .pm-dispatch-related > summary {
+    cursor: pointer;
+    padding: 5px 9px;
+    color: var(--pm-muted);
+    font-size: 10px;
+  }
+  .pm-dispatch-related-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 9px;
+    max-block-size: 110px;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
   .pm-dispatch-header {
     min-block-size: 43px;
     padding: 6px 9px;
