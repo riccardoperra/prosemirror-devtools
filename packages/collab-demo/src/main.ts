@@ -2,7 +2,10 @@ import {
   createProseMirrorDevtoolsStore,
   createProseMirrorInspectionClient,
 } from "prosemirror-inspector/core";
-import { installProseMirrorChromeBridge } from "prosemirror-inspector/agent";
+import {
+  installProseMirrorChromeBridge,
+  installProseMirrorWebMCPBridge,
+} from "prosemirror-inspector/agent";
 import { mountProseMirrorDevtools } from "prosemirror-inspector/standalone";
 import "prosemirror-view/style/prosemirror.css";
 import "prosemirror-inspector/styles.css";
@@ -47,6 +50,9 @@ const containers = {
 const store = createProseMirrorDevtoolsStore();
 const client = createProseMirrorInspectionClient({ store });
 const disposeBridge = import.meta.env.DEV ? installProseMirrorChromeBridge(client) : null;
+const disposeWebMCP = import.meta.env.DEV
+  ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
+  : null;
 const panel = import.meta.env.DEV
   ? mountProseMirrorDevtools(element("#inspector", HTMLDivElement), {
       store,
@@ -171,6 +177,7 @@ function dispose(): void {
   fixture?.dispose();
   panel?.unmount();
   disposeBridge?.();
+  disposeWebMCP?.();
 }
 window.addEventListener("pagehide", dispose, { once: true });
 import.meta.hot?.dispose(dispose);

@@ -49,16 +49,17 @@ entries keep their adapters active by choice. Core and Tiptap calls require a de
 
 ## Capture profiles and evidence
 
-| Profile or feature       | Available observations                                                                      | Limits                                                                   |
-| ------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Attach-only              | Current state, dispatches, observed application outcome, schema, and plugin order.          | Existing uninstrumented hooks are unobserved.                            |
-| Instrument before state  | Hook timings, observed filter and append provenance, and diagnostic callbacks when enabled. | Replacement plugin objects preserve keys, not identity.                  |
-| Diagnostics disabled     | Current state and dispatch capture remain available.                                        | Events, decorations, and NodeViews return `disabled`.                    |
-| Bounded capture          | Explicit budgets, pause and resume, retention gaps, and expired references.                 | Omitted detail cannot establish a complete causal trace.                 |
-| Historical state         | Retained document, selection, dispatch detail, and captured provider projections.           | No implicit current schema, arbitrary plugin state, or DOM substitution. |
-| Offline recordings       | Bounded captured queries with a separate source and read-only viewer.                       | Exact captured scopes only. No replay, live restore, or DOM resolution.  |
-| Agent queries and checks | Serializable bounded evidence, explicit targets, and per-expectation verdicts.              | Browser rendering requires external browser proof.                       |
-| Chrome discovery bridge  | Opt-in adapter over the common agent tools.                                                 | Experimental browser and MCP support is required.                        |
+| Profile or feature       | Available observations                                                                      | Limits                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Attach-only              | Current state, dispatches, observed application outcome, schema, and plugin order.          | Existing uninstrumented hooks are unobserved.                                       |
+| Instrument before state  | Hook timings, observed filter and append provenance, and diagnostic callbacks when enabled. | Replacement plugin objects preserve keys, not identity.                             |
+| Diagnostics disabled     | Current state and dispatch capture remain available.                                        | Events, decorations, and NodeViews return `disabled`.                               |
+| Bounded capture          | Explicit budgets, pause and resume, retention gaps, and expired references.                 | Omitted detail cannot establish a complete causal trace.                            |
+| Historical state         | Retained document, selection, dispatch detail, and captured provider projections.           | No implicit current schema, arbitrary plugin state, or DOM substitution.            |
+| Offline recordings       | Bounded captured queries with a separate source and read-only viewer.                       | Exact captured scopes only. No replay, live restore, or DOM resolution.             |
+| Agent queries and checks | Serializable bounded evidence, explicit targets, and per-expectation verdicts.              | Browser rendering requires external browser proof.                                  |
+| Native WebMCP            | Same read-only tool catalogue through native modelContext registration.                     | Experimental browser support required. Unsupported browsers return no registration. |
+| Chrome discovery bridge  | Opt-in adapter over the common agent tools.                                                 | Experimental browser and MCP support is required.                                   |
 
 ## Evidence locations
 

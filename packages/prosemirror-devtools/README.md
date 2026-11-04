@@ -543,6 +543,12 @@ from the installed package. npm does not activate skills automatically. The
 [agent guide](https://github.com/riccardoperra/prosemirror-devtools/blob/main/docs/agent-validation.md)
 describes installation, prerequisites, browser evidence, and the list and undo scenario.
 
+`await installProseMirrorWebMCPBridge(client)` registers the same tools for native WebMCP
+browser agents. It returns cleanup, or `null` when unsupported. Registration uses the current
+`document.modelContext` API and supports the earlier `navigator.modelContext` API. Enable it
+only in development and call its cleanup when the host is removed. The adapter does not install
+a polyfill or require a Chrome DevTools MCP server. Native WebMCP remains experimental.
+
 ## Semantic inspectors
 
 Use `createHistoryInspector({ plugin })` from `prosemirror-inspector/inspectors/history` with the
@@ -597,7 +603,7 @@ describes export, import, limits, and teardown.
 | `prosemirror-inspector/react-prosemirror`      | Controlled native model recorder for React ProseMirror                                           |
 | `prosemirror-inspector/recordings`             | Bounded diagnostic export, validated import, and offline queries                                 |
 | `prosemirror-inspector/recordings-panel`       | Separate read-only recording component and development mount                                     |
-| `prosemirror-inspector/agent`                  | Read-only agent tools, semantic checks, and experimental Chrome discovery                        |
+| `prosemirror-inspector/agent`                  | Read-only agent tools, semantic checks, native WebMCP, and Chrome discovery                      |
 | `prosemirror-inspector/inspectors/history`     | Official undo and redo history observations                                                      |
 | `prosemirror-inspector/inspectors/collab`      | Official collaboration version, pending steps, and original transaction metadata                 |
 | `prosemirror-inspector/inspectors/transport`   | Explicit application transport observations                                                      |

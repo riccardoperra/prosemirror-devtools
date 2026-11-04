@@ -1,5 +1,8 @@
 import { createTiptapInspector } from "prosemirror-inspector/inspectors/tiptap";
-import { installProseMirrorChromeBridge } from "prosemirror-inspector/agent";
+import {
+  installProseMirrorChromeBridge,
+  installProseMirrorWebMCPBridge,
+} from "prosemirror-inspector/agent";
 import { createProseMirrorInspectionClient } from "prosemirror-inspector/core";
 import { Extension } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
@@ -22,6 +25,9 @@ import "./style.css";
 const store = createProseMirrorDevtoolsStore();
 const disposeBridge = import.meta.env.DEV
   ? installProseMirrorChromeBridge(createProseMirrorInspectionClient({ store }))
+  : null;
+const disposeWebMCP = import.meta.env.DEV
+  ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
   : null;
 const fixture = "<ul><li><p>Alpha</p></li></ul>";
 
@@ -159,6 +165,7 @@ root.render(
 function dispose(): void {
   window.removeEventListener("pagehide", dispose);
   disposeBridge?.();
+  disposeWebMCP?.();
   root.unmount();
 }
 window.addEventListener("pagehide", dispose, { once: true });

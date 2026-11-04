@@ -1,4 +1,7 @@
-import { installProseMirrorChromeBridge } from "prosemirror-inspector/agent";
+import {
+  installProseMirrorChromeBridge,
+  installProseMirrorWebMCPBridge,
+} from "prosemirror-inspector/agent";
 import { createProseMirrorInspectionClient } from "prosemirror-inspector/core";
 import { baseKeymap } from "prosemirror-commands";
 import { history, redo, redoDepth, undo, undoDepth } from "prosemirror-history";
@@ -30,6 +33,9 @@ const splitItem = splitListItem(listItem);
 const store = createProseMirrorDevtoolsStore();
 const inspectionClient = import.meta.env.DEV ? createProseMirrorInspectionClient({ store }) : null;
 const disposeBridge = inspectionClient ? installProseMirrorChromeBridge(inspectionClient) : null;
+const disposeWebMCP = import.meta.env.DEV
+  ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
+  : null;
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing application container");
 app.innerHTML = `<main>
@@ -162,6 +168,7 @@ profile.addEventListener("change", reset);
 function dispose(): void {
   window.removeEventListener("pagehide", dispose);
   disposeBridge?.();
+  disposeWebMCP?.();
   for (const [button, listener] of clickHandlers) button.removeEventListener("click", listener);
   profile.removeEventListener("change", reset);
   cleanupRecordings();

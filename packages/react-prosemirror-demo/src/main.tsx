@@ -1,4 +1,7 @@
-import { installProseMirrorChromeBridge } from "prosemirror-inspector/agent";
+import {
+  installProseMirrorChromeBridge,
+  installProseMirrorWebMCPBridge,
+} from "prosemirror-inspector/agent";
 import { createProseMirrorInspectionClient } from "prosemirror-inspector/core";
 import {
   ProseMirror,
@@ -30,6 +33,9 @@ import "./style.css";
 const store = createProseMirrorDevtoolsStore();
 const disposeBridge = import.meta.env.DEV
   ? installProseMirrorChromeBridge(createProseMirrorInspectionClient({ store }))
+  : null;
+const disposeWebMCP = import.meta.env.DEV
+  ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
   : null;
 const schema = new Schema({
   nodes: addListNodes(basicSchema.spec.nodes, "paragraph block*", "block"),
@@ -190,6 +196,7 @@ root.render(
 function dispose(): void {
   window.removeEventListener("pagehide", dispose);
   disposeBridge?.();
+  disposeWebMCP?.();
   root.unmount();
 }
 window.addEventListener("pagehide", dispose, { once: true });

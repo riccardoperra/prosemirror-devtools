@@ -49,6 +49,28 @@ The tool group exposes `prosemirror_catalog`, `prosemirror_editors`, `prosemirro
 read. These tools do not modify the editor. `prosemirror_read` reuses the exact point returned by a
 previous inspection and returns `expired` when that point has advanced.
 
+## Use native WebMCP
+
+A WebMCP-capable browser agent can discover the same tools without a Chrome DevTools MCP server.
+Register them behind the application's development guard.
+
+```ts
+import { installProseMirrorWebMCPBridge } from "prosemirror-inspector/agent";
+
+const removeWebMCP = await installProseMirrorWebMCPBridge(client);
+// When the application host is removed:
+removeWebMCP?.();
+```
+
+The adapter uses `document.modelContext` and supports the earlier `navigator.modelContext` API.
+An unsupported browser returns `null` and keeps the application functional. A registration error
+rejects after removing partial registrations. Current registration cleanup uses `AbortSignal`.
+The adapter does not enable experimental browser features or install a polyfill.
+
+Both transports expose the same schemas and validation. Native registration marks the tools as
+read-only, debugging, and untrusted-content. Browser actions and visible correctness remain
+separate from semantic evidence. See the [native WebMCP guide](https://developer.chrome.com/docs/ai/webmcp/imperative-api).
+
 ## Check a semantic expectation
 
 ```ts
