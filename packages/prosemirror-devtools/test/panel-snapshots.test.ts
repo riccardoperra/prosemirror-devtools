@@ -24,7 +24,7 @@ describe("snapshot imports", () => {
     const target = createTestView(createTestState("target"));
     const replacement = createTestView(createTestState("replacement"));
     const store = createProseMirrorDevtoolsStore();
-    const unregister = store.register({ id: "editor", view: target });
+    let unregister = store.register({ id: "editor", view: target });
     const [instance, setInstance] = createSignal(store.getInstance("editor")!);
     let dispose = (): void => {};
     const snapshots = createRoot((cleanup) => {
@@ -40,7 +40,9 @@ describe("snapshot imports", () => {
       expect(target.state.doc.textContent).toBe("target changed");
       expect(snapshots.error()).toContain("target changed");
       snapshots.previewRestore(checkpoint);
-      setInstance({ ...instance(), view: replacement });
+      unregister();
+      unregister = store.register({ id: "editor", view: replacement });
+      setInstance(store.getInstance("editor")!);
       snapshots.confirmRestore();
       expect(replacement.state.doc.textContent).toBe("replacement");
       snapshots.previewRestore(checkpoint);
