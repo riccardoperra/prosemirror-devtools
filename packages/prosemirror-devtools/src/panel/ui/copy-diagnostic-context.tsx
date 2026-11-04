@@ -1,13 +1,21 @@
-import { createSignal, Show, type JSX } from "solid-js";
+import { createEffect, createSignal, on, Show, type JSX } from "solid-js";
 
 import { panelStyles } from "../styles";
 
 export function CopyDiagnosticContext(props: {
   read: () => string;
   ownerDocument: Document;
+  resetKey?: string;
 }): JSX.Element {
   const [text, setText] = createSignal<string>();
   const [status, setStatus] = createSignal("");
+  createEffect(
+    on(
+      () => props.resetKey,
+      () => setText(undefined),
+      { defer: true },
+    ),
+  );
   let output: HTMLTextAreaElement | undefined;
   const copy = async (): Promise<void> => {
     try {

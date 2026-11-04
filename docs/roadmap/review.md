@@ -75,3 +75,9 @@ progetto o dipendenze installate. L'installazione finale dal lockfile è stata r
 - Trasporto e provider hanno sequenze e campionamenti propri. La vicinanza temporale non prova causalità.
 - Le registrazioni contengono solo gli scope acquisiti. Import non significa replay o nuova prova nel browser.
 - La matrice distingue lifecycle degli editor, host dei pannelli e profilo. Non dichiara parità SSR generale.
+
+## Correzioni dopo la prova manuale
+
+La prova dell’utente ha rilevato il contesto espanso che comprimeva la navigazione TanStack.
+Il [follow-up](./usability-follow-up.md) conserva il difetto visivo, la correzione e le prove
+WebMCP native aggiunte successivamente. I controlli iniziali non coprivano quel layout espanso.

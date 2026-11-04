@@ -6,8 +6,8 @@ opzioni L1-L3 mantengono le condizioni di introduzione del piano. La pubblicazio
 ## Verifiche complessive
 
 - Baseline main `448ddbe`, 162 test in 32 file.
-- Versione integrata, 246 test in 51 file.
-- Suite browser su server nuovi, 16 test passati con Chrome 156.0.8078.80 e Playwright 1.64.1.
+- Versione integrata, 250 test in 52 file.
+- Suite browser su server nuovi, 20 test passati con Chrome 156.0.8078.80 e Playwright 1.64.1.
 - Build e controlli dei tipi dei package nel workspace di 13 progetti. Typecheck rigoroso anche degli scenari browser.
 - Lint, formato, reference generate, formato delle tre skill e publint.
 - Archivio installato in un consumer temporaneo. Core, agent e recordings importano senza browser e senza Tiptap, Yjs, Angular, history o collab installati.
@@ -58,7 +58,7 @@ consumer, delle input rules, degli strumenti agentici e del browser.
 | H2 Export diagnostico              | Verificato               | Export via query comuni, massimo 25 dispatch e 2 MB. Test recordings e file realmente scaricato.                                                     |
 | H3 Import e lettura offline        | Verificato               | Import rigoroso e source offline. V4 importa dopo remount, legge prima/dopo e conserva il viewer su file invalido.                                   |
 | I1 Matrice di supporto             | Verificato               | Matrice distinta per editor, host, profilo e release. Versioni native bloccate e installazione pulita.                                               |
-| I2 Scenari browser comuni          | Verificato               | 16 test browser su quattro consumer. Viewport stretto, due editor, due host, remount, produzione e import.                                           |
+| I2 Scenari browser comuni          | Verificato               | 20 test browser su cinque consumer. Viewport stretto, due editor, due host, remount, produzione e import.                                            |
 | I3 Compatibilità delle skill       | Verificato               | Protocollo e link delle skill verificati. Reference dal catalogo, forward test e contesti live/offline distinti.                                     |
 | I4 Adapter e produzione            | Verificato               | Build e tipi di tutti i 13 progetti. Test adapter, consumer nativi e quattro preview di produzione. Nessuna parità SSR generale dichiarata.          |
 | I5 Allineamento di ogni incremento | Verificato               | README, guide, matrice, reference e note di rilascio aggiornati. Nuove API indicate come non pubblicate.                                             |

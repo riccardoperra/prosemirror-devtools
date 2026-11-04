@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const fixtures = [
+  { name: "tanstack", developmentPort: 4174, productionPort: 4274 },
   { name: "standalone", developmentPort: 4180, productionPort: 4280 },
   { name: "tiptap", developmentPort: 4181, productionPort: 4281 },
   { name: "react-prosemirror", developmentPort: 4182, productionPort: 4282 },

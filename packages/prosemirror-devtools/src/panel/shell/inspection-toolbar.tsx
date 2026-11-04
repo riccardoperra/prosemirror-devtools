@@ -1,5 +1,5 @@
 import { readInstanceState } from "../store/instance-state";
-import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
+import { createEffect, createMemo, createSignal, on, For, Show, type JSX } from "solid-js";
 
 import { usePanelInspection, usePanelMeta, usePanelNavigation } from "../panel-provider";
 import { serializeInspectionValue, resolveInspectionLimits } from "../../inspection/serialization";
@@ -13,6 +13,13 @@ export function InspectionToolbar(): JSX.Element {
   const meta = usePanelMeta();
   const navigation = usePanelNavigation();
   const [detailsOpen, setDetailsOpen] = createSignal(false);
+  createEffect(
+    on(
+      () => navigation.activePanel(),
+      () => setDetailsOpen(false),
+      { defer: true },
+    ),
+  );
   const historical = () => {
     const moment = inspection.moment();
     return moment.kind === "transaction" ? moment : undefined;
@@ -112,7 +119,11 @@ export function InspectionToolbar(): JSX.Element {
           )}
         </Show>
         <span class={panelStyles.pmSpacer} />
-        <CopyDiagnosticContext read={diagnosticContext} ownerDocument={meta.ownerDocument()} />
+        <CopyDiagnosticContext
+          read={diagnosticContext}
+          ownerDocument={meta.ownerDocument()}
+          resetKey={navigation.activePanel()}
+        />
         <button
           type="button"
           class={panelStyles.pmButton}
