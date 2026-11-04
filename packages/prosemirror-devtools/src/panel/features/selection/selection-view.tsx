@@ -5,6 +5,7 @@ import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { panelStyles } from "../../styles";
 import { Badge } from "../../ui/badge";
+import { useOptionalPanelContext } from "../../panel-provider";
 
 /** Content boundaries differ from the positions before and after a node. */
 export function inspectPosition(position: ResolvedPos) {
@@ -67,6 +68,13 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
         .$from.marksAcross(selection().$to)
         ?.map((mark) => mark.toJSON()) ?? null,
   }));
+  const panelContext = useOptionalPanelContext();
+  const panelInspection = panelContext?.inspection;
+  const navigation = panelContext?.navigation;
+  const inspectEndpoint = (panel: string): void => {
+    panelInspection?.selectPosition({ doc: state().doc, pos: position().pos, isRoot: false });
+    navigation?.selectPanel(panel);
+  };
 
   return (
     <div class={panelStyles.pmSplit}>
@@ -93,6 +101,22 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
           <Badge>depth {inspection().depth}</Badge>
           <Badge>parent offset {inspection().parentOffset}</Badge>
           <Badge>text offset {inspection().textOffset}</Badge>
+          <Show when={navigation}>
+            <button
+              type="button"
+              class={panelStyles.pmButton}
+              onClick={() => inspectEndpoint("state")}
+            >
+              Inspect endpoint in document
+            </button>
+            <button
+              type="button"
+              class={panelStyles.pmButton}
+              onClick={() => inspectEndpoint("schema")}
+            >
+              Schema at endpoint
+            </button>
+          </Show>
         </div>
         <table aria-label="Ancestors at the selected endpoint" class={panelStyles.pmTable}>
           <thead>

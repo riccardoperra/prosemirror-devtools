@@ -29,10 +29,10 @@ the rest of your development tools.
 ## What you can inspect
 
 - **State** — explore the document tree, selection, active marks, and document statistics.
-- **History** — inspect dispatches, step diffs and position mapping, and restore an earlier document.
+- **Transactions**. inspect dispatches, step diffs and position mapping, and restore an earlier document.
 - **Selection** — inspect anchor/head ancestry, boundaries, adjacent nodes, and marks.
 - **Events & commands** — trace handler outcomes, nested calls, and explicitly named commands.
-- **Decorations & node views** — inspect ranges, highlight positions, and follow lifecycle counters.
+- **Rendering**. inspect ranges, highlight positions, and follow lifecycle counters.
 - **Performance** — compare dispatch, state-apply, view-update, and plugin-hook timings.
 - **Plugins** — inspect plugin order, state, props, and the slowest plugin work.
 - **Schema** — browse the editor's node and mark specifications.

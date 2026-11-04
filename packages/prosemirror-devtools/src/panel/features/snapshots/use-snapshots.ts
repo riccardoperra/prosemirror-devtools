@@ -4,6 +4,8 @@ import {
   createSnapshot,
   loadSnapshots,
   persistSnapshots,
+  compareSnapshots,
+  prepareDocumentRestore,
   restoreSnapshot,
 } from "../../../core/snapshots";
 import type { RegisteredProseMirrorInstance, SavedSnapshot } from "../../../core/types";
@@ -13,17 +15,41 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+type SnapshotRestorePreview = Readonly<{
+  snapshot: SavedSnapshot;
+  target: RegisteredProseMirrorInstance;
+  state: RegisteredProseMirrorInstance["view"]["state"];
+  comparison: ReturnType<typeof compareSnapshots>;
+  selectionRestored: boolean;
+}>;
+
 export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>): {
   snapshots: Accessor<readonly SavedSnapshot[]>;
   error: Accessor<string | null>;
   save: () => void;
   importFile: (file: File) => Promise<void>;
-  restore: (snapshot: SavedSnapshot) => void;
+  preview: Accessor<SnapshotRestorePreview | undefined>;
+  previewIsCurrent: Accessor<boolean>;
+  previewRestore: (snapshot: SavedSnapshot) => void;
+  confirmRestore: () => void;
+  cancelRestore: () => void;
   remove: (snapshotId: string) => void;
 } {
   const [snapshots, setSnapshots] = createSignal<SavedSnapshot[]>(loadSnapshots(instance().id));
   const [error, setError] = createSignal<string | null>(null);
+  const [preview, setPreview] = createSignal<SnapshotRestorePreview>();
   let disposed = false;
+  const previewIsCurrent = (): boolean => {
+    const current = preview();
+    const target = instance();
+    return (
+      !!current &&
+      !disposed &&
+      target.id === current.target.id &&
+      target.view === current.target.view &&
+      target.view.state === current.state
+    );
+  };
   onCleanup(() => {
     disposed = true;
   });
@@ -66,9 +92,39 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
     }
   };
 
-  const restore = (snapshot: SavedSnapshot): void => {
+  const previewRestore = (snapshot: SavedSnapshot): void => {
     try {
-      restoreSnapshot(instance().view, snapshot);
+      const target = instance();
+      const state = target.view.state;
+      const prepared = prepareDocumentRestore(target.view, snapshot.doc, snapshot.selection);
+      setPreview({
+        snapshot,
+        target,
+        state,
+        comparison: compareSnapshots(
+          { doc: state.doc.toJSON(), selection: state.selection.toJSON() },
+          snapshot,
+        ),
+        selectionRestored: prepared.selectionRestored,
+      });
+      setError(null);
+    } catch (restoreError) {
+      setPreview(undefined);
+      setError(errorMessage(restoreError));
+    }
+  };
+
+  const confirmRestore = (): void => {
+    const current = preview();
+    if (!current || !previewIsCurrent()) {
+      setError(
+        "The restore target changed after this preview. Preview the snapshot again before restoring.",
+      );
+      return;
+    }
+    try {
+      restoreSnapshot(current.target.view, current.snapshot);
+      setPreview(undefined);
       setError(null);
     } catch (restoreError) {
       setError(errorMessage(restoreError));
@@ -79,5 +135,16 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
     updateSnapshots((current) => current.filter((snapshot) => snapshot.id !== snapshotId));
   };
 
-  return { snapshots, error, save, importFile, restore, remove };
+  return {
+    snapshots,
+    error,
+    save,
+    importFile,
+    preview,
+    previewIsCurrent,
+    previewRestore,
+    confirmRestore,
+    cancelRestore: () => setPreview(undefined),
+    remove,
+  };
 }

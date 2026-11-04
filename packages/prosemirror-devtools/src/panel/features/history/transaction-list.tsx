@@ -40,6 +40,7 @@ export function TransactionList(props: TransactionListProps): JSX.Element {
           {(record) => (
             <li>
               <button
+                aria-label={`Inspect dispatch #${record.id}`}
                 aria-pressed={props.selectedId === record.id}
                 class={cx(panelStyles.pmListRow, panelStyles.pmHistoryRow)}
                 onClick={() => props.onSelect(record.id)}

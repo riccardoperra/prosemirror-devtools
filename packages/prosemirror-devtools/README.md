@@ -145,7 +145,7 @@ function runBold() {
 }
 ```
 
-The **Events & commands** and **Decorations & node views** panels consume this capture. It is off
+The **Events & commands** and **Rendering** panels consume this capture. It is off
 by default. `limit` caps retained events, NodeViews, decoration sources, ranges per source, and
 dispatch references per event independently; it defaults to 200 and accepts 1–10,000. These limits
 are separate from transaction history. Panels render captured lists in pages of 100.
@@ -194,22 +194,22 @@ adapter to stay active in a production build.
 
 ## What the panel shows
 
-| Panel                    | Contents                                                                                           |
-| ------------------------ | -------------------------------------------------------------------------------------------------- |
-| State                    | Document tree and positions, node JSON, selection, active marks, and document statistics           |
-| History                  | Root/appended transactions, document restore, step diffs, changed ranges, and position mapping     |
-| Selection                | Anchor/head ancestry, offsets, boundaries, adjacent nodes, ranges, and marks                       |
-| Events & commands        | Opt-in handler outcomes, nested calls, synchronous dispatch IDs, and named commands                |
-| Decorations & node views | Opt-in ranges/specs, position overlays, and NodeView lifecycle counters                            |
-| Performance              | Dispatch timeline, apply/view phases, plugin ranking, hook timings, markers, average, p95, and max |
-| Plugins                  | Searchable plugin order, state, runtime keys, and exposed editor props                             |
-| Schema                   | Node specs, mark specs, and the top node type                                                      |
-| Snapshots                | Local save, restore, import, export, and delete controls                                           |
+| Panel             | Contents                                                                                           |
+| ----------------- | -------------------------------------------------------------------------------------------------- |
+| State             | Document tree and positions, node JSON, selection, active marks, and document statistics           |
+| Transactions      | Root/appended transactions, document restore, step diffs, changed ranges, and position mapping     |
+| Selection         | Anchor/head ancestry, offsets, boundaries, adjacent nodes, ranges, and marks                       |
+| Events & commands | Opt-in handler outcomes, nested calls, synchronous dispatch IDs, and named commands                |
+| Rendering         | Opt-in ranges/specs, position overlays, and NodeView lifecycle counters                            |
+| Performance       | Dispatch timeline, apply/view phases, plugin ranking, hook timings, markers, average, p95, and max |
+| Plugins           | Searchable plugin order, state, runtime keys, and exposed editor props                             |
+| Schema            | Node specs, mark specs, and the top node type                                                      |
+| Snapshots         | Local save, restore, import, export, and delete controls                                           |
 
 When several editors are registered, the toolbar lets you switch the active instance without
 remounting the panel.
 
-History’s **Changes & mapping** mode uses captured step maps, including mirrors and custom steps.
+Transactions **Changes & mapping** mode uses captured step maps, including mirrors and custom steps.
 Diffs are computed for the selected step, including marks and attributes. Filtered and unobserved
 custom dispatch outcomes do not claim applied mapping results.
 

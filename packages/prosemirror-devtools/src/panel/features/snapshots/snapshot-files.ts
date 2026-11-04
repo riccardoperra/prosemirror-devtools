@@ -27,6 +27,7 @@ export async function importSnapshotFile(
       `Expected a ${instance.view.state.schema.topNodeType.name} document, received ${importedDocument.type.name}.`,
     );
   }
+  importedDocument.check();
 
   return imported;
 }

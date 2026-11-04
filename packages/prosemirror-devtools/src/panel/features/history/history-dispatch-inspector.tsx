@@ -22,7 +22,7 @@ export function HistoryDispatchInspector(props: HistoryDispatchInspectorProps): 
       <DispatchInspector.Header />
       <DispatchInspector.Metrics />
       <div class={panelStyles.pmPaneHeader}>
-        <div class={panelStyles.pmViewSwitch} role="group" aria-label="History inspection mode">
+        <div class={panelStyles.pmViewSwitch} role="group" aria-label="Transaction inspection mode">
           <button
             type="button"
             aria-pressed={mode() === "details"}

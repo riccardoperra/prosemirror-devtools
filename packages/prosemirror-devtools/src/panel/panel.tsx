@@ -12,6 +12,7 @@ import { PanelContent } from "./shell/panel-content";
 import { PanelFrame } from "./shell/panel-frame";
 import { PanelTabList } from "./shell/panel-tab-list";
 import { PanelToolbar } from "./shell/panel-toolbar";
+import { InspectionToolbar } from "./shell/inspection-toolbar";
 
 export type {
   ProseMirrorDevtoolsPanelProps,
@@ -53,6 +54,7 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
               data-embedded={props.embedded ? "true" : undefined}
             >
               <PanelToolbar embedded={props.embedded} />
+              <InspectionToolbar />
               <PanelTabList />
             </header>
             <PanelContent

@@ -36,7 +36,13 @@ export function PanelToolbar(props: PanelToolbarProps): JSX.Element {
         value={activeInstanceId() ?? ""}
       >
         <Show when={instances().length > 0} fallback={<option value="">No instances</option>}>
-          <For each={instances()}>{(item) => <option value={item.id}>{item.label}</option>}</For>
+          <For each={instances()}>
+            {(item) => (
+              <option value={item.id}>
+                {item.label === item.id ? item.id : `${item.label} (${item.id})`}
+              </option>
+            )}
+          </For>
         </Show>
       </select>
       <Show when={!props.embedded}>

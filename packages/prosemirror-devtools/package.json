@@ -108,6 +108,10 @@
     "./recordings": {
       "types": "./dist/recordings.d.ts",
       "default": "./dist/recordings.js"
+    },
+    "./recordings-panel": {
+      "types": "./dist/recordings-panel.d.ts",
+      "default": "./dist/recordings-panel.js"
     }
   },
   "files": [

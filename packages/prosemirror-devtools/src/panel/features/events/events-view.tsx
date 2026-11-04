@@ -5,6 +5,8 @@ import { formatMs } from "../../formatters";
 import { cx, panelStyles } from "../../styles";
 import { EventDetails, EventStatusBadge } from "./event-details";
 import { eventSource, useEvents, type EventStatus } from "./use-events";
+import type { DevtoolsDiagnosticEvent } from "../../../core/diagnostics";
+import { useOptionalPanelContext } from "../../panel-provider";
 
 const SETUP_EXAMPLE = `const session = createProseMirrorDevtoolsSession({
   id: "editor",
@@ -55,6 +57,21 @@ function EventsSetup(): JSX.Element {
 
 export function EventsView(props: { instance: RegisteredProseMirrorInstance }): JSX.Element {
   const events = useEvents(() => props.instance);
+  const panelContext = useOptionalPanelContext();
+  const inspection = panelContext?.inspection;
+  const data = panelContext?.data.data;
+  const canInspectDispatch = (dispatch: DevtoolsDiagnosticEvent["dispatches"][number]): boolean => {
+    const target = data?.instance(dispatch.instanceId)();
+    return !!target?.transactions.some(
+      (record) =>
+        record.id === dispatch.id &&
+        (dispatch.sessionId !== undefined
+          ? record.sessionId === dispatch.sessionId
+          : target.view === props.instance.view) &&
+        (dispatch.generation === undefined ||
+          dispatch.generation === target.inspection?.target.generation),
+    );
+  };
 
   return (
     <Show when={events.controller()} fallback={<EventsSetup />}>
@@ -208,7 +225,25 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
             }
           >
             {(event) => (
-              <EventDetails event={event()} events={events.events()} onSelect={events.select} />
+              <EventDetails
+                event={event()}
+                events={events.events()}
+                onSelect={events.select}
+                canInspectDispatch={inspection ? canInspectDispatch : undefined}
+                onInspectDispatch={
+                  inspection
+                    ? (dispatch) => {
+                        if (canInspectDispatch(dispatch))
+                          inspection.selectTransaction({
+                            instanceId: dispatch.instanceId,
+                            id: dispatch.id,
+                            panel: "history",
+                          });
+                      }
+                    : undefined
+                }
+                onInspectPlugin={inspection?.selectPlugin}
+              />
             )}
           </Show>
         </div>

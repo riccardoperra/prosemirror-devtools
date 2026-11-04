@@ -65,6 +65,15 @@
 .pm-devtools[data-embedded="true"] {
   min-block-size: 0;
 }
+.pm-inspection-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 5px 9px;
+  border-block-start: 1px solid var(--pm-border);
+  font-size: 11px;
+}
 .pm-devtools[data-theme="dark"] {
   --prosemirror-devtools-background: #121212;
   --prosemirror-devtools-surface: #181818;

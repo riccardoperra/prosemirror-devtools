@@ -20,6 +20,13 @@ export function EventDetails(props: {
   event: DevtoolsDiagnosticEvent;
   events: readonly DevtoolsDiagnosticEvent[];
   onSelect: (id: number) => void;
+  canInspectDispatch?:
+    | ((dispatch: DevtoolsDiagnosticEvent["dispatches"][number]) => boolean)
+    | undefined;
+  onInspectDispatch?:
+    | ((dispatch: DevtoolsDiagnosticEvent["dispatches"][number]) => void)
+    | undefined;
+  onInspectPlugin?: ((key: string) => void) | undefined;
 }): JSX.Element {
   const parent = createMemo(() => props.events.find((event) => event.id === props.event.parentId));
   const children = createMemo(() =>
@@ -48,6 +55,17 @@ export function EventDetails(props: {
       <div style={{ padding: "10px", "overflow-wrap": "anywhere" }}>
         <strong class={panelStyles.pmMono}>{props.event.name}</strong>
         <p>{eventSource(props.event)}</p>
+        <Show when={props.onInspectPlugin && props.event.pluginKey}>
+          {(key) => (
+            <button
+              type="button"
+              class={panelStyles.pmButton}
+              onClick={() => props.onInspectPlugin?.(key())}
+            >
+              Inspect plugin {props.event.pluginLabel ?? key()}
+            </button>
+          )}
+        </Show>
         <time dateTime={new Date(props.event.timestamp).toISOString()}>
           {formatDateTime(props.event.timestamp)}
         </time>
@@ -125,9 +143,24 @@ export function EventDetails(props: {
           >
             <For each={props.event.dispatches.slice(0, EVENT_PAGE_SIZE)}>
               {(dispatch) => (
-                <Badge tone="blue">
-                  {dispatch.instanceId} · #{dispatch.id}
-                </Badge>
+                <Show
+                  when={props.onInspectDispatch}
+                  fallback={
+                    <Badge tone="blue">
+                      {dispatch.instanceId} · #{dispatch.id}
+                    </Badge>
+                  }
+                >
+                  <button
+                    type="button"
+                    class={panelStyles.pmButton}
+                    aria-label={`Inspect dispatch #${dispatch.id} in ${dispatch.instanceId}`}
+                    disabled={!props.canInspectDispatch?.(dispatch)}
+                    onClick={() => props.onInspectDispatch?.(dispatch)}
+                  >
+                    {dispatch.instanceId} · #{dispatch.id}
+                  </button>
+                </Show>
               )}
             </For>
             <Show when={props.event.dispatches.length > EVENT_PAGE_SIZE}>
@@ -140,7 +173,8 @@ export function EventDetails(props: {
         </div>
         <Show when={props.event.dispatches.length > 0}>
           <p class={panelStyles.pmPerformanceNote}>
-            Match these IDs in History. Dispatch records may have been cleared or expired.
+            Open a retained dispatch in Transactions. Unavailable links belong to a cleared,
+            expired, or different editor session.
           </p>
         </Show>
       </div>
