@@ -1,3 +1,4 @@
+import { InputRule, inputRules } from "prosemirror-inputrules";
 import { keymap } from "prosemirror-keymap";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { afterEach, describe, expect, it } from "vitest";
@@ -12,6 +13,52 @@ import { createTestState, createTestView } from "./helpers";
 afterEach(() => document.body.replaceChildren());
 
 describe("C5 named input evidence", () => {
+  it("observes an official input-rules plugin once without retaining its input payload", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const session = createProseMirrorDevtoolsSession({
+      id: "rules",
+      store,
+      diagnostics: true,
+      performanceMarks: false,
+      getPluginLabel: () => "Input rules",
+    });
+    const payload = "PRIVATE_INPUT_PAYLOAD";
+    let calls = 0;
+    const rules = inputRules({
+      rules: [
+        new InputRule(/PRIVATE_INPUT_PAYLOAD$/, (state, _match, from, to) => {
+          calls += 1;
+          return state.tr.insertText("replacement", from, to);
+        }),
+      ],
+    });
+    const view = createTestView(createTestState("", session.instrumentPlugins([rules])));
+    session.attach(view);
+    try {
+      const handled = view.someProp("handleTextInput", (handler) =>
+        handler(view, 1, 1, payload, () => view.state.tr),
+      );
+      expect(handled).toBe(true);
+      expect(calls).toBe(1);
+      expect(view.state.doc.textContent).toBe("replacement");
+      expect(store.getInstance("rules")?.transactions).toHaveLength(1);
+      expect(session.diagnostics?.getSnapshot().events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "handleTextInput",
+            pluginLabel: "Input rules",
+            handled: true,
+            dispatches: [expect.objectContaining({ instanceId: "rules", id: 1 })],
+          }),
+        ]),
+      );
+      expect(JSON.stringify(session.diagnostics?.getSnapshot().events)).not.toContain(payload);
+    } finally {
+      session.dispose();
+      view.destroy();
+    }
+  });
+
   it("links a real keymap command and retains paste and composition events without payloads", () => {
     const store = createProseMirrorDevtoolsStore();
     const session = createProseMirrorDevtoolsSession({

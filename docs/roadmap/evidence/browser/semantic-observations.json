@@ -1,0 +1,444 @@
+{
+  "target": {
+    "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+    "editorId": "standalone-list",
+    "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+    "generation": 1
+  },
+  "documentBefore": {
+    "kind": "available",
+    "value": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "bullet_list",
+          "content": [
+            {
+              "type": "list_item",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Alpha"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "target": {
+      "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+      "editorId": "standalone-list",
+      "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+      "generation": 1
+    },
+    "point": {
+      "kind": "live",
+      "target": {
+        "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+        "editorId": "standalone-list",
+        "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+        "generation": 1
+      },
+      "revision": 1,
+      "stateId": 1,
+      "dispatchId": 0,
+      "diagnosticsVersion": 1
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "documentAfter": {
+    "kind": "available",
+    "value": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "bullet_list",
+          "content": [
+            {
+              "type": "list_item",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Alpha"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "list_item",
+              "content": [
+                {
+                  "type": "paragraph"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "target": {
+      "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+      "editorId": "standalone-list",
+      "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+      "generation": 1
+    },
+    "point": {
+      "kind": "live",
+      "target": {
+        "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+        "editorId": "standalone-list",
+        "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+        "generation": 1
+      },
+      "revision": 9,
+      "stateId": 2,
+      "dispatchId": 1,
+      "diagnosticsVersion": 5
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "selection": {
+    "kind": "available",
+    "value": {
+      "type": "text",
+      "anchor": 12,
+      "head": 12,
+      "from": 12,
+      "to": 12,
+      "empty": true
+    },
+    "target": {
+      "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+      "editorId": "standalone-list",
+      "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+      "generation": 1
+    },
+    "point": {
+      "target": {
+        "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+        "editorId": "standalone-list",
+        "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+        "generation": 1
+      },
+      "revision": 9,
+      "kind": "live",
+      "stateId": 2,
+      "dispatchId": 1,
+      "diagnosticsVersion": 5
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "dispatches": {
+    "kind": "available",
+    "value": [
+      {
+        "id": 1,
+        "timestamp": 1793821960929,
+        "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+        "applicationStatus": "applied",
+        "appliedTransactionCount": 1,
+        "appendedTransactionCount": 0,
+        "docChanged": true,
+        "selectionSet": false,
+        "stepCount": 1,
+        "totalDuration": 1.5,
+        "parentDispatchId": null,
+        "error": null,
+        "captureErrors": []
+      }
+    ],
+    "target": {
+      "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+      "editorId": "standalone-list",
+      "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+      "generation": 1
+    },
+    "point": {
+      "target": {
+        "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+        "editorId": "standalone-list",
+        "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+        "generation": 1
+      },
+      "revision": 9,
+      "kind": "live",
+      "stateId": 2,
+      "dispatchId": 1,
+      "diagnosticsVersion": 5
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "history": {
+    "kind": "available",
+    "value": {
+      "kind": "state",
+      "depths": {
+        "undoDepth": 1,
+        "redoDepth": 0
+      }
+    },
+    "target": {
+      "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+      "editorId": "standalone-list",
+      "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+      "generation": 1
+    },
+    "point": {
+      "target": {
+        "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+        "editorId": "standalone-list",
+        "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+        "generation": 1
+      },
+      "revision": 9,
+      "kind": "live",
+      "stateId": 2,
+      "dispatchId": 1,
+      "diagnosticsVersion": 5
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "undone": {
+    "kind": "available",
+    "value": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "bullet_list",
+          "content": [
+            {
+              "type": "list_item",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Alpha"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "target": {
+      "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+      "editorId": "standalone-list",
+      "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+      "generation": 1
+    },
+    "point": {
+      "kind": "live",
+      "target": {
+        "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+        "editorId": "standalone-list",
+        "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+        "generation": 1
+      },
+      "revision": 12,
+      "stateId": 3,
+      "dispatchId": 2,
+      "diagnosticsVersion": 7
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "historical": {
+    "kind": "available",
+    "value": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "bullet_list",
+          "content": [
+            {
+              "type": "list_item",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Alpha"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "list_item",
+              "content": [
+                {
+                  "type": "paragraph"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "target": {
+      "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+      "editorId": "standalone-list",
+      "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+      "generation": 1
+    },
+    "point": {
+      "kind": "transaction",
+      "target": {
+        "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+        "editorId": "standalone-list",
+        "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+        "generation": 1
+      },
+      "revision": 7,
+      "transactionId": 1,
+      "phase": "after"
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "undoHistory": {
+    "kind": "available",
+    "value": {
+      "kind": "state",
+      "depths": {
+        "undoDepth": 0,
+        "redoDepth": 1
+      }
+    },
+    "target": {
+      "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+      "editorId": "standalone-list",
+      "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+      "generation": 1
+    },
+    "point": {
+      "target": {
+        "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+        "editorId": "standalone-list",
+        "sessionId": "session-b5947ebc-d243-4c54-9821-d72539aca3ef",
+        "generation": 1
+      },
+      "revision": 12,
+      "kind": "live",
+      "stateId": 3,
+      "dispatchId": 2,
+      "diagnosticsVersion": 7
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "replacement": {
+    "sourceId": "source-2969163f-630e-43b0-918f-e59171eecf65",
+    "editorId": "standalone-list",
+    "sessionId": "session-3e5fceac-f437-42be-ad7f-bc0f3160b5d7",
+    "generation": 2
+  }
+}

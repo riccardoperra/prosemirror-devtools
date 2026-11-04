@@ -10,6 +10,7 @@ export default defineConfig({
     core: "src/core/index.ts",
     recordings: "src/recordings/index.ts",
     "recordings-panel": "src/recordings-panel.ts",
+    agent: "src/agent/index.ts",
     performance: "src/performance/index.ts",
     "styles/index": "src/styles/index.ts",
     // The extension is usable without the panel. Keeping it as an internal

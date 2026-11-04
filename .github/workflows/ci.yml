@@ -43,3 +43,31 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Check types and documentation
+        run: pnpm typecheck && pnpm docs:check
+
+      - name: Check style
+        run: pnpm lint && pnpm format:check
+
+      - name: Check package exports
+        run: pnpm --filter prosemirror-inspector run publint
+
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Verify browser consumers
+        run: pnpm test:browser
+
+      - name: Verify Chrome MCP bridge
+        run: pnpm test:chrome-mcp
+
+      - name: Upload browser failures
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-failures
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

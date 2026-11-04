@@ -93,6 +93,10 @@
       "types": "./dist/inspectors/tiptap.d.ts",
       "default": "./dist/inspectors/tiptap.js"
     },
+    "./agent": {
+      "types": "./dist/agent.d.ts",
+      "default": "./dist/agent.js"
+    },
     "./inspectors/collab": {
       "types": "./dist/inspectors/collab.d.ts",
       "default": "./dist/inspectors/collab.js"
@@ -116,6 +120,7 @@
   },
   "files": [
     "dist",
+    "skills",
     "assets/prosemirror-inspector-logo-light.svg",
     "assets/prosemirror-inspector-logo-dark.svg",
     "CHANGELOG.md",
@@ -250,6 +255,7 @@
     "y-prosemirror": "catalog:",
     "y-protocols": "catalog:",
     "prosemirror-keymap": "catalog:",
-    "@tiptap/y-tiptap": "catalog:"
+    "@tiptap/y-tiptap": "catalog:",
+    "prosemirror-inputrules": "catalog:"
   }
 }

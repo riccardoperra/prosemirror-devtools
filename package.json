@@ -35,14 +35,20 @@
     "lint:fix": "oxlint . --fix",
     "release": "pnpm build:package && pnpm --filter prosemirror-inspector run publint && pnpm ci:publish",
     "test": "pnpm --recursive --if-present run test",
-    "typecheck": "pnpm --filter prosemirror-inspector run build && pnpm --recursive --if-present run typecheck",
-    "version-packages": "pnpm ci:version"
+    "typecheck": "pnpm --filter prosemirror-inspector run build && pnpm --recursive --if-present run typecheck && tsc --noEmit -p e2e/tsconfig.json",
+    "version-packages": "pnpm ci:version",
+    "test:browser": "playwright test",
+    "docs:generate": "node scripts/check-inspection-docs.mjs --write",
+    "docs:check": "node scripts/check-inspection-docs.mjs",
+    "test:chrome-mcp": "node e2e/chrome-mcp.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "catalog:",
     "@types/node": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "@playwright/test": "catalog:",
+    "chrome-devtools-mcp": "catalog:"
   }
 }

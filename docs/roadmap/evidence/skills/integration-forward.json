@@ -1,0 +1,2307 @@
+{
+  "checks": [
+    {
+      "name": "Visible target is standalone-list generation 1",
+      "passed": true,
+      "observed": {
+        "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+        "editorId": "standalone-list",
+        "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+        "generation": 1
+      }
+    },
+    {
+      "name": "Real Enter produces one application dispatch",
+      "passed": true,
+      "observed": "Undo depth 1. Redo depth 0. Caret 12. Dispatches 1."
+    },
+    {
+      "name": "One retained dispatch contains one applied transaction",
+      "passed": true,
+      "observed": {
+        "id": 1,
+        "applicationStatus": "applied",
+        "appliedTransactionCount": 1,
+        "appendedTransactionCount": 0,
+        "selectionBefore": {
+          "type": "text",
+          "anchor": 8,
+          "head": 8
+        },
+        "selectionAfter": {
+          "type": "text",
+          "anchor": 12,
+          "head": 12
+        },
+        "hooks": [
+          {
+            "pluginKey": "history$",
+            "hook": "state.apply"
+          }
+        ],
+        "provenance": {
+          "kind": "unobserved",
+          "transactions": [
+            {
+              "id": 0,
+              "appliedIndex": 0,
+              "origin": {
+                "kind": "root"
+              }
+            }
+          ],
+          "filters": [],
+          "appends": []
+        }
+      }
+    },
+    {
+      "name": "Document and selection match real list split",
+      "passed": true,
+      "observed": {
+        "document": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "bullet_list",
+              "content": [
+                {
+                  "type": "list_item",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Alpha"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "list_item",
+                  "content": [
+                    {
+                      "type": "paragraph"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "selection": {
+          "type": "text",
+          "anchor": 12,
+          "head": 12,
+          "from": 12,
+          "to": 12,
+          "empty": true
+        }
+      }
+    },
+    {
+      "name": "Instrumented Enter has handled key event and history apply hook",
+      "passed": true,
+      "observed": {
+        "events": {
+          "kind": "available",
+          "value": [
+            {
+              "kind": "prop",
+              "name": "handleKeyDown",
+              "pluginKey": "plugin$",
+              "pluginLabel": "plugin #2",
+              "id": 1,
+              "parentId": null,
+              "timestamp": 1793824299346,
+              "duration": 6,
+              "handled": true,
+              "error": null,
+              "metadata": {
+                "type": "keydown",
+                "code": "Enter",
+                "altKey": false,
+                "ctrlKey": false,
+                "metaKey": false,
+                "shiftKey": false,
+                "repeat": false,
+                "isComposing": false,
+                "defaultPrevented": false
+              },
+              "dispatches": [
+                {
+                  "instanceId": "standalone-list",
+                  "id": 1,
+                  "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+                  "generation": 1
+                }
+              ]
+            }
+          ],
+          "coverage": {
+            "complete": true,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        },
+        "hooks": [
+          {
+            "pluginKey": "history$",
+            "hook": "state.apply"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Undo restores original document and caret",
+      "passed": true,
+      "observed": "Undo depth 0. Redo depth 1. Caret 8. Dispatches 2."
+    },
+    {
+      "name": "Reset replaces session and increments generation",
+      "passed": true,
+      "observed": {
+        "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+        "editorId": "standalone-list",
+        "sessionId": "session-aaaf4c42-a997-46f5-94bd-35502857e1bd",
+        "generation": 2
+      }
+    },
+    {
+      "name": "Replacement session starts without old dispatches",
+      "passed": true,
+      "observed": "Undo depth 0. Redo depth 0. Caret 8. Dispatches 0."
+    },
+    {
+      "name": "Refreshed catalogue contains only replacement session",
+      "passed": true,
+      "observed": [
+        "Choose editor session",
+        "Standalone list fixture (standalone-list), generation 2"
+      ]
+    },
+    {
+      "name": "Capture profile switch remounts target",
+      "passed": true,
+      "observed": {
+        "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+        "editorId": "standalone-list",
+        "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+        "generation": 3
+      }
+    },
+    {
+      "name": "Explicit export session is available",
+      "passed": true,
+      "observed": [
+        {
+          "value": "standalone-list",
+          "text": "Standalone list fixture (standalone-list), generation 3"
+        }
+      ]
+    },
+    {
+      "name": "Attach-only still records real dispatch and final selection",
+      "passed": true,
+      "observed": {
+        "dispatches": 1,
+        "selection": {
+          "type": "text",
+          "anchor": 12,
+          "head": 12,
+          "from": 12,
+          "to": 12,
+          "empty": true
+        }
+      }
+    },
+    {
+      "name": "Attach-only does not claim instrumented key or plugin hooks",
+      "passed": true,
+      "observed": {
+        "events": {
+          "kind": "unobserved",
+          "reason": "No matching observation is retained. An empty trace does not prove the event did not happen.",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+            "generation": 3
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+              "editorId": "standalone-list",
+              "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+              "generation": 3
+            },
+            "revision": 3,
+            "stateId": 6,
+            "dispatchId": 1,
+            "diagnosticsVersion": 2
+          },
+          "coverage": {
+            "complete": false,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        },
+        "hooks": []
+      }
+    },
+    {
+      "name": "Production editor works with diagnostics disabled",
+      "passed": true,
+      "observed": {
+        "url": "http://127.0.0.1:4290/",
+        "banner": "Diagnostics are disabled in this production build.",
+        "inspectorCount": 0,
+        "recordingCount": 0,
+        "globalNames": [],
+        "afterEnter": "Undo depth 1. Redo depth 0. Caret 12. Dispatches 0."
+      }
+    },
+    {
+      "name": "No browser page errors",
+      "passed": true,
+      "observed": []
+    }
+  ],
+  "contexts": {
+    "initial": {
+      "version": 1,
+      "source": {
+        "kind": "live",
+        "id": "source-90577d61-b0a0-4835-a5dd-f978c1393495"
+      },
+      "target": {
+        "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+        "editorId": "standalone-list",
+        "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+        "generation": 1
+      },
+      "editorLabel": "Standalone list fixture",
+      "point": {
+        "kind": "live",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        },
+        "revision": 1,
+        "stateId": 1,
+        "dispatchId": 0,
+        "diagnosticsVersion": 1
+      },
+      "pointAvailability": "available",
+      "selected": {
+        "panel": "history",
+        "eventId": null,
+        "pluginKey": null,
+        "position": null
+      },
+      "evidence": {
+        "kind": "available",
+        "value": [
+          {
+            "id": "document",
+            "version": "1",
+            "label": "document",
+            "description": "Read document JSON or a bounded position range.",
+            "prerequisites": ["A current state or retained dispatch document."],
+            "queries": ["document"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "selection",
+            "version": "1",
+            "label": "selection",
+            "description": "Read the selection at the selected point.",
+            "prerequisites": ["A current state or retained dispatch selection."],
+            "queries": ["selection"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "transactions",
+            "version": "1",
+            "label": "transactions",
+            "description": "Search retained dispatch summaries in invocation order.",
+            "prerequisites": ["Dispatch capture."],
+            "queries": ["transactions"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "transaction",
+            "version": "1",
+            "label": "transaction",
+            "description": "Read one retained dispatch, applied steps, and observed provenance.",
+            "prerequisites": ["The requested dispatch remains retained."],
+            "queries": ["transaction"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "contributions",
+            "version": "1",
+            "label": "contributions",
+            "description": "Read installed semantic inspector projections.",
+            "prerequisites": ["Register at least one semantic inspector."],
+            "queries": ["contributions"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "contribution",
+            "version": "1",
+            "label": "contribution",
+            "description": "Read one named semantic inspector projection.",
+            "prerequisites": ["Register the requested semantic inspector."],
+            "queries": ["contribution"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "capabilities",
+            "version": "1",
+            "label": "capabilities",
+            "description": "Discover installed queries and their prerequisites.",
+            "prerequisites": [],
+            "queries": ["capabilities"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "events",
+            "version": "1",
+            "label": "events",
+            "description": "Search observed synchronous handler and command events.",
+            "prerequisites": ["Enable diagnostics and instrument the relevant plugin or command."],
+            "queries": ["events"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "decorations",
+            "version": "1",
+            "label": "decorations",
+            "description": "Read observed decoration ranges and their current validity.",
+            "prerequisites": ["Enable diagnostics and observe the decorations callback."],
+            "queries": ["decorations"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "nodeViews",
+            "version": "1",
+            "label": "nodeViews",
+            "description": "Read observed NodeView lifecycle summaries.",
+            "prerequisites": ["Enable diagnostics and instrument NodeView factories."],
+            "queries": ["nodeViews"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "schema",
+            "version": "1",
+            "label": "schema",
+            "description": "Read declarative schema constraints at the current state.",
+            "prerequisites": ["A current editor state."],
+            "queries": ["schema"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "plugins",
+            "version": "1",
+            "label": "plugins",
+            "description": "Read plugin order, props, and bounded current state evidence.",
+            "prerequisites": [
+              "A current editor state. Historical state needs an explicit inspector serializer."
+            ],
+            "queries": ["plugins"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "prosemirror-history",
+            "version": "1",
+            "label": "Undo history",
+            "description": "Public undo and redo depths, history transaction classification, and observed addToHistory metadata. Dispatches and undo events are distinct.",
+            "prerequisites": [
+              "prosemirror-history",
+              "An explicit history() plugin instance installed in the editor"
+            ],
+            "queries": ["contribution"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          }
+        ],
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+            "generation": 1
+          },
+          "revision": 1,
+          "stateId": 1,
+          "dispatchId": 0,
+          "diagnosticsVersion": 1
+        },
+        "coverage": {
+          "complete": true,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 20,
+            "maxDepth": 24,
+            "maxNodes": 1000,
+            "maxStringLength": 500,
+            "maxBytes": 8000
+          },
+          "notes": []
+        }
+      }
+    },
+    "instrumentedEnter": {
+      "version": 1,
+      "source": {
+        "kind": "live",
+        "id": "source-90577d61-b0a0-4835-a5dd-f978c1393495"
+      },
+      "target": {
+        "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+        "editorId": "standalone-list",
+        "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+        "generation": 1
+      },
+      "editorLabel": "Standalone list fixture",
+      "point": {
+        "kind": "live",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        },
+        "revision": 5,
+        "stateId": 2,
+        "dispatchId": 1,
+        "diagnosticsVersion": 3
+      },
+      "pointAvailability": "available",
+      "selected": {
+        "panel": "history",
+        "eventId": null,
+        "pluginKey": null,
+        "position": null
+      },
+      "evidence": {
+        "kind": "available",
+        "value": [
+          {
+            "id": "document",
+            "version": "1",
+            "label": "document",
+            "description": "Read document JSON or a bounded position range.",
+            "prerequisites": ["A current state or retained dispatch document."],
+            "queries": ["document"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "selection",
+            "version": "1",
+            "label": "selection",
+            "description": "Read the selection at the selected point.",
+            "prerequisites": ["A current state or retained dispatch selection."],
+            "queries": ["selection"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "transactions",
+            "version": "1",
+            "label": "transactions",
+            "description": "Search retained dispatch summaries in invocation order.",
+            "prerequisites": ["Dispatch capture."],
+            "queries": ["transactions"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "transaction",
+            "version": "1",
+            "label": "transaction",
+            "description": "Read one retained dispatch, applied steps, and observed provenance.",
+            "prerequisites": ["The requested dispatch remains retained."],
+            "queries": ["transaction"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "contributions",
+            "version": "1",
+            "label": "contributions",
+            "description": "Read installed semantic inspector projections.",
+            "prerequisites": ["Register at least one semantic inspector."],
+            "queries": ["contributions"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "contribution",
+            "version": "1",
+            "label": "contribution",
+            "description": "Read one named semantic inspector projection.",
+            "prerequisites": ["Register the requested semantic inspector."],
+            "queries": ["contribution"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "capabilities",
+            "version": "1",
+            "label": "capabilities",
+            "description": "Discover installed queries and their prerequisites.",
+            "prerequisites": [],
+            "queries": ["capabilities"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "events",
+            "version": "1",
+            "label": "events",
+            "description": "Search observed synchronous handler and command events.",
+            "prerequisites": ["Enable diagnostics and instrument the relevant plugin or command."],
+            "queries": ["events"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "decorations",
+            "version": "1",
+            "label": "decorations",
+            "description": "Read observed decoration ranges and their current validity.",
+            "prerequisites": ["Enable diagnostics and observe the decorations callback."],
+            "queries": ["decorations"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "nodeViews",
+            "version": "1",
+            "label": "nodeViews",
+            "description": "Read observed NodeView lifecycle summaries.",
+            "prerequisites": ["Enable diagnostics and instrument NodeView factories."],
+            "queries": ["nodeViews"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "schema",
+            "version": "1",
+            "label": "schema",
+            "description": "Read declarative schema constraints at the current state.",
+            "prerequisites": ["A current editor state."],
+            "queries": ["schema"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "plugins",
+            "version": "1",
+            "label": "plugins",
+            "description": "Read plugin order, props, and bounded current state evidence.",
+            "prerequisites": [
+              "A current editor state. Historical state needs an explicit inspector serializer."
+            ],
+            "queries": ["plugins"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "prosemirror-history",
+            "version": "1",
+            "label": "Undo history",
+            "description": "Public undo and redo depths, history transaction classification, and observed addToHistory metadata. Dispatches and undo events are distinct.",
+            "prerequisites": [
+              "prosemirror-history",
+              "An explicit history() plugin instance installed in the editor"
+            ],
+            "queries": ["contribution"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          }
+        ],
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+            "generation": 1
+          },
+          "revision": 5,
+          "stateId": 2,
+          "dispatchId": 1,
+          "diagnosticsVersion": 3
+        },
+        "coverage": {
+          "complete": true,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 20,
+            "maxDepth": 24,
+            "maxNodes": 1000,
+            "maxStringLength": 500,
+            "maxBytes": 8000
+          },
+          "notes": []
+        }
+      }
+    },
+    "remount": {
+      "version": 1,
+      "source": {
+        "kind": "live",
+        "id": "source-90577d61-b0a0-4835-a5dd-f978c1393495"
+      },
+      "target": {
+        "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+        "editorId": "standalone-list",
+        "sessionId": "session-aaaf4c42-a997-46f5-94bd-35502857e1bd",
+        "generation": 2
+      },
+      "editorLabel": "Standalone list fixture",
+      "point": {
+        "kind": "live",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-aaaf4c42-a997-46f5-94bd-35502857e1bd",
+          "generation": 2
+        },
+        "revision": 1,
+        "stateId": 4,
+        "dispatchId": 0,
+        "diagnosticsVersion": 1
+      },
+      "pointAvailability": "available",
+      "selected": {
+        "panel": "history",
+        "eventId": null,
+        "pluginKey": null,
+        "position": null
+      },
+      "evidence": {
+        "kind": "available",
+        "value": [
+          {
+            "id": "document",
+            "version": "1",
+            "label": "document",
+            "description": "Read document JSON or a bounded position range.",
+            "prerequisites": ["A current state or retained dispatch document."],
+            "queries": ["document"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "selection",
+            "version": "1",
+            "label": "selection",
+            "description": "Read the selection at the selected point.",
+            "prerequisites": ["A current state or retained dispatch selection."],
+            "queries": ["selection"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "transactions",
+            "version": "1",
+            "label": "transactions",
+            "description": "Search retained dispatch summaries in invocation order.",
+            "prerequisites": ["Dispatch capture."],
+            "queries": ["transactions"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "transaction",
+            "version": "1",
+            "label": "transaction",
+            "description": "Read one retained dispatch, applied steps, and observed provenance.",
+            "prerequisites": ["The requested dispatch remains retained."],
+            "queries": ["transaction"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "contributions",
+            "version": "1",
+            "label": "contributions",
+            "description": "Read installed semantic inspector projections.",
+            "prerequisites": ["Register at least one semantic inspector."],
+            "queries": ["contributions"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "contribution",
+            "version": "1",
+            "label": "contribution",
+            "description": "Read one named semantic inspector projection.",
+            "prerequisites": ["Register the requested semantic inspector."],
+            "queries": ["contribution"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "capabilities",
+            "version": "1",
+            "label": "capabilities",
+            "description": "Discover installed queries and their prerequisites.",
+            "prerequisites": [],
+            "queries": ["capabilities"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "events",
+            "version": "1",
+            "label": "events",
+            "description": "Search observed synchronous handler and command events.",
+            "prerequisites": ["Enable diagnostics and instrument the relevant plugin or command."],
+            "queries": ["events"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "decorations",
+            "version": "1",
+            "label": "decorations",
+            "description": "Read observed decoration ranges and their current validity.",
+            "prerequisites": ["Enable diagnostics and observe the decorations callback."],
+            "queries": ["decorations"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "nodeViews",
+            "version": "1",
+            "label": "nodeViews",
+            "description": "Read observed NodeView lifecycle summaries.",
+            "prerequisites": ["Enable diagnostics and instrument NodeView factories."],
+            "queries": ["nodeViews"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "schema",
+            "version": "1",
+            "label": "schema",
+            "description": "Read declarative schema constraints at the current state.",
+            "prerequisites": ["A current editor state."],
+            "queries": ["schema"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "plugins",
+            "version": "1",
+            "label": "plugins",
+            "description": "Read plugin order, props, and bounded current state evidence.",
+            "prerequisites": [
+              "A current editor state. Historical state needs an explicit inspector serializer."
+            ],
+            "queries": ["plugins"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "prosemirror-history",
+            "version": "1",
+            "label": "Undo history",
+            "description": "Public undo and redo depths, history transaction classification, and observed addToHistory metadata. Dispatches and undo events are distinct.",
+            "prerequisites": [
+              "prosemirror-history",
+              "An explicit history() plugin instance installed in the editor"
+            ],
+            "queries": ["contribution"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          }
+        ],
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-aaaf4c42-a997-46f5-94bd-35502857e1bd",
+          "generation": 2
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-aaaf4c42-a997-46f5-94bd-35502857e1bd",
+            "generation": 2
+          },
+          "revision": 1,
+          "stateId": 4,
+          "dispatchId": 0,
+          "diagnosticsVersion": 1
+        },
+        "coverage": {
+          "complete": true,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 20,
+            "maxDepth": 24,
+            "maxNodes": 1000,
+            "maxStringLength": 500,
+            "maxBytes": 8000
+          },
+          "notes": []
+        }
+      }
+    },
+    "attachInitial": {
+      "version": 1,
+      "source": {
+        "kind": "live",
+        "id": "source-90577d61-b0a0-4835-a5dd-f978c1393495"
+      },
+      "target": {
+        "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+        "editorId": "standalone-list",
+        "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+        "generation": 3
+      },
+      "editorLabel": "Standalone list fixture",
+      "point": {
+        "kind": "live",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+          "generation": 3
+        },
+        "revision": 1,
+        "stateId": 5,
+        "dispatchId": 0,
+        "diagnosticsVersion": 1
+      },
+      "pointAvailability": "available",
+      "selected": {
+        "panel": "history",
+        "eventId": null,
+        "pluginKey": null,
+        "position": null
+      },
+      "evidence": {
+        "kind": "available",
+        "value": [
+          {
+            "id": "document",
+            "version": "1",
+            "label": "document",
+            "description": "Read document JSON or a bounded position range.",
+            "prerequisites": ["A current state or retained dispatch document."],
+            "queries": ["document"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "selection",
+            "version": "1",
+            "label": "selection",
+            "description": "Read the selection at the selected point.",
+            "prerequisites": ["A current state or retained dispatch selection."],
+            "queries": ["selection"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "transactions",
+            "version": "1",
+            "label": "transactions",
+            "description": "Search retained dispatch summaries in invocation order.",
+            "prerequisites": ["Dispatch capture."],
+            "queries": ["transactions"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "transaction",
+            "version": "1",
+            "label": "transaction",
+            "description": "Read one retained dispatch, applied steps, and observed provenance.",
+            "prerequisites": ["The requested dispatch remains retained."],
+            "queries": ["transaction"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "contributions",
+            "version": "1",
+            "label": "contributions",
+            "description": "Read installed semantic inspector projections.",
+            "prerequisites": ["Register at least one semantic inspector."],
+            "queries": ["contributions"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "contribution",
+            "version": "1",
+            "label": "contribution",
+            "description": "Read one named semantic inspector projection.",
+            "prerequisites": ["Register the requested semantic inspector."],
+            "queries": ["contribution"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "capabilities",
+            "version": "1",
+            "label": "capabilities",
+            "description": "Discover installed queries and their prerequisites.",
+            "prerequisites": [],
+            "queries": ["capabilities"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "events",
+            "version": "1",
+            "label": "events",
+            "description": "Search observed synchronous handler and command events.",
+            "prerequisites": ["Enable diagnostics and instrument the relevant plugin or command."],
+            "queries": ["events"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "decorations",
+            "version": "1",
+            "label": "decorations",
+            "description": "Read observed decoration ranges and their current validity.",
+            "prerequisites": ["Enable diagnostics and observe the decorations callback."],
+            "queries": ["decorations"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "nodeViews",
+            "version": "1",
+            "label": "nodeViews",
+            "description": "Read observed NodeView lifecycle summaries.",
+            "prerequisites": ["Enable diagnostics and instrument NodeView factories."],
+            "queries": ["nodeViews"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "schema",
+            "version": "1",
+            "label": "schema",
+            "description": "Read declarative schema constraints at the current state.",
+            "prerequisites": ["A current editor state."],
+            "queries": ["schema"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "plugins",
+            "version": "1",
+            "label": "plugins",
+            "description": "Read plugin order, props, and bounded current state evidence.",
+            "prerequisites": [
+              "A current editor state. Historical state needs an explicit inspector serializer."
+            ],
+            "queries": ["plugins"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          },
+          {
+            "id": "prosemirror-history",
+            "version": "1",
+            "label": "Undo history",
+            "description": "Public undo and redo depths, history transaction classification, and observed addToHistory metadata. Dispatches and undo events are distinct.",
+            "prerequisites": [
+              "prosemirror-history",
+              "An explicit history() plugin instance installed in the editor"
+            ],
+            "queries": ["contribution"],
+            "evidence": {
+              "kind": "available",
+              "value": true
+            }
+          }
+        ],
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+          "generation": 3
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+            "generation": 3
+          },
+          "revision": 1,
+          "stateId": 5,
+          "dispatchId": 0,
+          "diagnosticsVersion": 1
+        },
+        "coverage": {
+          "complete": true,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 20,
+            "maxDepth": 24,
+            "maxNodes": 1000,
+            "maxStringLength": 500,
+            "maxBytes": 8000
+          },
+          "notes": []
+        }
+      }
+    }
+  },
+  "recordings": {
+    "final-instrumented": {
+      "versions": {
+        "inspectionProtocol": "1",
+        "recordingFormat": "1"
+      },
+      "origin": {
+        "source": {
+          "kind": "live",
+          "id": "source-90577d61-b0a0-4835-a5dd-f978c1393495"
+        },
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        }
+      },
+      "capture": {
+        "kind": "recording",
+        "profile": {
+          "kind": "unbounded",
+          "budgets": {
+            "transactions": null,
+            "events": 200,
+            "decorations": 200,
+            "nodeViews": 200,
+            "projections": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "gaps": 200
+          }
+        },
+        "gaps": [],
+        "omittedGapCount": 0
+      },
+      "point": {
+        "kind": "live",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        },
+        "revision": 5,
+        "stateId": 2,
+        "dispatchId": 1,
+        "diagnosticsVersion": 3
+      },
+      "document": {
+        "kind": "available",
+        "value": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "bullet_list",
+              "content": [
+                {
+                  "type": "list_item",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Alpha"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "list_item",
+                  "content": [
+                    {
+                      "type": "paragraph"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+            "generation": 1
+          },
+          "revision": 5,
+          "stateId": 2,
+          "dispatchId": 1,
+          "diagnosticsVersion": 3
+        },
+        "coverage": {
+          "complete": true,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "selection": {
+        "kind": "available",
+        "value": {
+          "type": "text",
+          "anchor": 12,
+          "head": 12,
+          "from": 12,
+          "to": 12,
+          "empty": true
+        },
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+            "generation": 1
+          },
+          "revision": 5,
+          "stateId": 2,
+          "dispatchId": 1,
+          "diagnosticsVersion": 3
+        },
+        "coverage": {
+          "complete": true,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "dispatchCount": 1,
+      "transaction": {
+        "id": 1,
+        "applicationStatus": "applied",
+        "appliedTransactionCount": 1,
+        "appendedTransactionCount": 0,
+        "selectionBefore": {
+          "type": "text",
+          "anchor": 8,
+          "head": 8
+        },
+        "selectionAfter": {
+          "type": "text",
+          "anchor": 12,
+          "head": 12
+        },
+        "hooks": [
+          {
+            "pluginKey": "history$",
+            "hook": "state.apply"
+          }
+        ],
+        "provenance": {
+          "kind": "unobserved",
+          "transactions": [
+            {
+              "id": 0,
+              "appliedIndex": 0,
+              "origin": {
+                "kind": "root"
+              }
+            }
+          ],
+          "filters": [],
+          "appends": []
+        }
+      },
+      "events": {
+        "kind": "available",
+        "value": [
+          {
+            "kind": "prop",
+            "name": "handleKeyDown",
+            "pluginKey": "plugin$",
+            "pluginLabel": "plugin #2",
+            "id": 1,
+            "parentId": null,
+            "timestamp": 1793824299346,
+            "duration": 6,
+            "handled": true,
+            "error": null,
+            "metadata": {
+              "type": "keydown",
+              "code": "Enter",
+              "altKey": false,
+              "ctrlKey": false,
+              "metaKey": false,
+              "shiftKey": false,
+              "repeat": false,
+              "isComposing": false,
+              "defaultPrevented": false
+            },
+            "dispatches": [
+              {
+                "instanceId": "standalone-list",
+                "id": 1,
+                "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+                "generation": 1
+              }
+            ]
+          }
+        ],
+        "coverage": {
+          "complete": true,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "capabilities": [
+        {
+          "id": "document",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "selection",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "transactions",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "transaction",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "contributions",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "contribution",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "capabilities",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "events",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "decorations",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "nodeViews",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "schema",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "plugins",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "prosemirror-history",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        }
+      ],
+      "decorations": {
+        "kind": "unobserved",
+        "reason": "No matching observation is retained. An empty trace does not prove the event did not happen.",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+            "generation": 1
+          },
+          "revision": 5,
+          "stateId": 2,
+          "dispatchId": 1,
+          "diagnosticsVersion": 3
+        },
+        "coverage": {
+          "complete": false,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "nodeViews": {
+        "kind": "unobserved",
+        "reason": "No matching observation is retained. An empty trace does not prove the event did not happen.",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+          "generation": 1
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-4e27326d-ca5d-40d7-878f-0e69d84c2516",
+            "generation": 1
+          },
+          "revision": 5,
+          "stateId": 2,
+          "dispatchId": 1,
+          "diagnosticsVersion": 3
+        },
+        "coverage": {
+          "complete": false,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "omissions": [
+        {
+          "scope": "replay",
+          "reason": "This artifact contains query evidence, not executable EditorState, undo branches, provider state, DOM, or a browser action report."
+        },
+        {
+          "scope": "history",
+          "reason": "Only the selected 1 dispatch IDs and bounded current query scopes are included. Unselected or expired observations are not reconstructed."
+        },
+        {
+          "scope": "budget",
+          "reason": "Queries and dispatches that exceed the total byte budget are omitted. A missing query is not evidence that the editor contained no data."
+        },
+        {
+          "scope": "current/decorations",
+          "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+        },
+        {
+          "scope": "current/nodeViews",
+          "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+        },
+        {
+          "scope": "dispatch/1/before/contributions",
+          "reason": "unobserved: Retained inspector projections describe the end of the dispatch. Inspect their explicit before projection when available."
+        }
+      ]
+    },
+    "final-attach": {
+      "versions": {
+        "inspectionProtocol": "1",
+        "recordingFormat": "1"
+      },
+      "origin": {
+        "source": {
+          "kind": "live",
+          "id": "source-90577d61-b0a0-4835-a5dd-f978c1393495"
+        },
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+          "generation": 3
+        }
+      },
+      "capture": {
+        "kind": "recording",
+        "profile": {
+          "kind": "unbounded",
+          "budgets": {
+            "transactions": null,
+            "events": 200,
+            "decorations": 200,
+            "nodeViews": 200,
+            "projections": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "gaps": 200
+          }
+        },
+        "gaps": [],
+        "omittedGapCount": 0
+      },
+      "point": {
+        "kind": "live",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+          "generation": 3
+        },
+        "revision": 3,
+        "stateId": 6,
+        "dispatchId": 1,
+        "diagnosticsVersion": 2
+      },
+      "document": {
+        "kind": "available",
+        "value": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "bullet_list",
+              "content": [
+                {
+                  "type": "list_item",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Alpha"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "list_item",
+                  "content": [
+                    {
+                      "type": "paragraph"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+          "generation": 3
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+            "generation": 3
+          },
+          "revision": 3,
+          "stateId": 6,
+          "dispatchId": 1,
+          "diagnosticsVersion": 2
+        },
+        "coverage": {
+          "complete": true,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "selection": {
+        "kind": "available",
+        "value": {
+          "type": "text",
+          "anchor": 12,
+          "head": 12,
+          "from": 12,
+          "to": 12,
+          "empty": true
+        },
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+          "generation": 3
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+            "generation": 3
+          },
+          "revision": 3,
+          "stateId": 6,
+          "dispatchId": 1,
+          "diagnosticsVersion": 2
+        },
+        "coverage": {
+          "complete": true,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "dispatchCount": 1,
+      "transaction": {
+        "id": 1,
+        "applicationStatus": "applied",
+        "appliedTransactionCount": 1,
+        "appendedTransactionCount": 0,
+        "selectionBefore": {
+          "type": "text",
+          "anchor": 8,
+          "head": 8
+        },
+        "selectionAfter": {
+          "type": "text",
+          "anchor": 12,
+          "head": 12
+        },
+        "hooks": [],
+        "provenance": {
+          "kind": "unobserved",
+          "transactions": [
+            {
+              "id": 0,
+              "appliedIndex": 0,
+              "origin": {
+                "kind": "root"
+              }
+            }
+          ],
+          "filters": [],
+          "appends": []
+        }
+      },
+      "events": {
+        "kind": "unobserved",
+        "reason": "No matching observation is retained. An empty trace does not prove the event did not happen.",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+          "generation": 3
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+            "generation": 3
+          },
+          "revision": 3,
+          "stateId": 6,
+          "dispatchId": 1,
+          "diagnosticsVersion": 2
+        },
+        "coverage": {
+          "complete": false,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "capabilities": [
+        {
+          "id": "document",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "selection",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "transactions",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "transaction",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "contributions",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "contribution",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "capabilities",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "events",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "decorations",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "nodeViews",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "schema",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "plugins",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        },
+        {
+          "id": "prosemirror-history",
+          "evidence": {
+            "kind": "available",
+            "value": true
+          }
+        }
+      ],
+      "decorations": {
+        "kind": "unobserved",
+        "reason": "No matching observation is retained. An empty trace does not prove the event did not happen.",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+          "generation": 3
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+            "generation": 3
+          },
+          "revision": 3,
+          "stateId": 6,
+          "dispatchId": 1,
+          "diagnosticsVersion": 2
+        },
+        "coverage": {
+          "complete": false,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "nodeViews": {
+        "kind": "unobserved",
+        "reason": "No matching observation is retained. An empty trace does not prove the event did not happen.",
+        "target": {
+          "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+          "editorId": "standalone-list",
+          "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+          "generation": 3
+        },
+        "point": {
+          "kind": "live",
+          "target": {
+            "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+            "editorId": "standalone-list",
+            "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+            "generation": 3
+          },
+          "revision": 3,
+          "stateId": 6,
+          "dispatchId": 1,
+          "diagnosticsVersion": 2
+        },
+        "coverage": {
+          "complete": false,
+          "gaps": [],
+          "truncated": false,
+          "limits": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "notes": []
+        }
+      },
+      "omissions": [
+        {
+          "scope": "replay",
+          "reason": "This artifact contains query evidence, not executable EditorState, undo branches, provider state, DOM, or a browser action report."
+        },
+        {
+          "scope": "history",
+          "reason": "Only the selected 1 dispatch IDs and bounded current query scopes are included. Unselected or expired observations are not reconstructed."
+        },
+        {
+          "scope": "budget",
+          "reason": "Queries and dispatches that exceed the total byte budget are omitted. A missing query is not evidence that the editor contained no data."
+        },
+        {
+          "scope": "current/events",
+          "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+        },
+        {
+          "scope": "current/decorations",
+          "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+        },
+        {
+          "scope": "current/nodeViews",
+          "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+        },
+        {
+          "scope": "dispatch/1/before/contributions",
+          "reason": "unobserved: Retained inspector projections describe the end of the dispatch. Inspect their explicit before projection when available."
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "browserVersion": "156.0.8078.80",
+  "remountOptions": [
+    "Choose editor session",
+    "Standalone list fixture (standalone-list), generation 2"
+  ],
+  "attachCapabilities": {
+    "kind": "available",
+    "value": [
+      {
+        "id": "document",
+        "version": "1",
+        "label": "document",
+        "description": "Read document JSON or a bounded position range.",
+        "prerequisites": ["A current state or retained dispatch document."],
+        "queries": ["document"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "selection",
+        "version": "1",
+        "label": "selection",
+        "description": "Read the selection at the selected point.",
+        "prerequisites": ["A current state or retained dispatch selection."],
+        "queries": ["selection"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "transactions",
+        "version": "1",
+        "label": "transactions",
+        "description": "Search retained dispatch summaries in invocation order.",
+        "prerequisites": ["Dispatch capture."],
+        "queries": ["transactions"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "transaction",
+        "version": "1",
+        "label": "transaction",
+        "description": "Read one retained dispatch, applied steps, and observed provenance.",
+        "prerequisites": ["The requested dispatch remains retained."],
+        "queries": ["transaction"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "contributions",
+        "version": "1",
+        "label": "contributions",
+        "description": "Read installed semantic inspector projections.",
+        "prerequisites": ["Register at least one semantic inspector."],
+        "queries": ["contributions"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "contribution",
+        "version": "1",
+        "label": "contribution",
+        "description": "Read one named semantic inspector projection.",
+        "prerequisites": ["Register the requested semantic inspector."],
+        "queries": ["contribution"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "capabilities",
+        "version": "1",
+        "label": "capabilities",
+        "description": "Discover installed queries and their prerequisites.",
+        "prerequisites": [],
+        "queries": ["capabilities"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "events",
+        "version": "1",
+        "label": "events",
+        "description": "Search observed synchronous handler and command events.",
+        "prerequisites": ["Enable diagnostics and instrument the relevant plugin or command."],
+        "queries": ["events"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "decorations",
+        "version": "1",
+        "label": "decorations",
+        "description": "Read observed decoration ranges and their current validity.",
+        "prerequisites": ["Enable diagnostics and observe the decorations callback."],
+        "queries": ["decorations"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "nodeViews",
+        "version": "1",
+        "label": "nodeViews",
+        "description": "Read observed NodeView lifecycle summaries.",
+        "prerequisites": ["Enable diagnostics and instrument NodeView factories."],
+        "queries": ["nodeViews"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "schema",
+        "version": "1",
+        "label": "schema",
+        "description": "Read declarative schema constraints at the current state.",
+        "prerequisites": ["A current editor state."],
+        "queries": ["schema"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "plugins",
+        "version": "1",
+        "label": "plugins",
+        "description": "Read plugin order, props, and bounded current state evidence.",
+        "prerequisites": [
+          "A current editor state. Historical state needs an explicit inspector serializer."
+        ],
+        "queries": ["plugins"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      },
+      {
+        "id": "prosemirror-history",
+        "version": "1",
+        "label": "Undo history",
+        "description": "Public undo and redo depths, history transaction classification, and observed addToHistory metadata. Dispatches and undo events are distinct.",
+        "prerequisites": [
+          "prosemirror-history",
+          "An explicit history() plugin instance installed in the editor"
+        ],
+        "queries": ["contribution"],
+        "evidence": {
+          "kind": "available",
+          "value": true
+        }
+      }
+    ],
+    "target": {
+      "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+      "editorId": "standalone-list",
+      "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+      "generation": 3
+    },
+    "point": {
+      "kind": "live",
+      "target": {
+        "sourceId": "source-90577d61-b0a0-4835-a5dd-f978c1393495",
+        "editorId": "standalone-list",
+        "sessionId": "session-0631738d-eb37-421f-8060-3e1edeea108b",
+        "generation": 3
+      },
+      "revision": 3,
+      "stateId": 6,
+      "dispatchId": 1,
+      "diagnosticsVersion": 2
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "attachStatus": "Undo depth 1. Redo depth 0. Caret 12. Dispatches 1.",
+  "production": {
+    "url": "http://127.0.0.1:4290/",
+    "banner": "Diagnostics are disabled in this production build.",
+    "inspectorCount": 0,
+    "recordingCount": 0,
+    "globalNames": [],
+    "afterEnter": "Undo depth 1. Redo depth 0. Caret 12. Dispatches 0."
+  },
+  "limitations": [
+    "Skill contains no explicit link to the installed package guide it requires.",
+    "No catalogue or inspection-client discovery API syntax is documented by the skill. Default page exposes no Inspector-like window names.",
+    "Fixture exposes reset and profile-switch remounts, but no editor-only dispose or unmount control. Full disposal cannot be proven through available visible controls.",
+    "Fixture has unobserved decorations and NodeViews and no visible overlay activation control. An active overlay surviving remount could not be tested.",
+    "Only protocol 1 and recording format 1 are exposed. Inspector and ProseMirror dependency package versions are not reported by the visible UI or exported recording."
+  ]
+}

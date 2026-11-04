@@ -1,5 +1,7 @@
 # Devtools review and panel roadmap
 
+This review describes the baseline before the product roadmap. See the [support matrix](./support-matrix.md) and [execution ledger](./roadmap/execution.md) for the implemented and verified state.
+
 The current separation between the framework-neutral recorder, Solid panel, feature models, and
 framework adapters is useful. Keep it. This pass concentrates on work performed during dispatch,
 mount/update/teardown behavior, and inspectors that remain usable inside a small TanStack pane.
