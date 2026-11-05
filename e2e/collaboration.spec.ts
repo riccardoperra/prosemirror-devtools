@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 
 import { available, callTool, object } from "./inspection-tools";
@@ -152,6 +152,90 @@ test("V3 Yjs collaboration keeps the other peer's edit when undoing local work",
     path: screenshot,
     contentType: "image/png",
   });
+});
+
+test("kitchen sink combines collaboration, history, rendering and offline recording", async ({
+  page,
+}, testInfo) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("http://127.0.0.1:4183");
+  await expect(
+    page.getByRole("heading", { name: "ProseMirror Inspector kitchen sink" }),
+  ).toBeVisible();
+  await page.getByRole("checkbox", { name: "Hold delivery", exact: true }).check();
+  const first = page.getByRole("textbox", { name: "Official collab editor A", exact: true });
+  const second = page.getByRole("textbox", { name: "Official collab editor B", exact: true });
+  const initial = await first.innerText();
+  await page.getByRole("button", { name: "Insert sample in A", exact: true }).click();
+  await expect(first).not.toHaveText(initial);
+  await expect(second).toHaveText(initial);
+  const edited = await first.innerText();
+
+  const { editors } = object(await callTool(page, "prosemirror_editors"));
+  if (!Array.isArray(editors)) throw new Error("Expected both kitchen sink editors.");
+  const editor = editors.find(
+    (entry: unknown) => object(object(entry).target).editorId === "official-A",
+  );
+  const target = object(object(editor).target);
+  const history = available(
+    await callTool(page, "prosemirror_inspect", {
+      target,
+      query: { kind: "contribution", id: "prosemirror-history" },
+    }),
+  );
+  expect(history.value).toMatchObject({ depths: { undoDepth: 1, redoDepth: 0 } });
+  const read = async (query: Record<string, string>) =>
+    available(await callTool(page, "prosemirror_read", { point: history.point, query })).value;
+  expect(await read({ kind: "contribution", id: "prosemirror-collab" })).toMatchObject({
+    state: { version: 0, unconfirmedSteps: 1 },
+  });
+  expect(await read({ kind: "events", name: "Insert sample" })).toMatchObject([
+    { kind: "command", name: "Insert sample" },
+  ]);
+  expect(await read({ kind: "decorations" })).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        ranges: expect.arrayContaining(
+          ["inline", "node", "widget"].map((kind) => expect.objectContaining({ kind })),
+        ),
+      }),
+    ]),
+  );
+  expect(await read({ kind: "nodeViews" })).toEqual(
+    expect.arrayContaining([expect.objectContaining({ nodeType: "paragraph", destroyed: false })]),
+  );
+
+  const deliver = page.getByRole("button", { name: "Deliver queued updates", exact: true });
+  await deliver.click();
+  await expect(second).toHaveText(edited);
+  await page.getByRole("button", { name: "Undo in A", exact: true }).click();
+  await deliver.click();
+  await expect(second).toHaveText(initial);
+  await page.getByRole("button", { name: "Redo in A", exact: true }).click();
+  await deliver.click();
+  await expect(second).toHaveText(edited);
+
+  await page
+    .getByRole("combobox", { name: "Recording export editor", exact: true })
+    .selectOption("official-A");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export diagnostic recording", exact: true }).click();
+  const path = testInfo.outputPath("kitchen-sink-recording.json");
+  await (await download).saveAs(path);
+  const recording = object(JSON.parse(await readFile(path, "utf8")));
+  expect(recording).toMatchObject({
+    format: "prosemirror-inspector-recording",
+    origin: { target },
+  });
+  expect(Array.isArray(recording.dispatches) && recording.dispatches.length > 0).toBe(true);
+  await page.getByRole("button", { name: "Open exported recording", exact: true }).click();
+  await expect(
+    page.getByRole("region", { name: "ProseMirror recording inspector", exact: true }),
+  ).toContainText("Offline source");
+  await expect(first).toHaveText(edited);
+  await expect(second).toHaveText(edited);
+  expect(errors).toEqual([]);
 });
 
 test("V7 collaboration production build keeps both systems functional without diagnostics", async ({
