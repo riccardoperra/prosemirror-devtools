@@ -5,20 +5,18 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { createInterface } from "node:readline";
-import { setTimeout as delay } from "node:timers/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "@playwright/test";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const fixture = resolve(root, "packages/standalone-demo");
 const fixtureRequire = createRequire(resolve(fixture, "package.json"));
 const require = createRequire(import.meta.url);
-const vite = resolve(dirname(fixtureRequire.resolve("vite/package.json")), "bin/vite.js");
+const { createServer } = await import(pathToFileURL(fixtureRequire.resolve("vite")).href);
 const mcp = resolve(
   dirname(require.resolve("chrome-devtools-mcp/package.json")),
   "build/src/bin/chrome-devtools-mcp.js",
 );
-const url = "http://127.0.0.1:4194/";
 const reportPath = resolve(root, "test-results/chrome-mcp.json");
 const children = [];
 const errors = new Map();
@@ -64,23 +62,19 @@ const output = (result) => {
   return JSON.parse(value.slice(start, end + 1));
 };
 
+let server;
 try {
   await rm(reportPath, { force: true });
-  const server = start([vite, "--host", "127.0.0.1", "--port", "4194", "--strictPort"], fixture);
-  let fixtureReady = false;
-  server.stdout.on("data", (chunk) => {
-    if (String(chunk).includes(url)) fixtureReady = true;
+  server = await createServer({
+    root: fixture,
+    server: { host: "127.0.0.1", port: 0 },
   });
-  const deadline = Date.now() + 30_000;
-  while (true) {
-    if (server.exitCode !== null) throw new Error(`Fixture exited: ${errors.get(server)}`);
-    try {
-      if (fixtureReady && (await fetch(url, { signal: AbortSignal.timeout(1_000) })).ok) break;
-    } catch {}
-    if (Date.now() > deadline)
-      throw new Error(`Fixture did not become ready: ${errors.get(server)}`);
-    await delay(50);
-  }
+  await server.listen();
+  const url = server.resolvedUrls?.local[0];
+  assert(url, "Vite did not provide a loopback URL for the fixture.");
+  const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
+  await response.body?.cancel();
+  assert(response.ok, `Fixture returned HTTP ${response.status} at ${url}.`);
   const client = start(
     [
       mcp,
@@ -208,5 +202,5 @@ try {
     `Chrome MCP ${initialized.serverInfo.version}: five Inspector tools discovered; coherent document, selection and verdict passed.`,
   );
 } finally {
-  await Promise.all(children.map(stop));
+  await Promise.all([server?.close(), ...children.map(stop)]);
 }
