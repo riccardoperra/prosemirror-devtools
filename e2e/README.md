@@ -40,6 +40,6 @@ After the package build and browser installation, run the isolated MCP check.
 pnpm test:chrome-mcp
 ```
 
-The runner starts its own standalone fixture on an available loopback port and Chrome DevTools MCP from the pinned development dependency. It discovers all five Inspector tools through the official MCP client, reads the document and selection at the same point, and checks a semantic expectation. It disables caller JavaScript evaluation, usage statistics, and global MCP configuration discovery. It closes its browser and fixture after success or failure.
+The runner starts a standalone fixture on an available loopback port. Playwright launches a browser with a temporary profile. Chrome DevTools MCP connects to that browser over a loopback CDP endpoint. It discovers all five Inspector tools through the official MCP client, reads the document and selection at the same point, and checks a semantic expectation. It disables caller JavaScript evaluation, usage statistics, and global MCP configuration discovery. It closes its browser and fixture after success or failure.
 
 The proof is written to `test-results/chrome-mcp.json`. `PLAYWRIGHT_EXECUTABLE_PATH` selects an installed Chrome executable. Without that variable the check uses Playwright's installed Chromium. The bridge remains experimental even when this pinned client passes.
