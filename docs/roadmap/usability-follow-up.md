@@ -10,8 +10,12 @@ del pannello live iniziano sotto le tab. La barra prima e dopo il dispatch compa
 seleziona una transazione storica. La regressione browser verifica lo spazio del pannello su
 standalone e TanStack a 390 e 1280 pixel.
 
-- [Prima](./evidence/usability/context-before.jpg).
-- [Dopo](./evidence/usability/context-after.jpg).
+Il confronto su State in TanStack misura lo spazio fra la fine delle tab e l'inizio del contenuto.
+La [baseline](./evidence/compact-context/baseline.jpg) occupava 1 px. La
+[versione con contesto nell'header](./evidence/compact-context/previous.jpg) occupava 76 px.
+[State ora](./evidence/compact-context/state.jpg) torna a 1 px. Il nome dell'editor torna leggibile.
+[Context](./evidence/compact-context/context.jpg) mostra dati catturati e inspector installati.
+I dettagli tecnici sono chiusi all'apertura.
 
 `installProseMirrorWebMCPBridge` registra gli stessi cinque tool di lettura del bridge Chrome.
 Usa l'API corrente `document.modelContext` e riconosce l'API precedente su `navigator`.
