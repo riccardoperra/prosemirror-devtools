@@ -1,6 +1,6 @@
 # Debug undo and collaboration from captured events
 
-**Status.** Proposal for review.
+**Status.** Contextual prototype for review.
 
 The first kitchen sink prototype gave Undo history and Collaboration their own tabs with counters and a JSON disclosure. Those counters describe an editor, but a developer investigating a missing edit still has to find the relevant action, dispatch, or provider signal. A view should help them finish that investigation before it earns space in the tab bar.
 
@@ -56,3 +56,11 @@ At a narrow panel width, show the selected observation as a single column. At a 
 2. **Verify the boundary cases in both collaboration modes.** Hold an official Collab edit in A, find the pending step and unchanged version, then deliver it and verify the version advance and B's document. In Yjs, make one edit per peer and undo A's local edit. Verify B's edit remains and a remote update is visible on the receiving peer. With no provider observer, show that transport was unobserved.
 3. **Compare the peer workspace only if the contextual flow leaves a gap.** Reproduce a held message or a provider-reported acknowledgement timeout. Check whether the workspace can identify the last observed stage and offer a next action with fewer view switches. If it needs a bounded event feed, first specify host observation, retained identity and links, freshness, and export limits. Compare the two layouts on the same trace at wide and narrow widths before adding a tab.
 4. **Verify offline and agent parity.** Export the same case and reopen it offline. The detail labels the recorded observation and preserves gaps. Query the same editor and point via MCP. The panel and agent receive matching counts and link availability without reading the editor DOM.
+
+## What the prototype shows
+
+The selected dispatch in Transactions shows the captured undo and sync changes above its details or diff. An Events call shows the same summary for its retained dispatch links. The raw samples open on demand in Transactions. The panel reads the existing captured projections, and the prototype adds a kitchen sink button for an edit explicitly excluded from undo history.
+
+Holding one official Collab edit makes pending steps rise from zero to one. The confirmation dispatch clears that step and advances the confirmed version. The observed Undo call links to the dispatch that changes the document and moves one entry from undo to redo.
+
+In the Yjs fixture, the Undo call links to the dispatch that removes A's edit while preserving B's. The sample captured during that dispatch can still refer to a preceding remote update. The view labels the last observed update separately from the dispatch and keeps unsettled UndoManager counts in the raw sample. A peer workspace would need independent update retention and explicit linkage to make a delivery timeline useful. Review the contextual flow in the kitchen sink before adding that workspace.

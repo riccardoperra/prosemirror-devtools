@@ -147,6 +147,7 @@ export function mountYjs({
     inspectorId: "yjs",
     flush,
     runCommand(peer, command) {
+      if (command === "sampleExcluded") return;
       const { editor, diagnostics } = clients[peer];
       const run = () => {
         if (command !== "sample") return editor.commands[command]();

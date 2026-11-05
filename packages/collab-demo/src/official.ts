@@ -138,10 +138,18 @@ export function mountOfficial({
     runCommand(peer, command) {
       const { view, session } = clients[peer];
       const run = () => {
-        if (command !== "sample") return { undo, redo }[command](view.state, view.dispatch, view);
+        if (command === "undo" || command === "redo")
+          return { undo, redo }[command](view.state, view.dispatch, view);
         const { $from } = view.state.selection;
         const at = $from.parent.isTextblock ? $from.end() : $from.pos;
-        view.dispatch(view.state.tr.insertText(` Sample from peer ${peer}.`, at));
+        const transaction = view.state.tr.insertText(
+          command === "sampleExcluded"
+            ? " Edit outside undo history."
+            : ` Sample from peer ${peer}.`,
+          at,
+        );
+        if (command === "sampleExcluded") transaction.setMeta("addToHistory", false);
+        view.dispatch(transaction);
         return true;
       };
       if (session?.diagnostics) session.diagnostics.traceCommand(commandLabels[command], run);

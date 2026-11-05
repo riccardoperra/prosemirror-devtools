@@ -838,6 +838,29 @@
   .pm-history-layout {
     overflow: hidden;
   }
+  .pm-dispatch-effects {
+    display: grid;
+    gap: 6px;
+    padding: 8px 10px;
+    border-block-end: 1px solid var(--pm-border);
+    overflow-wrap: anywhere;
+  }
+  .pm-dispatch-effects p {
+    margin: 0;
+  }
+  .pm-dispatch-effects strong {
+    margin-inline-end: 5px;
+  }
+  .pm-dispatch-effects small,
+  .pm-dispatch-effects summary {
+    color: var(--pm-muted);
+  }
+  .pm-dispatch-effects small {
+    display: block;
+  }
+  .pm-dispatch-effects summary {
+    cursor: pointer;
+  }
   .pm-history-list {
     min-inline-size: 0;
     min-block-size: 0;
