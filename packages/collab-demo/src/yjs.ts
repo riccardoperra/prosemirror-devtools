@@ -148,10 +148,12 @@ export function mountYjs({
     flush,
     runCommand(peer, command) {
       const { editor, diagnostics } = clients[peer];
-      const run = () =>
-        command === "sample"
-          ? editor.commands.insertContent(" sample")
-          : editor.commands[command]();
+      const run = () => {
+        if (command !== "sample") return editor.commands[command]();
+        const { $from } = editor.state.selection;
+        const at = $from.parent.isTextblock ? $from.end() : $from.pos;
+        return editor.commands.insertContentAt(at, ` Sample from peer ${peer}.`);
+      };
       if (diagnostics) diagnostics.traceCommand(commandLabels[command], run);
       else run();
     },
@@ -159,7 +161,7 @@ export function mountYjs({
       if (paused) store.pauseCapture(`yjs-${peer}`);
       else store.resumeCapture(`yjs-${peer}`);
     },
-    status: () => `${pending.length} Yjs updates waiting for delivery.`,
+    status: () => `Yjs updates waiting for delivery · ${pending.length}.`,
     dispose() {
       active = false;
       pending.length = 0;

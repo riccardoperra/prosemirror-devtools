@@ -29,14 +29,14 @@ export function createDiagnosticDemoPlugin({ blockExamples = false } = {}): Plug
               { label: "Active text block" },
             ),
             Decoration.widget(
-              to,
+              $from.end(),
               (view) => {
                 const marker = view.dom.ownerDocument.createElement("span");
                 marker.className = "demo-widget";
                 marker.setAttribute("aria-hidden", "true");
                 return marker;
               },
-              { key: "demo-widget", label: "Marker at the end of the highlighted text" },
+              { key: "demo-widget", label: "Marker at the end of the active block" },
             ),
           );
         }

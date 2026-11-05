@@ -4,7 +4,7 @@ import { baseKeymap } from "prosemirror-commands";
 import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { schema } from "prosemirror-schema-basic";
-import { EditorState, type Command } from "prosemirror-state";
+import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { createProseMirrorDevtoolsSession } from "prosemirror-inspector/core";
 import { createCollabInspector } from "prosemirror-inspector/inspectors/collab";
@@ -15,19 +15,9 @@ import {
   commandLabels,
   peers,
   type CollaborationFixture,
-  type DemoCommand,
   type FixtureOptions,
   type Peer,
 } from "./types";
-
-const commands: Record<DemoCommand, Command> = {
-  undo,
-  redo,
-  sample(state, dispatch) {
-    dispatch?.(state.tr.insertText(" sample"));
-    return true;
-  },
-};
 
 export function mountOfficial({
   containers,
@@ -147,7 +137,13 @@ export function mountOfficial({
     },
     runCommand(peer, command) {
       const { view, session } = clients[peer];
-      const run = () => commands[command](view.state, view.dispatch, view);
+      const run = () => {
+        if (command !== "sample") return { undo, redo }[command](view.state, view.dispatch, view);
+        const { $from } = view.state.selection;
+        const at = $from.parent.isTextblock ? $from.end() : $from.pos;
+        view.dispatch(view.state.tr.insertText(` Sample from peer ${peer}.`, at));
+        return true;
+      };
       if (session?.diagnostics) session.diagnostics.traceCommand(commandLabels[command], run);
       else run();
     },
@@ -155,7 +151,7 @@ export function mountOfficial({
       if (paused) clients[peer].session?.pauseCapture();
       else clients[peer].session?.resumeCapture();
     },
-    status: () => `Confirmed version ${version}. ${pending.size} peers waiting to send.`,
+    status: () => `Confirmed version ${version}. Waiting to send · ${pending.size} of 2 peers.`,
     dispose() {
       active = false;
       pending.clear();
