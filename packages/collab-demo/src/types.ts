@@ -12,6 +12,7 @@ export type DemoCommand = keyof typeof commandLabels;
 export const commands = ["undo", "redo", "sample"] satisfies readonly DemoCommand[];
 
 export interface CollaborationFixture {
+  readonly inspectorId: "prosemirror-collab" | "yjs";
   flush(): void;
   runCommand(peer: Peer, command: DemoCommand): void;
   setPaused(peer: Peer, paused: boolean): void;

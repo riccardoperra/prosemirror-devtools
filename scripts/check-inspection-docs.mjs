@@ -85,7 +85,7 @@ const connection = await format(
     "",
     "## Browser and computer use",
     "",
-    "Without third-party MCP tools, select the editor and use Transactions, Events, or Follow live to choose the observation. Undo history and Collaboration appear when the editor has the matching inspectors. Open Raw data in either view for the sampled values. Open Context for recording status, gaps, and installed inspectors. For the observation identity, expand Technical details and then Coverage and read point under Capabilities and coverage.",
+    "Without third-party MCP tools, select the editor and open Context. Captured data shows recording status and gaps. Installed inspectors lists the providers for that editor. Open Technical details and then Coverage and read point for the observation identity and evidence. Use Transactions, Events, and Follow live to choose the observation.",
     "",
     "In Context, use Copy diagnostic context when the environment permits it. The panel provides a textarea fallback. Reading the visible diagnostic panes is sufficient when clipboard access is unavailable. Do not request clipboard permissions merely to inspect evidence.",
     "",

@@ -171,24 +171,19 @@ test("V5 repeats the list scenario through accessible UI without JavaScript eval
   await expect(page.getByLabel("Installed inspectors", { exact: true })).toContainText(
     "Undo history",
   );
-  await page.getByRole("tab", { name: "Undo history", exact: true }).click();
-  const undoHistory = page.getByRole("tabpanel");
-  await expect(undoHistory.getByRole("group", { name: "Undo", exact: true })).toHaveText("Undo1");
-  await expect(undoHistory.getByText("Raw data", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Before dispatch", exact: true }).click();
-  await expect(undoHistory.getByRole("status")).toContainText("Switch to After dispatch");
-  await page.getByRole("button", { name: "After dispatch", exact: true }).click();
+  await page.getByText("Technical details", { exact: true }).click();
+  await expect(page.getByLabel("Semantic inspector evidence", { exact: true })).toContainText(
+    "prosemirror-history",
+  );
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(editor.locator("li")).toHaveCount(1);
   await expect(page.getByRole("status").filter({ hasText: "Undo depth" })).toContainText(
     "Undo depth 0. Redo depth 1. Caret 8. Dispatches 2.",
   );
   await expect(page.getByLabel("Inspection context", { exact: true })).toContainText("Dispatch #1");
-  await expect(undoHistory.getByRole("group", { name: "Undo", exact: true })).toHaveText("Undo1");
   await page.getByRole("button", { name: "Follow live", exact: true }).click();
   await expect(page.getByLabel("Inspection context", { exact: true })).toHaveCount(0);
-  await expect(undoHistory.getByRole("group", { name: "Undo", exact: true })).toHaveText("Undo0");
-  await expect(undoHistory.getByRole("group", { name: "Redo", exact: true })).toHaveText("Redo1");
+  await expect(page.getByRole("tabpanel")).toContainText("Live editor");
   const screenshot = testInfo.outputPath("standalone-computer-use.png");
   await page.screenshot({ path: screenshot, fullPage: true });
   await testInfo.attach("UI-only undo and diagnostic evidence", {

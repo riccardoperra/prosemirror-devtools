@@ -393,46 +393,6 @@
     overscroll-behavior: contain;
     scrollbar-color: var(--pm-border-strong) transparent;
   }
-  .pm-inspector-view > .pm-document-disclosure {
-    border: 1px solid var(--pm-border);
-    border-radius: var(--pm-radius);
-  }
-  .pm-inspector-view > .pm-document-disclosure > summary {
-    border-radius: var(--pm-radius);
-  }
-  .pm-inspector-source {
-    margin-block-end: 12px;
-  }
-  .pm-inspector-source h3 {
-    margin: 0 0 6px;
-    font-size: 12px;
-    font-weight: 650;
-  }
-  .pm-inspector-source p {
-    margin: 6px 0 0;
-    color: var(--pm-muted);
-  }
-  .pm-inspector-metrics {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 0;
-  }
-  .pm-inspector-metrics > div {
-    min-inline-size: min(100%, 112px);
-    padding: 6px 9px;
-    border: 1px solid var(--pm-border);
-    border-radius: var(--pm-radius);
-    background: var(--pm-panel);
-  }
-  .pm-inspector-metrics dt {
-    color: var(--pm-muted);
-  }
-  .pm-inspector-metrics dd {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 650;
-  }
   .pm-performance-view {
     background: var(--pm-bg);
   }

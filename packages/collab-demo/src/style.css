@@ -120,6 +120,13 @@ body {
   overflow: hidden;
 }
 
+#sample-details > pre {
+  overflow: auto;
+  font-size: 12px;
+  padding: 12px;
+  background: #eef1f5;
+}
+
 .kitchen-sink > output {
   font-variant-numeric: tabular-nums;
 }

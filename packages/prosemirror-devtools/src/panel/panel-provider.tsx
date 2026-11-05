@@ -29,7 +29,7 @@ import type {
   TransactionRecord,
 } from "../core/types";
 import { useResolvedTheme } from "./hooks/use-resolved-theme";
-import { hasDedicatedInspectorPanel, type ResolvedPanelDefinition } from "./panel-registry";
+import type { ResolvedPanelDefinition } from "./panel-registry";
 import type { PanelDensity } from "./panel.types";
 import { ensurePanelStyles } from "./styles";
 import { createHostDataAccess } from "./store/host-data-access";
@@ -150,6 +150,12 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
     return preference.source === props.theme ? preference.value : props.theme;
   });
   const resolvedTheme = useResolvedTheme(themeChoice, ownerDocument);
+  const activePanel = createMemo(() => {
+    const requested = props.activePanel ?? uncontrolledActivePanel();
+    return props.panels.some(({ id }) => id === requested)
+      ? requested
+      : (props.panels[0]?.id ?? "");
+  });
   const dataAccess = createHostDataAccess(props.store);
   onCleanup(dataAccess.dispose);
   const instance = from(
@@ -159,22 +165,6 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
       ),
     dataAccess.data.activeInstance(),
   );
-  const inspectors = createMemo(() => instance()?.inspection?.inspectors);
-  const visiblePanels = createMemo(() => {
-    const installed = inspectors();
-    return props.panels.filter((panel) => {
-      if (panel.kind === "extension" || !panel.inspectorIds) return true;
-      const ids = panel.inspectorIds;
-      return installed?.some(
-        ({ descriptor }) => hasDedicatedInspectorPanel(descriptor) && ids.includes(descriptor.id),
-      );
-    });
-  });
-  const activePanel = createMemo(() => {
-    const requested = props.activePanel ?? uncontrolledActivePanel();
-    const panels = visiblePanels();
-    return panels.some(({ id }) => id === requested) ? requested : (panels[0]?.id ?? "");
-  });
   const [moment, setMoment] = createSignal<PanelInspectionMoment>({ kind: "live" });
   const [position, setPosition] = createSignal<PanelInspectionPosition>();
   const [pluginKey, setPluginKey] = createSignal<string>();
@@ -249,7 +239,7 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
 
   const navigation: PanelNavigation = {
     activePanel,
-    panels: visiblePanels,
+    panels: () => props.panels,
     selectPanel,
   };
   const appearance: PanelAppearance = {

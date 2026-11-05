@@ -25,9 +25,9 @@ app.innerHTML = `<main class="kitchen-sink">
   <details class="demo-guide" ${import.meta.env.DEV ? "" : "hidden"}>
     <summary>Try the kitchen sink</summary>
     <ol>
-      <li>Hold delivery and insert a sample in A. In <strong>Collaboration</strong>, check the pending step and watch the version change on delivery. Try undo and redo in A with <strong>Undo history</strong> open.</li>
+      <li>Hold delivery, insert a sample in each peer, then deliver. In <strong>Context</strong>, compare collaboration and history before and after delivery. Try undo and redo in A.</li>
       <li>Pick a transaction and inspect <strong>Rendering</strong> for the highlighted text, paragraph decoration, widget and paragraph NodeView. Compare capture profiles to see which events require instrumentation.</li>
-      <li>Switch to <strong>Tiptap Collaboration with Yjs</strong> to inspect local and remote updates and the Yjs undo stack. Find Tiptap extension data in <strong>Context</strong>.</li>
+      <li>Switch to <strong>Tiptap Collaboration with Yjs</strong> for the Yjs undo stack and Tiptap extension data in <strong>Context</strong>.</li>
       <li>Export an editor session and open the recording below. Refresh editor sessions after a fixture reset. Open a second inspector to compare two live selections.</li>
     </ol>
     <p>Both agent bridges expose the same live editor sessions in development.</p>
@@ -49,6 +49,7 @@ app.innerHTML = `<main class="kitchen-sink">
     .join("")}</div>
   <output id="status" aria-live="polite"></output>
   <p id="coverage"></p>
+  <details id="sample-details" ${import.meta.env.DEV ? "" : "hidden"}><summary>Current provider samples and coverage</summary><pre id="samples"></pre></details>
   <div id="inspector" class="inspector" aria-label="ProseMirror Inspector"></div>
   <div id="demo-actions"></div>
 </main>`;
@@ -62,6 +63,8 @@ const profile = element("#profile", HTMLSelectElement);
 const hold = element("#hold", HTMLInputElement);
 const delay = element("#delay", HTMLInputElement);
 const status = element("#status", HTMLOutputElement);
+const sampleDetails = element("#sample-details", HTMLDetailsElement);
+const samples = element("#samples", HTMLPreElement);
 const coverage = element("#coverage", HTMLParagraphElement);
 const containers = {
   A: element("#editor-A", HTMLDivElement),
@@ -94,6 +97,21 @@ const paused: Record<Peer, boolean> = { A: false, B: false };
 function render(): void {
   if (!active || !fixture) return;
   status.textContent = lastError ?? fixture.status();
+  if (sampleDetails.open) {
+    const id = fixture.inspectorId;
+    samples.textContent = JSON.stringify(
+      client.listEditors().map((editor) => ({
+        target: editor.target,
+        capture: editor.capture,
+        contribution: client.query({
+          target: editor.target,
+          query: { kind: "contribution", id },
+        }),
+      })),
+      null,
+      2,
+    );
+  }
   for (const peer of peers) {
     const button = element(`#pause-${peer}`, HTMLButtonElement);
     button.textContent = `${paused[peer] ? "Resume" : "Pause"} capture ${peer}`;
@@ -151,8 +169,9 @@ function reset(): void {
     ? "Diagnostics are disabled in this production build."
     : profile.value === "attach"
       ? "Attach only captures editor state, dispatches and provider samples. Instrument before state to see plugin callbacks and rendering observations."
-      : "";
-  coverage.hidden = !coverage.textContent;
+      : system.value === "yjs"
+        ? "Yjs undo stack values can settle after dispatch. Open the current provider samples for the final counts."
+        : "The official collab plugin reports confirmed versions and pending steps.";
   render();
 }
 const handlers = [
@@ -183,6 +202,7 @@ function holdChanged(): void {
 }
 system.addEventListener("change", reset);
 profile.addEventListener("change", reset);
+sampleDetails.addEventListener("toggle", render);
 hold.addEventListener("change", holdChanged);
 const unsubscribe = store.subscribe(changed);
 reset();
@@ -201,6 +221,7 @@ function dispose(): void {
   for (const [button, listener] of handlers) button.removeEventListener("click", listener);
   system.removeEventListener("change", reset);
   profile.removeEventListener("change", reset);
+  sampleDetails.removeEventListener("toggle", render);
   hold.removeEventListener("change", holdChanged);
   unsubscribe();
   disposeRecordings?.();
