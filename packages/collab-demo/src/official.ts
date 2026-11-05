@@ -117,13 +117,21 @@ export function mountOfficial({
             payload: { kind: "steps", version: fromVersion, count: batch.steps.length },
             dispatch: { kind: "unknown" },
           });
-          client.view.dispatch(
-            receiveTransaction(
-              client.view.state,
-              batch.steps,
-              batch.steps.map(() => batch.clientID),
-            ),
-          );
+          const receive = () => {
+            client.view.dispatch(
+              receiveTransaction(
+                client.view.state,
+                batch.steps,
+                batch.steps.map(() => batch.clientID),
+              ),
+            );
+            return true;
+          };
+          const diagnostics = client.session?.diagnostics;
+          if (diagnostics) {
+            const action = recipient === peer ? "Confirm" : "Receive";
+            diagnostics.traceCommand(`Collab: ${action} ${messageId}`, receive);
+          } else receive();
           if (recipient === peer)
             client.transport?.observe({
               kind: "acknowledge",

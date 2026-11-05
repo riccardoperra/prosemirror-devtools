@@ -893,6 +893,14 @@
     justify-content: flex-end;
     gap: 4px;
   }
+  .pm-history-effects {
+    grid-column: 2 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    color: var(--pm-muted);
+    font-size: 11px;
+  }
   .pm-detail-columns {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

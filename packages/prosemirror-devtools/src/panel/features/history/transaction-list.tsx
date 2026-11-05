@@ -4,6 +4,8 @@ import { cx, panelStyles } from "../../styles";
 
 import type { TransactionRecord } from "../../../core/types";
 import { formatDateTime, formatMs, formatTime } from "../../formatters";
+import { Badge } from "../../ui/badge";
+import { readDispatchEffects } from "../dispatch/read-dispatch-effects";
 import { TransactionBadges } from "../dispatch/transaction-badges";
 
 const HISTORY_PAGE_SIZE = 200;
@@ -37,34 +39,53 @@ export function TransactionList(props: TransactionListProps): JSX.Element {
       </div>
       <ul class={panelStyles.pmList}>
         <For each={newestFirst()}>
-          {(record) => (
-            <li>
-              <button
-                aria-label={`Inspect dispatch #${record.id}`}
-                aria-pressed={props.selectedId === record.id}
-                class={cx(panelStyles.pmListRow, panelStyles.pmHistoryRow)}
-                onClick={() => props.onSelect(record.id)}
-                type="button"
-              >
-                <span class={panelStyles.pmTransactionTime}>#{record.id}</span>
-                <span class={panelStyles.pmRowMain}>
-                  <time
-                    class={cx(panelStyles.pmRowTitle, panelStyles.pmHistoryTimestamp)}
-                    dateTime={new Date(record.timestamp).toISOString()}
-                    title={formatDateTime(record.timestamp)}
-                  >
-                    {formatTime(record.timestamp)}
-                  </time>
-                  <span class={panelStyles.pmRowDetail}>
-                    {record.stepCount} steps · {formatMs(record.totalDuration)}
+          {(record) => {
+            const effects = readDispatchEffects(record).filter(({ effect }) => effect.listLabel);
+            return (
+              <li>
+                <button
+                  aria-label={`Inspect dispatch #${record.id}`}
+                  aria-description={
+                    effects
+                      .map(({ effect }) => `${effect.badge ?? ""} ${effect.listLabel}`)
+                      .join(". ") || undefined
+                  }
+                  aria-pressed={props.selectedId === record.id}
+                  class={cx(panelStyles.pmListRow, panelStyles.pmHistoryRow)}
+                  onClick={() => props.onSelect(record.id)}
+                  type="button"
+                >
+                  <span class={panelStyles.pmTransactionTime}>#{record.id}</span>
+                  <span class={panelStyles.pmRowMain}>
+                    <time
+                      class={cx(panelStyles.pmRowTitle, panelStyles.pmHistoryTimestamp)}
+                      dateTime={new Date(record.timestamp).toISOString()}
+                      title={formatDateTime(record.timestamp)}
+                    >
+                      {formatTime(record.timestamp)}
+                    </time>
+                    <span class={panelStyles.pmRowDetail}>
+                      {record.stepCount} steps · {formatMs(record.totalDuration)}
+                    </span>
                   </span>
-                </span>
-                <span class={panelStyles.pmHistoryBadges}>
-                  <TransactionBadges record={record} />
-                </span>
-              </button>
-            </li>
-          )}
+                  <span class={panelStyles.pmHistoryBadges}>
+                    <TransactionBadges record={record} />
+                  </span>
+                  <Show when={effects.length > 0}>
+                    <span class={panelStyles.pmHistoryEffects}>
+                      <For each={effects}>
+                        {({ effect }) => (
+                          <span>
+                            <Badge tone="blue">{effect.badge}</Badge> {effect.listLabel}
+                          </span>
+                        )}
+                      </For>
+                    </span>
+                  </Show>
+                </button>
+              </li>
+            );
+          }}
         </For>
         <Show when={hiddenCount() > 0}>
           <li>

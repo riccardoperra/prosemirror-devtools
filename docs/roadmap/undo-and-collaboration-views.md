@@ -61,6 +61,10 @@ At a narrow panel width, show the selected observation as a single column. At a 
 
 The selected dispatch in Transactions shows the captured undo and sync changes above its details or diff. An Events call shows the same summary for its retained dispatch links. The raw samples open on demand in Transactions. The panel reads the existing captured projections, and the prototype adds a kitchen sink button for an edit explicitly excluded from undo history.
 
+The dispatch list shows a badge when a projection describes a meaningful change or an explicit history action. The demo traces the official collaboration receive and confirmation calls at the application boundary. Both calls include the batch ID and link to their retained editor dispatch in Events.
+
+Transactions and Events render the same presentation model. An internal presenter matches a captured inspector ID and version and returns an optional badge, list label, and detail. Editors that do not install the inspector have no corresponding projection or badge. The presenters read serialized data and require no optional editor dependencies. A future host registration hook can use this shape for custom inspectors once the prototype settles the UI contract.
+
 Holding one official Collab edit makes pending steps rise from zero to one. The confirmation dispatch clears that step and advances the confirmed version. The observed Undo call links to the dispatch that changes the document and moves one entry from undo to redo.
 
 In the Yjs fixture, the Undo call links to the dispatch that removes A's edit while preserving B's. The sample captured during that dispatch can still refer to a preceding remote update. The view labels the last observed update separately from the dispatch and keeps unsettled UndoManager counts in the raw sample. A peer workspace would need independent update retention and explicit linkage to make a delivery timeline useful. Review the contextual flow in the kitchen sink before adding that workspace.

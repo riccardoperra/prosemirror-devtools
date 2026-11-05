@@ -11,7 +11,7 @@ Open [the kitchen sink on port 4183](http://localhost:4183). Both modes use two 
 
 ## Try the Transactions and Events prototype
 
-1. In **Official ProseMirror collab**, check **Hold delivery** and click **Insert sample in A**. With A selected, open **Transactions**. **Sync effect** shows one new pending step and the same confirmed version. Click **Deliver queued updates**. Inspect the newest dispatch for the confirmed version and the cleared pending step.
+1. In **Official ProseMirror collab**, check **Hold delivery** and click **Insert sample in A**. With A selected, **Transactions** marks the dispatch **Collab · Local steps queued**. Click **Deliver queued updates**. The new dispatch says **Collab · Pending steps cleared**. In **Events**, open **Collab: Confirm steps-1** to follow the application call to that dispatch. Select B to find its corresponding **Collab: Receive steps-1** call.
 2. Click **Undo in A**, open **Events**, and select the **Undo** call. Read the undo and redo changes on its dispatch, then open the dispatch and select **Changes & mapping**. Click **Follow live** and then **Insert outside history in A** to inspect an explicit `addToHistory: false` edit. Use **Raw effect samples** to read the captured data.
 3. In **Tiptap Collaboration with Yjs**, insert a sample in both peers, deliver, and undo in A. Find **Undo** in **Events** and open its dispatch to see the edit it removed. The **Yjs sample** shows the last update observed when the dispatch was captured. That update can precede the dispatch. **Current provider samples and coverage** gives you the current UndoManager counts after the command settles.
 
