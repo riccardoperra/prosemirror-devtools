@@ -11,6 +11,7 @@ import { formatMs, formatTime } from "../../formatters";
 import { JsonTree } from "../../json-tree";
 import { cx, panelStyles } from "../../styles";
 import { Badge } from "../../ui/badge";
+import { ResizableSplit } from "../../ui/resizable-split";
 import { collectDecorationRows } from "./decoration-list";
 import { mountDecorationOverlay } from "./decoration-overlay";
 
@@ -247,7 +248,7 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
             </button>
           </div>
         </Show>
-        <div class={panelStyles.pmSplit} style={{ flex: "1", "min-block-size": "0" }}>
+        <ResizableSplit label="Rendering list width" style={{ flex: "1", "min-block-size": "0" }}>
           <div class={panelStyles.pmPane}>
             <Show
               when={totalRows() > 0}
@@ -481,7 +482,7 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
               </Show>
             </Show>
           </div>
-        </div>
+        </ResizableSplit>
       </div>
     </Show>
   );

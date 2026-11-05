@@ -6,6 +6,7 @@ import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { panelStyles } from "../../styles";
 import { Badge } from "../../ui/badge";
+import { ResizableSplit } from "../../ui/resizable-split";
 import { useOptionalPanelContext } from "../../panel-provider";
 
 /** Content boundaries differ from the positions before and after a node. */
@@ -78,7 +79,7 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
   };
 
   return (
-    <div class={panelStyles.pmSplit}>
+    <ResizableSplit label="Resolved position width">
       <div class={panelStyles.pmPane}>
         <div class={panelStyles.pmPaneHeader}>
           <span class={panelStyles.pmPaneTitle}>Resolved position</span>
@@ -181,6 +182,6 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
           <JsonTree value={marks()} />
         </div>
       </div>
-    </div>
+    </ResizableSplit>
   );
 }

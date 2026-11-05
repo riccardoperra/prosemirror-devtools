@@ -61,7 +61,8 @@ describe("devtools panel shell", () => {
     try {
       const panel = container.querySelector<HTMLElement>(".pm-devtools");
       const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
-      expect(tabs).toHaveLength(BUILTIN_PANELS.length);
+      expect(tabs.map((tab) => tab.textContent)).not.toContain("Undo history");
+      expect(tabs.map((tab) => tab.textContent)).not.toContain("Collaboration");
       expect(panel?.dataset.theme).toBe("light");
 
       tabs[0]?.focus();
@@ -275,7 +276,9 @@ describe("devtools panel shell", () => {
     let unregister = (): void => {};
 
     try {
-      expect(container.querySelectorAll('[role="tab"]')).toHaveLength(BUILTIN_PANELS.length + 1);
+      expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe(
+        "Live state",
+      );
       expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("No active editor");
 
       unregister = store.register({ id: "editor", view });

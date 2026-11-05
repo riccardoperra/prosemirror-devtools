@@ -82,7 +82,6 @@ export function mountOfficial({
   };
   const clients = { A: createPeer("A"), B: createPeer("B") };
   return {
-    inspectorId: "prosemirror-collab",
     flush() {
       while (active && pending.size > 0) {
         const peer = pending.values().next().value;

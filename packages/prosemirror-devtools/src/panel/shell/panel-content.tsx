@@ -13,6 +13,7 @@ import {
 import { panelStyles } from "../styles";
 
 import type { RegisteredProseMirrorInstance } from "../../core/types";
+import { CollaborationView, UndoHistoryView } from "../features/inspector/inspector-views";
 import { HistoryView } from "../features/history/history-view";
 import { DecorationsView } from "../features/decorations/decorations-view";
 import { EventsView } from "../features/events/events-view";
@@ -124,6 +125,12 @@ function ActivePanelView(props: ActivePanelViewProps): JSX.Element {
             </Match>
             <Match when={props.tab === "history"}>
               <HistoryView instance={props.instance} onClear={props.onClearHistory} />
+            </Match>
+            <Match when={props.tab === "inspector-undo-history"}>
+              <UndoHistoryView />
+            </Match>
+            <Match when={props.tab === "inspector-collaboration"}>
+              <CollaborationView />
             </Match>
             <Match when={props.tab === "selection"}>
               <SelectionView instance={props.instance} />

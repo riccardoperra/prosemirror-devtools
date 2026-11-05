@@ -3,6 +3,7 @@ import { For, Show, type JSX } from "solid-js";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { formatMs } from "../../formatters";
 import { cx, panelStyles } from "../../styles";
+import { ResizableSplit } from "../../ui/resizable-split";
 import { EventDetails, EventStatusBadge } from "./event-details";
 import { eventSource, useEvents, type EventStatus } from "./use-events";
 import type { DevtoolsDiagnosticEvent } from "../../../core/diagnostics";
@@ -75,7 +76,7 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
 
   return (
     <Show when={events.controller()} fallback={<EventsSetup />}>
-      <div class={panelStyles.pmSplit}>
+      <ResizableSplit label="Observed calls width">
         <div class={panelStyles.pmPane}>
           <div class={panelStyles.pmPaneHeader}>
             <span class={panelStyles.pmPaneTitle}>Observed calls</span>
@@ -247,7 +248,7 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
             )}
           </Show>
         </div>
-      </div>
+      </ResizableSplit>
     </Show>
   );
 }

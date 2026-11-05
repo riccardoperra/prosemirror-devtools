@@ -4,6 +4,8 @@ export type ProseMirrorDevtoolsTab =
   | "decorations"
   | "events"
   | "history"
+  | "inspector-undo-history"
+  | "inspector-collaboration"
   | "performance"
   | "plugins"
   | "schema"

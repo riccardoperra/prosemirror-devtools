@@ -102,7 +102,7 @@ then press Enter through the browser. Check the extra list item and the committe
 Execute Undo through the visible button. Wait for the original document and history depths.
 
 Run the same scenario through the accessible panel without JavaScript evaluation. Use Transactions,
-Follow live and the historical phase controls to choose an observation. Open **Context** for capture status and installed inspectors. Expand **Technical details** for the read point and provider evidence.
+Follow live and the historical phase controls to choose an observation. Open **Undo history** to read the undo and redo counts. Open **Context** for capture status and installed inspectors. Expand **Technical details** for coverage and the read point.
 The copy control exposes a bounded diagnostic context and a textarea fallback.
 
 Record each action, observation point, expected result, actual result, and browser artifact. Keep

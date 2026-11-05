@@ -1,5 +1,16 @@
 import type { DevtoolsExtension, DevtoolsPanelExtension } from "../core/extensions";
+import type { InspectorDescriptor } from "../inspection/types";
 import type { ProseMirrorDevtoolsTab } from "./panel.types";
+
+export const INSPECTOR_PANEL_IDS = {
+  history: "prosemirror-history",
+  collab: "prosemirror-collab",
+  yjs: "yjs",
+};
+
+export function hasDedicatedInspectorPanel({ id, version }: InspectorDescriptor): boolean {
+  return version === "1" && Object.values(INSPECTOR_PANEL_IDS).includes(id);
+}
 
 export type BuiltinPanelDefinition = Readonly<{
   id: ProseMirrorDevtoolsTab;
@@ -8,6 +19,7 @@ export type BuiltinPanelDefinition = Readonly<{
   requiresInstance: true;
   badge: "transactions" | null;
   kind: "builtin";
+  inspectorIds?: readonly string[];
 }>;
 
 export type ExternalPanelDefinition = Readonly<{
@@ -47,6 +59,24 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
     requiresInstance: true,
     badge: "transactions",
     kind: "builtin",
+  },
+  {
+    id: "inspector-undo-history",
+    title: "Undo history",
+    order: 11,
+    requiresInstance: true,
+    badge: null,
+    kind: "builtin",
+    inspectorIds: [INSPECTOR_PANEL_IDS.history, INSPECTOR_PANEL_IDS.yjs],
+  },
+  {
+    id: "inspector-collaboration",
+    title: "Collaboration",
+    order: 12,
+    requiresInstance: true,
+    badge: null,
+    kind: "builtin",
+    inspectorIds: [INSPECTOR_PANEL_IDS.collab, INSPECTOR_PANEL_IDS.yjs],
   },
   {
     id: "events",

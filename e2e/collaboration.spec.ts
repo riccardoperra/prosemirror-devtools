@@ -132,7 +132,17 @@ test("V3 Yjs collaboration keeps the other peer's edit when undoing local work",
       query: { kind: "contribution", id: "prosemirror-collab" },
     }),
   ).toMatchObject({ kind: "unsupported" });
+  const panel = page.getByRole("tabpanel");
+  await page.getByRole("tab", { name: "Collaboration", exact: true }).click();
+  await expect(panel.getByRole("group", { name: "Latest update", exact: true })).toContainText(
+    "Remote",
+  );
+  await expect(panel.getByRole("group", { name: "Confirmed version", exact: true })).toHaveCount(0);
+  await page.getByRole("tab", { name: "Undo history", exact: true }).click();
+  await expect(panel.getByRole("group", { name: "Undo", exact: true })).toHaveText("Undo1");
   await page.getByRole("button", { name: "Undo in A", exact: true }).click();
+  await expect(panel.getByRole("group", { name: "Undo", exact: true })).toHaveText("Undo0");
+  await expect(panel.getByRole("group", { name: "Redo", exact: true })).toHaveText("Redo1");
   await page.getByRole("button", { name: "Deliver queued updates", exact: true }).click();
   await expect(editors.A).toHaveText("Shared Yjs document.B");
   await expect(editors.B).toHaveText("Shared Yjs document.B");
@@ -163,6 +173,14 @@ test("kitchen sink combines collaboration, history, rendering and offline record
   await expect(
     page.getByRole("heading", { name: "ProseMirror Inspector kitchen sink" }),
   ).toBeVisible();
+  const panel = page.getByRole("tabpanel");
+  await page.getByRole("tab", { name: "Collaboration", exact: true }).click();
+  const version = panel.getByRole("group", { name: "Confirmed version", exact: true });
+  const pending = panel.getByRole("group", { name: "Pending steps", exact: true });
+  await expect(version).toHaveText("Confirmed version0");
+  await expect(pending).toHaveText("Pending steps0");
+  await expect(panel.getByText("Raw data", { exact: true })).toBeVisible();
+  await expect(panel.getByText("unconfirmedSteps", { exact: true })).not.toBeVisible();
   await page.getByRole("checkbox", { name: "Hold delivery", exact: true }).check();
   const first = page.getByRole("textbox", { name: "Official collab editor A", exact: true });
   const second = page.getByRole("textbox", { name: "Official collab editor B", exact: true });
@@ -170,6 +188,7 @@ test("kitchen sink combines collaboration, history, rendering and offline record
   await page.getByRole("button", { name: "Insert sample in A", exact: true }).click();
   await expect(first).not.toHaveText(initial);
   await expect(second).toHaveText(initial);
+  await expect(pending).toHaveText("Pending steps1");
   const edited = await first.innerText();
 
   const { editors } = object(await callTool(page, "prosemirror_editors"));
@@ -209,6 +228,8 @@ test("kitchen sink combines collaboration, history, rendering and offline record
   const deliver = page.getByRole("button", { name: "Deliver queued updates", exact: true });
   await deliver.click();
   await expect(second).toHaveText(edited);
+  await expect(version).toHaveText("Confirmed version1");
+  await expect(pending).toHaveText("Pending steps0");
   await page.getByRole("button", { name: "Undo in A", exact: true }).click();
   await deliver.click();
   await expect(second).toHaveText(initial);

@@ -1,6 +1,7 @@
 import { createMemo, Show, type JSX } from "solid-js";
 
 import { panelStyles } from "../../styles";
+import { ResizableSplit } from "../../ui/resizable-split";
 
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { useSelectedTransaction } from "../../hooks/use-selected-transaction";
@@ -24,7 +25,7 @@ export function HistoryView(props: HistoryViewProps): JSX.Element {
       }
     >
       {(record) => (
-        <div class={panelStyles.pmHistoryLayout}>
+        <ResizableSplit label="Dispatch list width" class={panelStyles.pmHistoryLayout}>
           <TransactionList
             onClear={props.onClear}
             onSelect={select}
@@ -32,7 +33,7 @@ export function HistoryView(props: HistoryViewProps): JSX.Element {
             selectedId={selectedId()}
           />
           <HistoryDispatchInspector instance={props.instance} record={record()} />
-        </div>
+        </ResizableSplit>
       )}
     </Show>
   );

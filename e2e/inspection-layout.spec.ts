@@ -45,6 +45,25 @@ for (const host of ["standalone", "tanstack"]) {
         .press("x");
       await page.getByRole("tab", { name: /^Transactions/ }).click();
       const dispatch = page.getByRole("region", { name: /^Dispatch \d+ inspector$/ });
+      const divider = panel.getByRole("separator", { name: "Dispatch list width", exact: true });
+      if (width === 1280) {
+        await expect(divider).toBeVisible();
+        await divider.scrollIntoViewIfNeeded();
+        const start = (await divider.boundingBox())!;
+        const handle = { x: start.x + start.width / 2, y: start.y + 24 };
+        await page.mouse.move(handle.x, handle.y);
+        await page.mouse.down();
+        await page.mouse.move(handle.x + 70, handle.y);
+        await page.mouse.up();
+        await expect
+          .poll(async () => (await divider.boundingBox())!.x)
+          .toBeGreaterThan(start.x + 40);
+        const dragged = (await divider.boundingBox())!;
+        await divider.press("ArrowLeft");
+        await expect.poll(async () => (await divider.boundingBox())!.x).toBeLessThan(dragged.x);
+      } else {
+        await expect(divider).toBeHidden();
+      }
       await expect(dispatch.getByText("Related evidence", { exact: true })).toBeVisible();
       await expect(
         dispatch.getByRole("navigation", { name: "Related dispatch evidence" }),

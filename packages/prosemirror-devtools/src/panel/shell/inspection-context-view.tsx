@@ -2,6 +2,7 @@ import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 
 import { resolveInspectionLimits, serializeInspectionValue } from "../../inspection/serialization";
 import { usePanelInspection, usePanelMeta, usePanelNavigation } from "../panel-provider";
+import { hasDedicatedInspectorPanel } from "../panel-registry";
 import { readInstanceState } from "../store/instance-state";
 import { cx, panelStyles } from "../styles";
 import { Badge } from "../ui/badge";
@@ -19,8 +20,8 @@ export function InspectionContextView(): JSX.Element {
   const capabilities = createMemo(() =>
     detailsOpen() ? inspection.read({ kind: "capabilities" }) : undefined,
   );
-  const contributions = createMemo(() =>
-    detailsOpen() ? inspection.read({ kind: "contributions" }) : undefined,
+  const additionalInspectors = createMemo(() =>
+    inspectors().filter(({ descriptor }) => !hasDedicatedInspectorPanel(descriptor)),
   );
 
   const diagnosticContext = (): string => {
@@ -121,11 +122,24 @@ export function InspectionContextView(): JSX.Element {
             <Show when={capabilities()}>
               {(value) => <InspectionReadout result={value()} label="Capabilities and coverage" />}
             </Show>
-            <Show when={contributions()}>
-              {(value) => (
-                <InspectionReadout result={value()} label="Semantic inspector evidence" />
-              )}
-            </Show>
+            <For each={additionalInspectors()}>
+              {({ descriptor }) => {
+                const [open, setOpen] = createSignal(false);
+                return (
+                  <details
+                    class={panelStyles.pmDocumentDisclosure}
+                    onToggle={(event) => setOpen(event.currentTarget.open)}
+                  >
+                    <summary>{descriptor.label} data</summary>
+                    <Show
+                      when={open() && inspection.read({ kind: "contribution", id: descriptor.id })}
+                    >
+                      {(value) => <InspectionReadout result={value()} label={descriptor.label} />}
+                    </Show>
+                  </details>
+                );
+              }}
+            </For>
           </div>
         </Show>
       </details>

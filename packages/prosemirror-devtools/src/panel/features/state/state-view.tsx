@@ -8,6 +8,7 @@ import { inspectState } from "../../../core/serialize";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
+import { ResizableSplit } from "../../ui/resizable-split";
 import { DocumentTree, getDocumentNodeRange } from "./document-tree";
 import { useDocumentSelection } from "./use-document-selection";
 import { useOptionalPanelContext } from "../../panel-provider";
@@ -64,7 +65,7 @@ export function StateView(props: StateViewProps): JSX.Element {
   });
 
   return (
-    <div class={panelStyles.pmSplit}>
+    <ResizableSplit label="Document width">
       <div class={panelStyles.pmPane}>
         <div class={panelStyles.pmPaneHeader}>
           <span class={panelStyles.pmPaneTitle}>Document</span>
@@ -173,6 +174,6 @@ export function StateView(props: StateViewProps): JSX.Element {
           <JsonTree value={selectionJson()} />
         </div>
       </div>
-    </div>
+    </ResizableSplit>
   );
 }

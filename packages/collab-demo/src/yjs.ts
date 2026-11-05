@@ -144,7 +144,6 @@ export function mountYjs({
   for (const peer of peers)
     yUndoPluginKey.getState(clients[peer].editor.state)?.undoManager.clear();
   return {
-    inspectorId: "yjs",
     flush,
     runCommand(peer, command) {
       const { editor, diagnostics } = clients[peer];
