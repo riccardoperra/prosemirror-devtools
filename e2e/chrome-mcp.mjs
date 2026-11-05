@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -63,6 +64,8 @@ const output = (result) => {
 };
 
 let server;
+let browser;
+let profile;
 try {
   await rm(reportPath, { force: true });
   server = await createServer({
@@ -75,15 +78,25 @@ try {
   const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
   await response.body?.cancel();
   assert(response.ok, `Fixture returned HTTP ${response.status} at ${url}.`);
+  profile = await mkdtemp(resolve(tmpdir(), "inspector-chrome-mcp-"));
+  browser = await chromium.launchPersistentContext(profile, {
+    executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH,
+    args: ["--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0"],
+  });
+  const [port, socketPath] = (await readFile(resolve(profile, "DevToolsActivePort"), "utf8"))
+    .trim()
+    .split("\n");
+  assert(
+    /^\d+$/.test(port) && socketPath?.startsWith("/devtools/browser/"),
+    "Missing Chrome CDP endpoint.",
+  );
   const client = start(
     [
       mcp,
-      "--headless=true",
-      "--isolated=true",
+      `--wsEndpoint=ws://127.0.0.1:${port}${socketPath}`,
       "--usageStatistics=false",
       "--javascriptEvaluation=false",
       "--categoryExperimentalThirdParty=true",
-      `--executablePath=${process.env.PLAYWRIGHT_EXECUTABLE_PATH ?? chromium.executablePath()}`,
     ],
     root,
   );
@@ -202,5 +215,13 @@ try {
     `Chrome MCP ${initialized.serverInfo.version}: five Inspector tools discovered; coherent document, selection and verdict passed.`,
   );
 } finally {
-  await Promise.all([server?.close(), ...children.map(stop)]);
+  try {
+    await Promise.all([server?.close(), ...children.map(stop)]);
+  } finally {
+    try {
+      await browser?.close();
+    } finally {
+      if (profile) await rm(profile, { recursive: true, force: true });
+    }
+  }
 }
