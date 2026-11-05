@@ -15,19 +15,13 @@ for (const scenario of cases) {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(process.env.INSPECTOR_REACT_FIXTURE_URL ?? "http://127.0.0.1:4182");
     await page.getByRole("tab", { name: scenario.panel, exact: true }).click();
-    await expect(page.getByRole("button", { name: "Follow live", exact: true })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(page.getByRole("button", { name: "Follow live", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Focus editor", exact: true }).click();
     const editor = page.getByRole("textbox", { name: "React ProseMirror editor", exact: true });
     await editor.press("End");
     await editor.press("Z");
     await expect(editor).toHaveText("AlphaZ");
-    await expect(page.getByRole("button", { name: "Follow live", exact: true })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(page.getByRole("button", { name: "Follow live", exact: true })).toHaveCount(0);
     const panel = page.getByRole("tabpanel");
     for (const expected of scenario.expected) {
       await expect(panel.getByText(expected, { exact: true })).toBeVisible();

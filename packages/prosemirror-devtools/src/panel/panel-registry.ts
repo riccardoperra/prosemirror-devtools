@@ -96,6 +96,14 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
     badge: null,
     kind: "builtin",
   },
+  {
+    id: "inspection-context",
+    title: "Context",
+    order: 110,
+    requiresInstance: true,
+    badge: null,
+    kind: "builtin",
+  },
 ];
 
 export function resolvePanelRegistry(

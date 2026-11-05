@@ -7,4 +7,5 @@ export type ProseMirrorDevtoolsTab =
   | "performance"
   | "plugins"
   | "schema"
-  | "snapshots";
+  | "snapshots"
+  | "inspection-context";

@@ -2,20 +2,28 @@ import { expect, test } from "@playwright/test";
 
 for (const host of ["standalone", "tanstack"]) {
   for (const width of [390, 1280]) {
-    test(`${host} disclosures preserve panel space at ${width}px`, async ({ page }) => {
+    test(`${host} keeps context in a separate tab at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
       await page.goto(`http://127.0.0.1:${host === "tanstack" ? 4174 : 4180}`);
       if (host === "tanstack")
         await page.getByRole("button", { name: "Open TanStack Devtools", exact: true }).click();
+      const panel = page.getByRole("tabpanel");
+      await expect(
+        page.getByRole("button", { name: "Copy diagnostic context", exact: true }),
+      ).toHaveCount(0);
+      await page.getByRole("tab", { name: "Context", exact: true }).click();
+      const initialBounds = await panel.boundingBox();
+      expect(initialBounds).not.toBeNull();
+      await expect(panel.getByRole("region", { name: "Captured data" })).toContainText("Recording");
+      await expect(panel.getByRole("region", { name: "Installed inspectors" })).toBeVisible();
       await page.getByRole("button", { name: "Copy diagnostic context", exact: true }).click();
       const context = page.getByRole("textbox", { name: "Diagnostic context JSON" });
       await expect(context).toBeVisible();
-      await page.getByText("Inspectors and capture coverage", { exact: true }).click();
+      await page.getByText("Technical details", { exact: true }).click();
       await expect(
         page.getByRole("region", { name: "Capabilities and coverage", exact: true }),
       ).toBeVisible();
       const tabs = page.getByRole("tablist", { name: "ProseMirror Inspector panels" });
-      const panel = page.getByRole("tabpanel");
       const tabsBounds = await tabs.boundingBox();
       const contextBounds = await context.boundingBox();
       const panelBounds = await panel.boundingBox();
@@ -24,6 +32,8 @@ for (const host of ["standalone", "tanstack"]) {
       expect(panelBounds).not.toBeNull();
       expect(contextBounds!.width).toBeLessThanOrEqual(width);
       expect(panelBounds!.height).toBeGreaterThan(100);
+      expect(panelBounds!.y - (tabsBounds!.y + tabsBounds!.height)).toBeLessThanOrEqual(2);
+      expect(panelBounds!.height).toBe(initialBounds!.height);
       await page.getByRole("tab", { name: "Selection", exact: true }).click();
       await expect(panel).toContainText("Head");
       await expect(context).not.toBeVisible();

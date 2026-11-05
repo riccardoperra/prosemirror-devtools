@@ -167,7 +167,11 @@ test("V5 repeats the list scenario through accessible UI without JavaScript eval
     .getByRole("button", { name: "Inspect dispatch #1 in standalone-list", exact: true })
     .click();
   await expect(page.getByRole("tab", { selected: true })).toContainText("Transactions");
-  await page.getByText("Inspectors and capture coverage", { exact: true }).click();
+  await page.getByRole("tab", { name: "Context", exact: true }).click();
+  await expect(page.getByLabel("Installed inspectors", { exact: true })).toContainText(
+    "Undo history",
+  );
+  await page.getByText("Technical details", { exact: true }).click();
   await expect(page.getByLabel("Semantic inspector evidence", { exact: true })).toContainText(
     "prosemirror-history",
   );
@@ -178,7 +182,8 @@ test("V5 repeats the list scenario through accessible UI without JavaScript eval
   );
   await expect(page.getByLabel("Inspection context", { exact: true })).toContainText("Dispatch #1");
   await page.getByRole("button", { name: "Follow live", exact: true }).click();
-  await expect(page.getByLabel("Inspection context", { exact: true })).toContainText("Live editor");
+  await expect(page.getByLabel("Inspection context", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("tabpanel")).toContainText("Live editor");
   const screenshot = testInfo.outputPath("standalone-computer-use.png");
   await page.screenshot({ path: screenshot, fullPage: true });
   await testInfo.attach("UI-only undo and diagnostic evidence", {

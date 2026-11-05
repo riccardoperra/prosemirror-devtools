@@ -4,10 +4,11 @@ Il controllo visivo precedente non aveva verificato il contesto diagnostico espa
 TanStack. L'header embedded disponeva selettore, contesto e tab su una stessa riga. Il contesto
 aperto restringeva la navigazione e consumava lo spazio del pannello.
 
-La correzione separa la navigazione dal contesto, limita l'altezza dell'header e rende scrollabili
-i dettagli. Il campo JSON usa colori e font del pannello. La regressione browser apre contesto e
-copertura su standalone e TanStack a 390 e 1280 pixel, verifica lo spazio disponibile e cambia tab.
-I due casi standalone fallivano prima della correzione; i quattro casi passano dopo.
+Il primo intervento separava la navigazione dal contesto e limitava l'altezza dell'header. La
+versione corrente sposta stato della cattura, inspector e copia diagnostica in **Context**. I dati
+del pannello live iniziano sotto le tab. La barra prima e dopo il dispatch compare quando si
+seleziona una transazione storica. La regressione browser verifica lo spazio del pannello su
+standalone e TanStack a 390 e 1280 pixel.
 
 - [Prima](./evidence/usability/context-before.jpg).
 - [Dopo](./evidence/usability/context-after.jpg).
@@ -31,5 +32,4 @@ plugin occupavano più righe prima dei dati. Ora sono in Related evidence, chius
 limitato in altezza quando aperto. Il test unitario segue un collegamento e torna a Transactions;
 la regressione browser verifica che i dettagli siano nel viewport a larghezza desktop.
 
-Cambiare tab richiude i dettagli diagnostici secondari. Il contesto espanso non rimane sopra
-il contenuto del pannello appena scelto. Il controllo del viewport riguarda l’host TanStack.
+I dettagli tecnici si aprono dentro **Context**. Il controllo del viewport riguarda l’host TanStack.

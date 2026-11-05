@@ -232,8 +232,9 @@ selected dispatch. **Follow live** returns to the current state. Historical docu
 reads never substitute live data. The visible Transactions and Rendering names retain the public
 panel IDs `history` and `decorations`.
 
-Use **Inspectors and capture coverage** for semantic provider values and availability reasons.
-**Copy diagnostic context** copies a bounded target, point, selection, and coverage summary.
+Open **Context** to see capture status and installed inspectors. Expand **Technical details** for
+semantic provider values, coverage, and availability reasons. **Copy diagnostic context** copies
+a bounded target, point, selection, and coverage summary.
 
 Transactions **Changes & mapping** mode uses captured step maps, including mirrors and custom steps.
 Diffs are computed for the selected step, including marks and attributes. Filtered and unobserved

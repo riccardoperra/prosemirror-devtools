@@ -33,6 +33,7 @@ import {
 import { useActiveInstance } from "../store/selectors";
 import { EmptyState } from "../ui/empty-state";
 import { HistoricalPanel } from "./historical-panel";
+import { InspectionContextView } from "./inspection-context-view";
 
 const PerformanceView = lazy(async () => {
   const module = await import("../features/performance/performance-view");
@@ -149,6 +150,9 @@ function ActivePanelView(props: ActivePanelViewProps): JSX.Element {
             </Match>
             <Match when={props.tab === "schema"}>
               <SchemaView instance={props.instance} />
+            </Match>
+            <Match when={props.tab === "inspection-context"}>
+              <InspectionContextView />
             </Match>
             <Match when={props.tab === "snapshots"}>
               <SnapshotsView instance={props.instance} />

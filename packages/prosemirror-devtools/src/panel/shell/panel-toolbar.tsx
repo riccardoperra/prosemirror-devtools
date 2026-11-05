@@ -1,4 +1,4 @@
-import { For, Show, type JSX } from "solid-js";
+import { createMemo, For, Show, type JSX } from "solid-js";
 
 import { panelStyles } from "../styles";
 
@@ -14,6 +14,15 @@ export function PanelToolbar(props: PanelToolbarProps): JSX.Element {
   const activeInstanceId = useActiveInstanceId();
   const instances = useInstanceDescriptors();
   const appearance = usePanelAppearance();
+  const duplicateLabels = createMemo(() => {
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+    for (const { label } of instances()) {
+      if (seen.has(label)) duplicates.add(label);
+      seen.add(label);
+    }
+    return duplicates;
+  });
 
   return (
     <div class={panelStyles.pmToolbar}>
@@ -39,7 +48,7 @@ export function PanelToolbar(props: PanelToolbarProps): JSX.Element {
           <For each={instances()}>
             {(item) => (
               <option value={item.id}>
-                {item.label === item.id ? item.id : `${item.label} (${item.id})`}
+                {duplicateLabels().has(item.label) ? `${item.label} (${item.id})` : item.label}
               </option>
             )}
           </For>

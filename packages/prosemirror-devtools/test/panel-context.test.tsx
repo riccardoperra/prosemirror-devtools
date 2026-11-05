@@ -54,6 +54,13 @@ describe("host inspection context", () => {
         host.querySelector('[aria-label="Captured inspector projections"]')?.textContent,
       ).toContain('"counter"');
       expect(getState).not.toHaveBeenCalled();
+      tab(host, "Context")?.click();
+      expect(host.querySelector('[aria-label="Installed inspectors"]')?.textContent).toContain(
+        "counter",
+      );
+      expect(host.querySelector('[aria-label="Inspection context"]')?.textContent).toContain(
+        "Dispatch #1",
+      );
       Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
         .find((button) => button.textContent === "Copy diagnostic context")
         ?.click();

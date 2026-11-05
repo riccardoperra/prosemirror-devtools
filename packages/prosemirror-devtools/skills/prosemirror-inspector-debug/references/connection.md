@@ -30,9 +30,9 @@ The bridge answers devtoolstooldiscovery on window. It does not install a window
 
 ## Browser and computer use
 
-Without third-party MCP tools, use the visible editor selector and Inspectors and capture coverage. Expand Coverage and read point for target, session, source, protocol, and coverage evidence. Use Transactions, Events, and Follow live to keep observations at an explicit point.
+Without third-party MCP tools, select the editor and open Context. Captured data shows recording status and gaps. Installed inspectors lists the providers for that editor. Open Technical details and then Coverage and read point for the observation identity and evidence. Use Transactions, Events, and Follow live to choose the observation.
 
-Use Copy diagnostic context only when the environment permits it. The panel provides a textarea fallback. Reading the visible diagnostic panes is sufficient when clipboard access is unavailable. Do not request clipboard permissions merely to inspect evidence.
+In Context, use Copy diagnostic context when the environment permits it. The panel provides a textarea fallback. Reading the visible diagnostic panes is sufficient when clipboard access is unavailable. Do not request clipboard permissions merely to inspect evidence.
 
 A host-side runner can use createProseMirrorInspectionClient({store}) and createProseMirrorAgentTools(client) through the public package entries. Neither requires a window global. The plain browser route can remain entirely UI based. Missing structured access leaves only the affected checks inconclusive.
 

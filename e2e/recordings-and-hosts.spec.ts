@@ -19,15 +19,17 @@ test("I2 two standalone hosts keep independent read points and share one capture
   await editor.press("Enter");
   await expect(editor.locator("li")).toHaveCount(2);
   await first.getByRole("button", { name: "Inspect dispatch #1", exact: true }).click();
+  await second.getByRole("button", { name: "Inspect dispatch #1", exact: true }).click();
   await second.getByRole("button", { name: "Follow live", exact: true }).click();
   await editor.press("X");
   await expect(editor).toContainText("X");
   await expect(first.getByLabel("Inspection context", { exact: true })).toContainText(
     "Dispatch #1",
   );
-  await expect(second.getByLabel("Inspection context", { exact: true })).toContainText(
-    "Live editor",
-  );
+  await expect(second.getByLabel("Inspection context", { exact: true })).toHaveCount(0);
+  await expect(
+    second.getByRole("button", { name: "Inspect dispatch #2", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   await second.getByRole("button", { name: "Inspect dispatch #2", exact: true }).click();
   await expect(second.getByLabel("Inspection context", { exact: true })).toContainText(
     "Dispatch #2",
