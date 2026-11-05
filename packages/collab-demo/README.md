@@ -17,6 +17,8 @@ Open [the kitchen sink on port 4183](http://localhost:4183). Both modes use two 
 
 ## Explore the other diagnostics
 
+Both modes register a custom **Text impact** inspector. Insert a sample in A and look for **Text impact** in the Transactions row and its detail. In **Events**, select **Insert sample** to see the same detail beside the linked dispatch. **Open another inspector** shows the same captures in a host without the custom presenter. See the [inspector and presenter registration](./src/text-impact.ts).
+
 1. In **Official ProseMirror collab**, check **Hold delivery** and click **Insert sample in A** and **Insert sample in B**. Inspect the pending steps and undo depth in **Context**. Click **Deliver queued updates** to converge the peers, then try **Undo in A** and **Redo in A**. Deliver again to propagate each change.
 2. Select a dispatch in **Transactions** and open **Rendering** to inspect the inline decoration, highlighted block, widget, and paragraph NodeView. Switch to **Attach only** and repeat an edit to compare coverage with plugin instrumentation disabled.
 3. Switch to **Tiptap Collaboration with Yjs** and repeat the edits and delivery. **Context** shows the Yjs document and undo stack, alongside Tiptap extension and storage samples. Undo in A preserves B's edit.

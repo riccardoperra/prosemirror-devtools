@@ -29,6 +29,7 @@ import type {
   TransactionRecord,
 } from "../core/types";
 import { useResolvedTheme } from "./hooks/use-resolved-theme";
+import type { DispatchPresenters } from "./features/dispatch/read-dispatch-effects";
 import type { ResolvedPanelDefinition } from "./panel-registry";
 import type { PanelDensity } from "./panel.types";
 import { ensurePanelStyles } from "./styles";
@@ -102,6 +103,7 @@ type PanelContextValue = Readonly<{
   appearance: PanelAppearance;
   meta: PanelMeta;
   inspection: PanelInspectionContext;
+  dispatchPresenters: Accessor<DispatchPresenters | undefined>;
 }>;
 
 const PanelContext = createContext<PanelContextValue>();
@@ -130,6 +132,7 @@ export interface PanelProviderProps {
   activePanel: string | undefined;
   onActivePanelChange: ((panelId: string) => void) | undefined;
   panels: readonly ResolvedPanelDefinition[];
+  dispatchPresenters?: DispatchPresenters;
   styleTarget: Document | undefined;
   children: JSX.Element;
 }
@@ -298,7 +301,14 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
     },
     selectEvent: setEventId,
   };
-  const context: PanelContextValue = { data: dataAccess, navigation, appearance, meta, inspection };
+  const context: PanelContextValue = {
+    data: dataAccess,
+    navigation,
+    appearance,
+    meta,
+    inspection,
+    dispatchPresenters: () => props.dispatchPresenters,
+  };
 
   return <PanelContext.Provider value={context}>{props.children}</PanelContext.Provider>;
 }

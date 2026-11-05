@@ -11,6 +11,8 @@ import { createCollabInspector } from "prosemirror-inspector/inspectors/collab";
 import { createHistoryInspector } from "prosemirror-inspector/inspectors/history";
 import { createTransportObserver } from "prosemirror-inspector/inspectors/transport";
 
+import { textImpactInspector } from "./text-impact";
+
 import {
   commandLabels,
   peers,
@@ -50,6 +52,7 @@ export function mountOfficial({
           inspectors: [
             createCollabInspector({ plugin, ...(transport ? { transport } : {}) }),
             createHistoryInspector({ plugin: undoPlugin }),
+            textImpactInspector,
           ],
         })
       : null;

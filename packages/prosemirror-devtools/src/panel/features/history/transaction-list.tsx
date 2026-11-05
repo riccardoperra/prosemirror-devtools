@@ -4,6 +4,7 @@ import { cx, panelStyles } from "../../styles";
 
 import type { TransactionRecord } from "../../../core/types";
 import { formatDateTime, formatMs, formatTime } from "../../formatters";
+import { useOptionalPanelContext } from "../../panel-provider";
 import { Badge } from "../../ui/badge";
 import { readDispatchEffects } from "../dispatch/read-dispatch-effects";
 import { TransactionBadges } from "../dispatch/transaction-badges";
@@ -18,6 +19,7 @@ export interface TransactionListProps {
 }
 
 export function TransactionList(props: TransactionListProps): JSX.Element {
+  const panel = useOptionalPanelContext();
   const [visibleCount, setVisibleCount] = createSignal(HISTORY_PAGE_SIZE);
   const newestFirst = createMemo(() =>
     props.records.slice(Math.max(0, props.records.length - visibleCount())).reverse(),
@@ -40,13 +42,17 @@ export function TransactionList(props: TransactionListProps): JSX.Element {
       <ul class={panelStyles.pmList}>
         <For each={newestFirst()}>
           {(record) => {
-            const effects = readDispatchEffects(record).filter(({ effect }) => effect.listLabel);
+            const effects = createMemo(() =>
+              readDispatchEffects(record, panel?.dispatchPresenters()).filter(
+                ({ effect }) => effect.listLabel,
+              ),
+            );
             return (
               <li>
                 <button
                   aria-label={`Inspect dispatch #${record.id}`}
                   aria-description={
-                    effects
+                    effects()
                       .map(({ effect }) => `${effect.badge ?? ""} ${effect.listLabel}`)
                       .join(". ") || undefined
                   }
@@ -71,12 +77,15 @@ export function TransactionList(props: TransactionListProps): JSX.Element {
                   <span class={panelStyles.pmHistoryBadges}>
                     <TransactionBadges record={record} />
                   </span>
-                  <Show when={effects.length > 0}>
+                  <Show when={effects().length > 0}>
                     <span class={panelStyles.pmHistoryEffects}>
-                      <For each={effects}>
+                      <For each={effects()}>
                         {({ effect }) => (
                           <span>
-                            <Badge tone="blue">{effect.badge}</Badge> {effect.listLabel}
+                            <Show when={effect.badge}>
+                              {(badge) => <Badge tone="blue">{badge()}</Badge>}
+                            </Show>{" "}
+                            {effect.listLabel}
                           </span>
                         )}
                       </For>

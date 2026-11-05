@@ -1,12 +1,10 @@
+import type {
+  DevtoolsDispatchPresentation,
+  DevtoolsDispatchPresentationInput,
+  DevtoolsDispatchPresenter,
+  DevtoolsExtension,
+} from "../../../core/extensions";
 import type { TransactionRecord } from "../../../core/types";
-
-interface DispatchEffect {
-  readonly label: string;
-  readonly text: string;
-  readonly note?: string;
-  readonly badge?: string;
-  readonly listLabel?: string;
-}
 
 function field(value: unknown, key: string): unknown {
   return value && typeof value === "object" && !Array.isArray(value) && key in value
@@ -32,7 +30,10 @@ function transition(
   return start === undefined || end === undefined ? undefined : `${label} ${start} → ${end}`;
 }
 
-function undoEffect(sample: unknown, record: TransactionRecord): DispatchEffect | undefined {
+function undoEffect({
+  value: sample,
+  record,
+}: DevtoolsDispatchPresentationInput): DevtoolsDispatchPresentation | undefined {
   if (field(sample, "kind") !== "dispatch") return;
   const before = field(sample, "before");
   const after = field(sample, "after");
@@ -95,7 +96,10 @@ function transportNote(sample: unknown): string {
   return `Last transport signal: ${stage}${typeof message === "string" ? ` ${message}` : ""}. ${identity}`;
 }
 
-function collabEffect(sample: unknown, record: TransactionRecord): DispatchEffect | undefined {
+function collabEffect({
+  value: sample,
+  record,
+}: DevtoolsDispatchPresentationInput): DevtoolsDispatchPresentation | undefined {
   if (field(sample, "kind") !== "dispatch") return;
   const before = field(sample, "before");
   const after = field(sample, "state");
@@ -125,7 +129,10 @@ function collabEffect(sample: unknown, record: TransactionRecord): DispatchEffec
   };
 }
 
-function yjsEffect(sample: unknown, record: TransactionRecord): DispatchEffect | undefined {
+function yjsEffect({
+  value: sample,
+  record,
+}: DevtoolsDispatchPresentationInput): DevtoolsDispatchPresentation | undefined {
   if (field(sample, "sample") !== "prosemirror-dispatch" || !record.docChanged) return;
   const update = field(sample, "latestUpdate");
   const direction = field(update, "local");
@@ -142,19 +149,53 @@ function yjsEffect(sample: unknown, record: TransactionRecord): DispatchEffect |
   };
 }
 
-const presenters = new Map([
-  ["prosemirror-history@1", undoEffect],
-  ["prosemirror-collab@1", collabEffect],
-  ["yjs@1", yjsEffect],
+const presenterKey = (inspectorId: string, version: string): string =>
+  JSON.stringify([inspectorId, version]);
+
+const builtInPresenters = new Map([
+  [presenterKey("prosemirror-history", "1"), undoEffect],
+  [presenterKey("prosemirror-collab", "1"), collabEffect],
+  [presenterKey("yjs", "1"), yjsEffect],
 ]);
 
-export function readDispatchEffects(record: TransactionRecord) {
+export type DispatchPresenters = ReadonlyMap<string, DevtoolsDispatchPresenter>;
+
+export function resolveDispatchPresenters(
+  extensions: readonly DevtoolsExtension[],
+): DispatchPresenters {
+  const presenters = new Map<string, DevtoolsDispatchPresenter>();
+  for (const extension of extensions) {
+    for (const presenter of extension.dispatchPresenters ?? []) {
+      const { inspectorId, version } = presenter;
+      if (!inspectorId.trim() || !version.trim()) {
+        throw new Error(
+          `Extension "${extension.id}" must provide an inspector id and version for each dispatch presenter.`,
+        );
+      }
+      const key = presenterKey(inspectorId, version);
+      if (presenters.has(key)) {
+        throw new Error(
+          `Duplicate dispatch presenter for inspector "${inspectorId}" version "${version}".`,
+        );
+      }
+      presenters.set(key, presenter);
+    }
+  }
+  return presenters;
+}
+
+export function readDispatchEffects(record: TransactionRecord, presenters?: DispatchPresenters) {
   return (record.inspection?.projections ?? []).flatMap((projection) => {
     if (projection.evidence.kind !== "available") return [];
-    const effect = presenters.get(`${projection.id}@${projection.version}`)?.(
-      projection.evidence.value,
-      record,
-    );
+    const key = presenterKey(projection.id, projection.version);
+    const custom = presenters?.get(key);
+    const input = { value: projection.evidence.value, record };
+    let effect: DevtoolsDispatchPresentation | undefined;
+    try {
+      effect = custom ? custom.present(input) : builtInPresenters.get(key)?.(input);
+    } catch {
+      effect = { label: "Presentation unavailable", text: projection.id };
+    }
     return effect ? [{ effect, projection }] : [];
   });
 }

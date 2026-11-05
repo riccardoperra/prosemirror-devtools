@@ -63,7 +63,7 @@ The selected dispatch in Transactions shows the captured undo and sync changes a
 
 The dispatch list shows a badge when a projection describes a meaningful change or an explicit history action. The demo traces the official collaboration receive and confirmation calls at the application boundary. Both calls include the batch ID and link to their retained editor dispatch in Events.
 
-Transactions and Events render the same presentation model. An internal presenter matches a captured inspector ID and version and returns an optional badge, list label, and detail. Editors that do not install the inspector have no corresponding projection or badge. The presenters read serialized data and require no optional editor dependencies. A future host registration hook can use this shape for custom inspectors once the prototype settles the UI contract.
+Transactions and Events render the same presentation model. A presenter matches a captured inspector ID and version and returns an optional badge, list label, and detail. Editors that do not install the inspector have no corresponding projection or badge. The presenters read serialized data and require no optional editor dependencies. Hosts can register their own presenters through `DevtoolsExtension.dispatchPresenters`. The kitchen sink's Text impact inspector registers its presenter in one host and shares the same captured data with the second host.
 
 Holding one official Collab edit makes pending steps rise from zero to one. The confirmation dispatch clears that step and advances the confirmed version. The observed Undo call links to the dispatch that changes the document and moves one entry from undo to redo.
 

@@ -14,6 +14,7 @@ import "prosemirror-inspector/styles.css";
 import "./style.css";
 
 import { mountOfficial } from "./official";
+import { textImpactExtension } from "./text-impact";
 import { mountYjs } from "./yjs";
 import { commandLabels, commands, peers, type CollaborationFixture, type Peer } from "./types";
 
@@ -28,6 +29,7 @@ app.innerHTML = `<main class="kitchen-sink">
       <li>Hold delivery and insert a sample in A. Open <strong>Transactions</strong> to see the pending step, then deliver it and inspect the new dispatch. Try <strong>Insert outside history in A</strong> to see an explicit undo exclusion.</li>
       <li>Pick a transaction and inspect <strong>Rendering</strong> for the highlighted text, paragraph decoration, widget and paragraph NodeView. Compare capture profiles to see which events require instrumentation.</li>
       <li>In <strong>Events</strong>, search for <strong>Undo</strong> after undoing an edit. Open the linked dispatch for its effects and diff. Repeat in <strong>Tiptap Collaboration with Yjs</strong> to see what the Yjs sample can explain.</li>
+      <li>Insert a sample to see <strong>Text impact</strong> in Transactions. In Events, select <strong>Insert sample</strong> to see the custom detail next to the linked dispatch.</li>
       <li>Export an editor session and open the recording below. Refresh editor sessions after a fixture reset. Open a second inspector to compare two live selections.</li>
     </ol>
     <p>Both agent bridges expose the same live editor sessions in development.</p>
@@ -81,6 +83,7 @@ const panel = import.meta.env.DEV
       store,
       theme: "light",
       defaultPanel: "history",
+      extensions: [textImpactExtension],
     })
   : null;
 if (!panel) {
