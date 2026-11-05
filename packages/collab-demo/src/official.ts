@@ -1,22 +1,40 @@
-import { collab, getVersion, receiveTransaction, sendableSteps } from "prosemirror-collab";
+import { createDiagnosticDemoPlugin } from "@prosemirror-devtools/demo-kit/diagnostic-plugin";
+import { collab, receiveTransaction, sendableSteps } from "prosemirror-collab";
 import { baseKeymap } from "prosemirror-commands";
-import { history, undo } from "prosemirror-history";
+import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { schema } from "prosemirror-schema-basic";
-import { EditorState } from "prosemirror-state";
+import { EditorState, type Command } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { createProseMirrorDevtoolsSession } from "prosemirror-inspector/core";
 import { createCollabInspector } from "prosemirror-inspector/inspectors/collab";
 import { createHistoryInspector } from "prosemirror-inspector/inspectors/history";
 import { createTransportObserver } from "prosemirror-inspector/inspectors/transport";
 
-import { peers, type CollaborationFixture, type FixtureOptions, type Peer } from "./types";
+import {
+  commandLabels,
+  peers,
+  type CollaborationFixture,
+  type DemoCommand,
+  type FixtureOptions,
+  type Peer,
+} from "./types";
+
+const commands: Record<DemoCommand, Command> = {
+  undo,
+  redo,
+  sample(state, dispatch) {
+    dispatch?.(state.tr.insertText(" sample"));
+    return true;
+  },
+};
 
 export function mountOfficial({
   containers,
   store,
   changed,
   queued,
+  instrumentPlugins,
 }: FixtureOptions): CollaborationFixture {
   const pending = new Set<Peer>();
   let version = 0;
@@ -45,12 +63,18 @@ export function mountOfficial({
           ],
         })
       : null;
-    const plugins = [plugin, undoPlugin, keymap({ "Mod-z": undo }), keymap(baseKeymap)];
+    const plugins = [
+      plugin,
+      undoPlugin,
+      keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo }),
+      keymap(baseKeymap),
+      createDiagnosticDemoPlugin({ blockExamples: true }),
+    ];
     const view = new EditorView(containers[peer], {
       state: EditorState.create({
         schema,
         doc: authority,
-        plugins: session?.instrumentPlugins(plugins) ?? plugins,
+        plugins: session && instrumentPlugins ? session.instrumentPlugins(plugins) : plugins,
       }),
       attributes: { role: "textbox", "aria-label": `Official collab editor ${peer}` },
       dispatchTransaction(transaction) {
@@ -121,25 +145,17 @@ export function mountOfficial({
       }
       changed();
     },
-    undo(peer) {
-      const client = clients[peer];
-      undo(client.view.state, client.view.dispatch, client.view);
+    runCommand(peer, command) {
+      const { view, session } = clients[peer];
+      const run = () => commands[command](view.state, view.dispatch, view);
+      if (session?.diagnostics) session.diagnostics.traceCommand(commandLabels[command], run);
+      else run();
     },
     setPaused(peer, paused) {
       if (paused) clients[peer].session?.pauseCapture();
       else clients[peer].session?.resumeCapture();
     },
-    summary: () => ({
-      system: "prosemirror-collab",
-      authorityVersion: version,
-      pendingSenders: [...pending],
-      clients: peers.map((peer) => ({
-        peer,
-        confirmedVersion: getVersion(clients[peer].view.state),
-        unconfirmedSteps: sendableSteps(clients[peer].view.state)?.steps.length ?? 0,
-        document: clients[peer].view.state.doc.textContent,
-      })),
-    }),
+    status: () => `Confirmed version ${version}. ${pending.size} peers waiting to send.`,
     dispose() {
       active = false;
       pending.clear();

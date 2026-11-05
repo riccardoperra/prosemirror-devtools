@@ -1,15 +1,19 @@
-# Run the collaboration fixtures
+# Run the ProseMirror Inspector kitchen sink
 
-Run `pnpm --filter @prosemirror-devtools/collab-demo dev` after building `prosemirror-inspector`. Open port 4183.
+Build the inspector and start the demo.
 
-Select either the official `prosemirror-collab` transport or native Tiptap Collaboration with Yjs. Both show two real editors and an in-memory application transport. The delivery delay is explicit. **Hold delivery** lets both peers edit before **Deliver queued updates** applies the queued work.
+```sh
+pnpm --filter prosemirror-inspector build
+pnpm --filter @prosemirror-devtools/collab-demo dev
+```
 
-The official authority applies real ProseMirror steps. Each peer receives confirmations through `receiveTransaction`. The inspector uses public `getVersion` and `sendableSteps`, including original transaction metadata for rebased unconfirmed steps. It does not infer network state from those transactions.
+Open [the kitchen sink on port 4183](http://localhost:4183). Both modes use two real editors connected through an in-memory application transport.
 
-The Yjs fixture uses Tiptap 3.31.4, `@tiptap/extension-collaboration` 3.31.4, `@tiptap/y-tiptap` 3.0.12, and Yjs 13.6.33. StarterKit undo is disabled. Each binding's actual Yjs UndoManager implements **Undo in A** and **Undo in B**. Remote edits are preserved by local collaborative undo.
+1. In **Official ProseMirror collab**, check **Hold delivery** and click **Insert sample in A** and **Insert sample in B**. Inspect the pending steps and undo depth in **Context**. Click **Deliver queued updates** to converge the peers, then try **Undo in A** and **Redo in A**. Deliver again to propagate each change.
+2. Select a dispatch in **Transactions** and open **Rendering** to inspect the inline decoration, highlighted block, widget, and paragraph NodeView. Switch to **Attach only** and repeat an edit to compare coverage with plugin instrumentation disabled.
+3. Switch to **Tiptap Collaboration with Yjs** and repeat the edits and delivery. **Context** shows the Yjs document and undo stack, alongside Tiptap extension and storage samples. Undo in A preserves B's edit.
+4. Use **Pause capture A** to create a capture gap while collaboration continues. Use **Open another inspector** to compare two selections. In **Diagnostic recordings**, export an editor and open the exported recording to inspect it offline. Refresh the export editor list after switching modes, changing capture profiles, or resetting the fixture.
 
-**Pause capture A** pauses detailed diagnostic retention while editing, transport delivery, and current provider samples continue. The capture gap remains visible through the shared inspector client. Provider samples and document signals have their own sequence and time. A signal's proximity to a dispatch does not establish causality. Transport dispatch links remain unknown unless the application observes them explicitly.
+Chrome and WebMCP bridges read the same live editor sessions as the panel. The WebMCP bridge registers when the browser exposes its API. The diagnostic panel, recording controls and agent bridges are development-only.
 
-Transport observation keeps current counts and the latest signal. Historical projections belong to the editor session. Signals between retained samples are not a complete transport log. A Yjs dispatch sample may occur before an UndoManager command completes its final stack update. A current query samples the final current stack.
-
-The development guard controls registrations, the panel, and read-only agent discovery. Production keeps the actual collaboration examples and disables diagnostics. Reset and teardown remove transport listeners, queued updates, timers, views, Yjs documents, and diagnostic registrations.
+The official fixture applies steps to an authority document and confirms them with `receiveTransaction`. Collaboration diagnostics use public `getVersion` and `sendableSteps`. The Yjs fixture uses the collaboration binding's actual UndoManager. Current provider samples can show an undo stack change that completed after the corresponding dispatch sample. Transport signals come from the in-memory transport and have their own sequence and time. Their proximity to an editor dispatch leaves the relationship unknown.

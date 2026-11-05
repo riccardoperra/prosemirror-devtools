@@ -286,6 +286,9 @@ importers:
 
   packages/collab-demo:
     dependencies:
+      '@prosemirror-devtools/demo-kit':
+        specifier: workspace:*
+        version: link:../devtools-demo-kit
       '@tiptap/core':
         specifier: 'catalog:'
         version: 3.31.4(@tiptap/pm@3.31.4)
@@ -606,6 +609,9 @@ importers:
 
   packages/standalone-demo:
     dependencies:
+      '@prosemirror-devtools/demo-kit':
+        specifier: workspace:*
+        version: link:../devtools-demo-kit
       prosemirror-commands:
         specifier: 'catalog:'
         version: 1.7.2

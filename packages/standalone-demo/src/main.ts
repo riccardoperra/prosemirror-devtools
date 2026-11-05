@@ -20,8 +20,8 @@ import { mountProseMirrorDevtools } from "prosemirror-inspector/standalone";
 import "prosemirror-view/style/prosemirror.css";
 import "prosemirror-inspector/styles.css";
 import "./style.css";
-import { mountComparisonControls } from "./comparison-ui";
-import { mountRecordingControls } from "./recording-ui";
+import { mountComparisonControls } from "@prosemirror-devtools/demo-kit/comparison-ui";
+import { mountRecordingControls } from "@prosemirror-devtools/demo-kit/recording-ui";
 
 const schema = new Schema({
   nodes: addListNodes(basicSchema.spec.nodes, "paragraph block*", "block"),

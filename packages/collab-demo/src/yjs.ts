@@ -1,3 +1,4 @@
+import { createDiagnosticDemoPlugin } from "@prosemirror-devtools/demo-kit/diagnostic-plugin";
 import { Editor, Extension } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import StarterKit from "@tiptap/starter-kit";
@@ -8,16 +9,25 @@ import {
   dispatchTiptapTransaction,
   setupTiptapDevtools,
 } from "prosemirror-inspector/tiptap";
+import { createProseMirrorDevtoolsDiagnostics } from "prosemirror-inspector/core";
+import { createTiptapInspector } from "prosemirror-inspector/inspectors/tiptap";
 import { createTransportObserver } from "prosemirror-inspector/inspectors/transport";
 import { createYjsInspector, type YjsInspector } from "prosemirror-inspector/inspectors/yjs";
 
-import { peers, type CollaborationFixture, type FixtureOptions, type Peer } from "./types";
+import {
+  commandLabels,
+  peers,
+  type CollaborationFixture,
+  type FixtureOptions,
+  type Peer,
+} from "./types";
 
 export function mountYjs({
   containers,
   store,
   changed,
   queued,
+  instrumentPlugins,
 }: FixtureOptions): CollaborationFixture {
   const docs = { A: new Y.Doc(), B: new Y.Doc() };
   const transport = {
@@ -34,6 +44,7 @@ export function mountYjs({
   let messageSequence = 0;
   let active = true;
   const createPeer = (peer: Peer) => {
+    const diagnostics = import.meta.env.DEV ? createProseMirrorDevtoolsDiagnostics() : undefined;
     let inspector: YjsInspector | null = null;
     const native = Extension.create({
       name: "inspector",
@@ -57,7 +68,9 @@ export function mountYjs({
           store,
           performanceMarks: false,
           captureProfile: "bounded",
-          inspectors: [inspector],
+          instrumentPlugins,
+          ...(diagnostics ? { diagnostics } : {}),
+          inspectors: [inspector, createTiptapInspector({ editor })],
         });
       },
       dispatchTransaction(props) {
@@ -66,21 +79,27 @@ export function mountYjs({
       onDestroy() {
         detachTiptapDevtools(this.editor);
         inspector?.dispose();
+        diagnostics?.dispose();
       },
     });
-    return new Editor({
+    const editor = new Editor({
       element: containers[peer],
       extensions: [
         StarterKit.configure({ undoRedo: false, trailingNode: false }),
         Collaboration.configure({ document: docs[peer] }),
+        Extension.create({
+          name: "demoVisuals",
+          addProseMirrorPlugins: () => [createDiagnosticDemoPlugin({ blockExamples: true })],
+        }),
         ...(import.meta.env.DEV ? [native] : []),
       ],
       enableExtensionDispatchTransaction: true,
       editorProps: { attributes: { role: "textbox", "aria-label": `Tiptap Yjs editor ${peer}` } },
       onTransaction: changed,
     });
+    return { editor, diagnostics };
   };
-  const editors = { A: createPeer("A"), B: createPeer("B") };
+  const clients = { A: createPeer("A"), B: createPeer("B") };
   const disconnect = peers.map((from) => {
     const to = from === "A" ? "B" : "A";
     const listener = (update: Uint8Array, origin: unknown) => {
@@ -120,35 +139,33 @@ export function mountYjs({
     changed();
   };
   for (const peer of peers) transport[peer]?.observe({ kind: "connection", state: "connected" });
-  editors.A.commands.insertContent("Shared Yjs document.");
+  clients.A.editor.commands.insertContent("Shared Yjs document.");
   flush();
-  for (const peer of peers) yUndoPluginKey.getState(editors[peer].state)?.undoManager.clear();
+  for (const peer of peers)
+    yUndoPluginKey.getState(clients[peer].editor.state)?.undoManager.clear();
   return {
     inspectorId: "yjs",
     flush,
-    undo(peer) {
-      editors[peer].commands.undo();
+    runCommand(peer, command) {
+      const { editor, diagnostics } = clients[peer];
+      const run = () =>
+        command === "sample"
+          ? editor.commands.insertContent(" sample")
+          : editor.commands[command]();
+      if (diagnostics) diagnostics.traceCommand(commandLabels[command], run);
+      else run();
     },
     setPaused(peer, paused) {
       if (paused) store.pauseCapture(`yjs-${peer}`);
       else store.resumeCapture(`yjs-${peer}`);
     },
-    summary: () => ({
-      system: "Tiptap Collaboration with Yjs",
-      queuedUpdates: pending.length,
-      clients: peers.map((peer) => ({
-        peer,
-        document: editors[peer].state.doc.textContent,
-        undoDepth: yUndoPluginKey.getState(editors[peer].state)?.undoManager.undoStack.length ?? 0,
-        redoDepth: yUndoPluginKey.getState(editors[peer].state)?.undoManager.redoStack.length ?? 0,
-      })),
-    }),
+    status: () => `${pending.length} Yjs updates waiting for delivery.`,
     dispose() {
       active = false;
       pending.length = 0;
       for (const dispose of disconnect) dispose();
       for (const peer of peers) {
-        editors[peer].destroy();
+        clients[peer].editor.destroy();
         docs[peer].destroy();
       }
     },

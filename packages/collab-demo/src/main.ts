@@ -1,3 +1,5 @@
+import { mountComparisonControls } from "@prosemirror-devtools/demo-kit/comparison-ui";
+import { mountRecordingControls } from "@prosemirror-devtools/demo-kit/recording-ui";
 import {
   createProseMirrorDevtoolsStore,
   createProseMirrorInspectionClient,
@@ -13,24 +15,43 @@ import "./style.css";
 
 import { mountOfficial } from "./official";
 import { mountYjs } from "./yjs";
-import { peers, type CollaborationFixture, type Peer } from "./types";
+import { commandLabels, commands, peers, type CollaborationFixture, type Peer } from "./types";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing application container");
-app.innerHTML = `<main>
-  <h1>Collaboration Inspector</h1>
-  <p>Edit both peers while delivery is held, then deliver their updates. The inspector distinguishes confirmed versions, pending local work, and application-observed transport signals.</p>
+app.innerHTML = `<main class="kitchen-sink">
+  <h1>ProseMirror Inspector kitchen sink</h1>
+  <p>Two editors, a shared document, and controls to see what happens before and after delivery.</p>
+  <details class="demo-guide" ${import.meta.env.DEV ? "" : "hidden"}>
+    <summary>Try the kitchen sink</summary>
+    <ol>
+      <li>Hold delivery, insert a sample in each peer, then deliver. In <strong>Context</strong>, compare collaboration and history before and after delivery. Try undo and redo in A.</li>
+      <li>Pick a transaction and inspect <strong>Rendering</strong> for the highlighted text, paragraph decoration, widget and paragraph NodeView. Compare capture profiles to see which events require instrumentation.</li>
+      <li>Switch to <strong>Tiptap Collaboration with Yjs</strong> for the Yjs undo stack and Tiptap extension data in <strong>Context</strong>.</li>
+      <li>Export an editor session and open the recording below. Refresh editor sessions after a fixture reset. Open a second inspector to compare two live selections.</li>
+    </ol>
+    <p>Both agent bridges expose the same live editor sessions in development.</p>
+  </details>
   <div class="toolbar">
     <label>Collaboration system <select id="system"><option value="official">Official ProseMirror collab</option><option value="yjs">Tiptap Collaboration with Yjs</option></select></label>
+    <label id="profile-control">Capture profile <select id="profile"><option value="instrumented">Instrument before state</option><option value="attach">Attach only</option></select></label>
     <label><input id="hold" type="checkbox"/>Hold delivery</label>
     <label>Delivery delay <input id="delay" type="number" value="250" min="0" max="5000" aria-label="Delivery delay in milliseconds"/>ms</label>
     <button id="deliver">Deliver queued updates</button><button id="reset">Reset fixture</button>
   </div>
-  <div class="peers"><section><h2>Peer A</h2><div class="toolbar"><button id="undo-A">Undo in A</button><button id="pause-A" aria-pressed="false">Pause capture A</button></div><div id="editor-A" class="editor"></div></section>
-  <section><h2>Peer B</h2><div class="toolbar"><button id="undo-B">Undo in B</button><button id="pause-B" aria-pressed="false">Pause capture B</button></div><div id="editor-B" class="editor"></div></section></div>
-  <p id="coverage"></p><output id="status" aria-live="polite"></output>
-  <details><summary>Current provider samples and coverage</summary><pre id="samples"></pre></details>
+  <div class="peers">${peers
+    .map(
+      (peer) => `<section><h2>Peer ${peer}</h2><div class="toolbar">
+    ${commands.map((command) => `<button id="${command}-${peer}">${commandLabels[command]} in ${peer}</button>`).join("")}
+    <button id="pause-${peer}" aria-pressed="false">Pause capture ${peer}</button></div>
+    <div id="editor-${peer}" class="editor"></div></section>`,
+    )
+    .join("")}</div>
+  <output id="status" aria-live="polite"></output>
+  <p id="coverage"></p>
+  <details id="sample-details" ${import.meta.env.DEV ? "" : "hidden"}><summary>Current provider samples and coverage</summary><pre id="samples"></pre></details>
   <div id="inspector" class="inspector" aria-label="ProseMirror Inspector"></div>
+  <div id="demo-actions"></div>
 </main>`;
 function element<T extends HTMLElement>(selector: string, type: { new (): T }): T {
   const found = app?.querySelector(selector);
@@ -38,9 +59,11 @@ function element<T extends HTMLElement>(selector: string, type: { new (): T }): 
   return found;
 }
 const system = element("#system", HTMLSelectElement);
+const profile = element("#profile", HTMLSelectElement);
 const hold = element("#hold", HTMLInputElement);
 const delay = element("#delay", HTMLInputElement);
 const status = element("#status", HTMLOutputElement);
+const sampleDetails = element("#sample-details", HTMLDetailsElement);
 const samples = element("#samples", HTMLPreElement);
 const coverage = element("#coverage", HTMLParagraphElement);
 const containers = {
@@ -50,9 +73,7 @@ const containers = {
 const store = createProseMirrorDevtoolsStore();
 const client = createProseMirrorInspectionClient({ store });
 const disposeBridge = import.meta.env.DEV ? installProseMirrorChromeBridge(client) : null;
-const disposeWebMCP = import.meta.env.DEV
-  ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
-  : null;
+const disposeWebMCP = import.meta.env.DEV ? await installProseMirrorWebMCPBridge(client) : null;
 const panel = import.meta.env.DEV
   ? mountProseMirrorDevtools(element("#inspector", HTMLDivElement), {
       store,
@@ -60,7 +81,11 @@ const panel = import.meta.env.DEV
       defaultPanel: "history",
     })
   : null;
-if (!panel) element("#inspector", HTMLDivElement).hidden = true;
+if (!panel) {
+  element("#inspector", HTMLDivElement).hidden = true;
+  element("#profile-control", HTMLLabelElement).hidden = true;
+  for (const peer of peers) element(`#pause-${peer}`, HTMLButtonElement).hidden = true;
+}
 let fixture: CollaborationFixture | null = null;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let active = true;
@@ -71,19 +96,22 @@ const paused: Record<Peer, boolean> = { A: false, B: false };
 
 function render(): void {
   if (!active || !fixture) return;
-  status.textContent = lastError ?? JSON.stringify(fixture.summary());
-  samples.textContent = JSON.stringify(
-    client.listEditors().map((editor) => ({
-      target: editor.target,
-      capture: editor.capture,
-      contribution: client.query({
+  status.textContent = lastError ?? fixture.status();
+  if (sampleDetails.open) {
+    const id = fixture.inspectorId;
+    samples.textContent = JSON.stringify(
+      client.listEditors().map((editor) => ({
         target: editor.target,
-        query: { kind: "contribution", id: fixture?.inspectorId ?? "" },
-      }),
-    })),
-    null,
-    2,
-  );
+        capture: editor.capture,
+        contribution: client.query({
+          target: editor.target,
+          query: { kind: "contribution", id },
+        }),
+      })),
+      null,
+      2,
+    );
+  }
   for (const peer of peers) {
     const button = element(`#pause-${peer}`, HTMLButtonElement);
     button.textContent = `${paused[peer] ? "Resume" : "Pause"} capture ${peer}`;
@@ -129,20 +157,31 @@ function reset(): void {
     paused[peer] = false;
   }
   lastError = null;
-  const options = { containers, store, changed, queued };
+  const options = {
+    containers,
+    store,
+    changed,
+    queued,
+    instrumentPlugins: profile.value === "instrumented",
+  };
   fixture = system.value === "yjs" ? mountYjs(options) : mountOfficial(options);
   coverage.textContent = !import.meta.env.DEV
     ? "Diagnostics are disabled in this production build."
-    : system.value === "yjs"
-      ? "Tiptap uses Yjs collaborative undo. Document and transport signals have independent freshness. A dispatch sample may precede the UndoManager's final stack update."
-      : "The official collab plugin reports confirmed version and pending steps. Holding delivery preserves real concurrent local edits. Paused capture keeps an explicit gap while editors and transport continue.";
+    : profile.value === "attach"
+      ? "Attach only captures editor state, dispatches and provider samples. Instrument before state to see plugin callbacks and rendering observations."
+      : system.value === "yjs"
+        ? "Yjs undo stack values can settle after dispatch. Open the current provider samples for the final counts."
+        : "The official collab plugin reports confirmed versions and pending steps.";
   render();
 }
 const handlers = [
   [element("#deliver", HTMLButtonElement), deliver],
   [element("#reset", HTMLButtonElement), reset],
   ...peers.flatMap((peer): [HTMLButtonElement, () => void][] => [
-    [element(`#undo-${peer}`, HTMLButtonElement), () => fixture?.undo(peer)],
+    ...commands.map((command): [HTMLButtonElement, () => void] => [
+      element(`#${command}-${peer}`, HTMLButtonElement),
+      () => fixture?.runCommand(peer, command),
+    ]),
     [
       element(`#pause-${peer}`, HTMLButtonElement),
       () => {
@@ -162,9 +201,18 @@ function holdChanged(): void {
   if (!hold.checked) queued();
 }
 system.addEventListener("change", reset);
+profile.addEventListener("change", reset);
+sampleDetails.addEventListener("toggle", render);
 hold.addEventListener("change", holdChanged);
 const unsubscribe = store.subscribe(changed);
 reset();
+const actions = element("#demo-actions", HTMLDivElement);
+const disposeComparison = import.meta.env.DEV
+  ? mountComparisonControls({ container: actions, store })
+  : null;
+const disposeRecordings = import.meta.env.DEV
+  ? mountRecordingControls({ container: actions, client })
+  : null;
 function dispose(): void {
   if (!active) return;
   active = false;
@@ -172,8 +220,12 @@ function dispose(): void {
   if (timer !== null) clearTimeout(timer);
   for (const [button, listener] of handlers) button.removeEventListener("click", listener);
   system.removeEventListener("change", reset);
+  profile.removeEventListener("change", reset);
+  sampleDetails.removeEventListener("toggle", render);
   hold.removeEventListener("change", holdChanged);
   unsubscribe();
+  disposeRecordings?.();
+  disposeComparison?.();
   fixture?.dispose();
   panel?.unmount();
   disposeBridge?.();
