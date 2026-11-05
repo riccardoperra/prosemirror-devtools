@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { createServer as createTcpServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { createInterface } from "node:readline";
+import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "@playwright/test";
 
@@ -63,6 +65,41 @@ const output = (result) => {
   return JSON.parse(value.slice(start, end + 1));
 };
 
+async function availableLoopbackPort() {
+  const listener = createTcpServer().listen(0, "127.0.0.1");
+  await once(listener, "listening");
+  const { port } = listener.address();
+  await listener[Symbol.asyncDispose]();
+  return port;
+}
+
+async function waitForDebugEndpoint(port) {
+  const versionUrl = new URL(`http://127.0.0.1:${port}/json/version`);
+  const signal = AbortSignal.timeout(5_000);
+  let lastError;
+  while (!signal.aborted) {
+    try {
+      const response = await fetch(versionUrl, { signal, redirect: "error" });
+      assert(response.ok, `Chrome CDP returned HTTP ${response.status}.`);
+      const { webSocketDebuggerUrl } = await response.json();
+      const endpoint = new URL(webSocketDebuggerUrl);
+      assert(
+        endpoint.protocol === "ws:" &&
+          endpoint.host === versionUrl.host &&
+          endpoint.pathname.startsWith("/devtools/browser/"),
+        "Chrome did not return a loopback browser CDP endpoint.",
+      );
+      return endpoint.href;
+    } catch (error) {
+      lastError = error;
+      await delay(50);
+    }
+  }
+  throw new Error(`Chrome CDP endpoint did not become ready at ${versionUrl}.`, {
+    cause: lastError,
+  });
+}
+
 let server;
 let browser;
 let profile;
@@ -78,22 +115,17 @@ try {
   const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
   await response.body?.cancel();
   assert(response.ok, `Fixture returned HTTP ${response.status} at ${url}.`);
+  const port = await availableLoopbackPort();
   profile = await mkdtemp(resolve(tmpdir(), "inspector-chrome-mcp-"));
   browser = await chromium.launchPersistentContext(profile, {
     executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH,
-    args: ["--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0"],
+    args: ["--remote-debugging-address=127.0.0.1", `--remote-debugging-port=${port}`],
   });
-  const [port, socketPath] = (await readFile(resolve(profile, "DevToolsActivePort"), "utf8"))
-    .trim()
-    .split("\n");
-  assert(
-    /^\d+$/.test(port) && socketPath?.startsWith("/devtools/browser/"),
-    "Missing Chrome CDP endpoint.",
-  );
+  const endpoint = await waitForDebugEndpoint(port);
   const client = start(
     [
       mcp,
-      `--wsEndpoint=ws://127.0.0.1:${port}${socketPath}`,
+      `--wsEndpoint=${endpoint}`,
       "--usageStatistics=false",
       "--javascriptEvaluation=false",
       "--categoryExperimentalThirdParty=true",
