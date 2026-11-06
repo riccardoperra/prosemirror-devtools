@@ -1,3 +1,4 @@
+import { readInstanceState } from "../../store/instance-state";
 import { createMemo, For, Show, type JSX } from "solid-js";
 
 import { cx, panelStyles } from "../../styles";
@@ -6,6 +7,7 @@ import { inspectPlugins } from "../../../core/serialize";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
+import { ResizableSplit } from "../../ui/resizable-split";
 import { usePluginSelection } from "./use-plugin-selection";
 
 export interface PluginsViewProps {
@@ -13,11 +15,11 @@ export interface PluginsViewProps {
 }
 
 export function PluginsView(props: PluginsViewProps): JSX.Element {
-  const plugins = createMemo(() => inspectPlugins(props.instance.view.state));
+  const plugins = createMemo(() => inspectPlugins(readInstanceState(props.instance)));
   const { query, setQuery, filtered, selected, select } = usePluginSelection(plugins);
 
   return (
-    <div class={panelStyles.pmSplit}>
+    <ResizableSplit label="Plugin list width">
       <div class={panelStyles.pmPane}>
         <div class={panelStyles.pmPaneHeader}>
           <input
@@ -70,6 +72,6 @@ export function PluginsView(props: PluginsViewProps): JSX.Element {
           )}
         </Show>
       </div>
-    </div>
+    </ResizableSplit>
   );
 }

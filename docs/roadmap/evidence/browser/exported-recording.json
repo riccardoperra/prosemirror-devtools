@@ -1,0 +1,1349 @@
+{
+  "format": "prosemirror-inspector-recording",
+  "version": 1,
+  "id": "95db126e-db82-494b-8513-cba38d326c64",
+  "createdAt": 1793823716299,
+  "versions": { "inspectionProtocol": "1", "recordingFormat": "1" },
+  "origin": {
+    "source": { "kind": "live", "id": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd" },
+    "target": {
+      "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+      "editorId": "standalone-list",
+      "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+      "generation": 1
+    }
+  },
+  "editor": {
+    "label": "Standalone list fixture",
+    "registeredAt": 1793823716089,
+    "capture": {
+      "kind": "recording",
+      "profile": {
+        "kind": "unbounded",
+        "budgets": {
+          "transactions": null,
+          "events": 200,
+          "decorations": 200,
+          "nodeViews": 200,
+          "projections": {
+            "maxItems": 100,
+            "maxDepth": 24,
+            "maxNodes": 4000,
+            "maxStringLength": 16000,
+            "maxBytes": 128000
+          },
+          "gaps": 200
+        }
+      },
+      "gaps": [],
+      "omittedGapCount": 0
+    }
+  },
+  "limits": {
+    "maxBytes": 2000000,
+    "maxDispatches": 25,
+    "query": {
+      "maxItems": 100,
+      "maxDepth": 24,
+      "maxNodes": 4000,
+      "maxStringLength": 16000,
+      "maxBytes": 128000
+    }
+  },
+  "current": {
+    "point": {
+      "kind": "live",
+      "target": {
+        "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+        "editorId": "standalone-list",
+        "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+        "generation": 1
+      },
+      "revision": 5,
+      "stateId": 2,
+      "dispatchId": 1,
+      "diagnosticsVersion": 3
+    },
+    "queries": [
+      {
+        "query": { "kind": "document" },
+        "result": {
+          "kind": "available",
+          "value": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "bullet_list",
+                "content": [
+                  {
+                    "type": "list_item",
+                    "content": [
+                      { "type": "paragraph", "content": [{ "type": "text", "text": "Alpha" }] }
+                    ]
+                  },
+                  { "type": "list_item", "content": [{ "type": "paragraph" }] }
+                ]
+              }
+            ]
+          },
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": true,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      },
+      {
+        "query": { "kind": "selection" },
+        "result": {
+          "kind": "available",
+          "value": {
+            "type": "text",
+            "anchor": 12,
+            "head": 12,
+            "from": 12,
+            "to": 12,
+            "empty": true
+          },
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": true,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      },
+      {
+        "query": { "kind": "contributions" },
+        "result": {
+          "kind": "available",
+          "value": [
+            {
+              "id": "prosemirror-history",
+              "version": "1",
+              "evidence": {
+                "kind": "available",
+                "value": { "kind": "state", "depths": { "undoDepth": 1, "redoDepth": 0 } }
+              }
+            }
+          ],
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": true,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      },
+      {
+        "query": { "kind": "schema" },
+        "result": {
+          "kind": "available",
+          "value": {
+            "topNodeType": "doc",
+            "nodes": [
+              {
+                "name": "doc",
+                "content": "block+",
+                "group": "",
+                "marks": "_",
+                "inline": false,
+                "text": false,
+                "leaf": false,
+                "atom": false,
+                "isolating": false,
+                "selectable": true,
+                "attributes": []
+              },
+              {
+                "name": "paragraph",
+                "content": "inline*",
+                "group": "block",
+                "marks": "_",
+                "inline": false,
+                "text": false,
+                "leaf": false,
+                "atom": false,
+                "isolating": false,
+                "selectable": true,
+                "attributes": []
+              },
+              {
+                "name": "blockquote",
+                "content": "block+",
+                "group": "block",
+                "marks": "_",
+                "inline": false,
+                "text": false,
+                "leaf": false,
+                "atom": false,
+                "isolating": false,
+                "selectable": true,
+                "attributes": []
+              },
+              {
+                "name": "horizontal_rule",
+                "content": "",
+                "group": "block",
+                "marks": "_",
+                "inline": false,
+                "text": false,
+                "leaf": true,
+                "atom": true,
+                "isolating": false,
+                "selectable": true,
+                "attributes": []
+              },
+              {
+                "name": "heading",
+                "content": "inline*",
+                "group": "block",
+                "marks": "_",
+                "inline": false,
+                "text": false,
+                "leaf": false,
+                "atom": false,
+                "isolating": false,
+                "selectable": true,
+                "attributes": [
+                  {
+                    "name": "level",
+                    "required": false,
+                    "default": { "kind": "available", "value": 1 }
+                  }
+                ]
+              },
+              {
+                "name": "code_block",
+                "content": "text*",
+                "group": "block",
+                "marks": "",
+                "inline": false,
+                "text": false,
+                "leaf": false,
+                "atom": false,
+                "isolating": false,
+                "selectable": true,
+                "attributes": []
+              },
+              {
+                "name": "text",
+                "content": "",
+                "group": "inline",
+                "marks": "_",
+                "inline": true,
+                "text": true,
+                "leaf": true,
+                "atom": true,
+                "isolating": false,
+                "selectable": true,
+                "attributes": []
+              },
+              {
+                "name": "image",
+                "content": "",
+                "group": "inline",
+                "marks": "_",
+                "inline": true,
+                "text": false,
+                "leaf": true,
+                "atom": true,
+                "isolating": false,
+                "selectable": true,
+                "attributes": [
+                  { "name": "src", "required": true, "default": null },
+                  {
+                    "name": "alt",
+                    "required": false,
+                    "default": { "kind": "available", "value": null }
+                  },
+                  {
+                    "name": "title",
+                    "required": false,
+                    "default": { "kind": "available", "value": null }
+                  }
+                ]
+              },
+              {
+                "name": "hard_break",
+                "content": "",
+                "group": "inline",
+                "marks": "_",
+                "inline": true,
+                "text": false,
+                "leaf": true,
+                "atom": true,
+                "isolating": false,
+                "selectable": false,
+                "attributes": []
+              },
+              {
+                "name": "ordered_list",
+                "content": "list_item+",
+                "group": "block",
+                "marks": "_",
+                "inline": false,
+                "text": false,
+                "leaf": false,
+                "atom": false,
+                "isolating": false,
+                "selectable": true,
+                "attributes": [
+                  {
+                    "name": "order",
+                    "required": false,
+                    "default": { "kind": "available", "value": 1 }
+                  }
+                ]
+              },
+              {
+                "name": "bullet_list",
+                "content": "list_item+",
+                "group": "block",
+                "marks": "_",
+                "inline": false,
+                "text": false,
+                "leaf": false,
+                "atom": false,
+                "isolating": false,
+                "selectable": true,
+                "attributes": []
+              },
+              {
+                "name": "list_item",
+                "content": "paragraph block*",
+                "group": "",
+                "marks": "_",
+                "inline": false,
+                "text": false,
+                "leaf": false,
+                "atom": false,
+                "isolating": false,
+                "selectable": true,
+                "attributes": []
+              }
+            ],
+            "marks": [
+              { "name": "link", "group": "", "inclusive": false, "excludes": "link" },
+              { "name": "em", "group": "", "inclusive": true, "excludes": "em" },
+              { "name": "strong", "group": "", "inclusive": true, "excludes": "strong" },
+              { "name": "code", "group": "", "inclusive": true, "excludes": "code" }
+            ]
+          },
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": true,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      },
+      {
+        "query": { "kind": "plugins" },
+        "result": {
+          "kind": "available",
+          "value": [
+            {
+              "key": "history$",
+              "index": 0,
+              "props": ["handleDOMEvents"],
+              "state": {
+                "kind": "error",
+                "reason": "TypeError: The value contains an opaque object. Supply a semantic serializer."
+              }
+            },
+            {
+              "key": "plugin$",
+              "index": 1,
+              "props": ["handleKeyDown"],
+              "state": { "kind": "unobserved", "reason": "This plugin has no state field." }
+            },
+            {
+              "key": "plugin$1",
+              "index": 2,
+              "props": ["handleKeyDown"],
+              "state": { "kind": "unobserved", "reason": "This plugin has no state field." }
+            }
+          ],
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": true,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      },
+      {
+        "query": { "kind": "events" },
+        "result": {
+          "kind": "available",
+          "value": [
+            {
+              "kind": "prop",
+              "name": "handleKeyDown",
+              "pluginKey": "plugin$",
+              "pluginLabel": "plugin #2",
+              "id": 1,
+              "parentId": null,
+              "timestamp": 1793823716187,
+              "duration": 5.399999976158142,
+              "handled": true,
+              "error": null,
+              "metadata": {
+                "type": "keydown",
+                "code": "Enter",
+                "altKey": false,
+                "ctrlKey": false,
+                "metaKey": false,
+                "shiftKey": false,
+                "repeat": false,
+                "isComposing": false,
+                "defaultPrevented": false
+              },
+              "dispatches": [
+                {
+                  "instanceId": "standalone-list",
+                  "id": 1,
+                  "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                  "generation": 1
+                }
+              ]
+            }
+          ],
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": true,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      },
+      {
+        "query": { "kind": "decorations" },
+        "result": {
+          "kind": "unobserved",
+          "reason": "No matching observation is retained. An empty trace does not prove the event did not happen.",
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": false,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      },
+      {
+        "query": { "kind": "nodeViews" },
+        "result": {
+          "kind": "unobserved",
+          "reason": "No matching observation is retained. An empty trace does not prove the event did not happen.",
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": false,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      },
+      {
+        "query": { "kind": "capabilities" },
+        "result": {
+          "kind": "available",
+          "value": [
+            {
+              "id": "document",
+              "version": "1",
+              "label": "document",
+              "description": "Read document JSON or a bounded position range.",
+              "prerequisites": ["A current state or retained dispatch document."],
+              "queries": ["document"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "selection",
+              "version": "1",
+              "label": "selection",
+              "description": "Read the selection at the selected point.",
+              "prerequisites": ["A current state or retained dispatch selection."],
+              "queries": ["selection"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "transactions",
+              "version": "1",
+              "label": "transactions",
+              "description": "Search retained dispatch summaries in invocation order.",
+              "prerequisites": ["Dispatch capture."],
+              "queries": ["transactions"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "transaction",
+              "version": "1",
+              "label": "transaction",
+              "description": "Read one retained dispatch, applied steps, and observed provenance.",
+              "prerequisites": ["The requested dispatch remains retained."],
+              "queries": ["transaction"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "contributions",
+              "version": "1",
+              "label": "contributions",
+              "description": "Read installed semantic inspector projections.",
+              "prerequisites": ["Register at least one semantic inspector."],
+              "queries": ["contributions"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "contribution",
+              "version": "1",
+              "label": "contribution",
+              "description": "Read one named semantic inspector projection.",
+              "prerequisites": ["Register the requested semantic inspector."],
+              "queries": ["contribution"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "capabilities",
+              "version": "1",
+              "label": "capabilities",
+              "description": "Discover installed queries and their prerequisites.",
+              "prerequisites": [],
+              "queries": ["capabilities"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "events",
+              "version": "1",
+              "label": "events",
+              "description": "Search observed synchronous handler and command events.",
+              "prerequisites": [
+                "Enable diagnostics and instrument the relevant plugin or command."
+              ],
+              "queries": ["events"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "decorations",
+              "version": "1",
+              "label": "decorations",
+              "description": "Read observed decoration ranges and their current validity.",
+              "prerequisites": ["Enable diagnostics and observe the decorations callback."],
+              "queries": ["decorations"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "nodeViews",
+              "version": "1",
+              "label": "nodeViews",
+              "description": "Read observed NodeView lifecycle summaries.",
+              "prerequisites": ["Enable diagnostics and instrument NodeView factories."],
+              "queries": ["nodeViews"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "schema",
+              "version": "1",
+              "label": "schema",
+              "description": "Read declarative schema constraints at the current state.",
+              "prerequisites": ["A current editor state."],
+              "queries": ["schema"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "plugins",
+              "version": "1",
+              "label": "plugins",
+              "description": "Read plugin order, props, and bounded current state evidence.",
+              "prerequisites": [
+                "A current editor state. Historical state needs an explicit inspector serializer."
+              ],
+              "queries": ["plugins"],
+              "evidence": { "kind": "available", "value": true }
+            },
+            {
+              "id": "prosemirror-history",
+              "version": "1",
+              "label": "Undo history",
+              "description": "Public undo and redo depths, history transaction classification, and observed addToHistory metadata. Dispatches and undo events are distinct.",
+              "prerequisites": [
+                "prosemirror-history",
+                "An explicit history() plugin instance installed in the editor"
+              ],
+              "queries": ["contribution"],
+              "evidence": { "kind": "available", "value": true }
+            }
+          ],
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": true,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      },
+      {
+        "query": { "kind": "transactions" },
+        "result": {
+          "kind": "available",
+          "value": [
+            {
+              "id": 1,
+              "timestamp": 1793823716188,
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "applicationStatus": "applied",
+              "appliedTransactionCount": 1,
+              "appendedTransactionCount": 0,
+              "docChanged": true,
+              "selectionSet": false,
+              "stepCount": 1,
+              "totalDuration": 1.399999976158142,
+              "parentDispatchId": null,
+              "error": null,
+              "captureErrors": []
+            }
+          ],
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "point": {
+            "kind": "live",
+            "target": {
+              "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+              "editorId": "standalone-list",
+              "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+              "generation": 1
+            },
+            "revision": 5,
+            "stateId": 2,
+            "dispatchId": 1,
+            "diagnosticsVersion": 3
+          },
+          "coverage": {
+            "complete": true,
+            "gaps": [],
+            "truncated": false,
+            "limits": {
+              "maxItems": 100,
+              "maxDepth": 24,
+              "maxNodes": 4000,
+              "maxStringLength": 16000,
+              "maxBytes": 128000
+            },
+            "notes": []
+          }
+        }
+      }
+    ]
+  },
+  "dispatches": [
+    {
+      "kind": "available",
+      "id": 1,
+      "before": {
+        "point": {
+          "kind": "transaction",
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "revision": 3,
+          "transactionId": 1,
+          "phase": "before"
+        },
+        "queries": [
+          {
+            "query": { "kind": "document" },
+            "result": {
+              "kind": "available",
+              "value": {
+                "type": "doc",
+                "content": [
+                  {
+                    "type": "bullet_list",
+                    "content": [
+                      {
+                        "type": "list_item",
+                        "content": [
+                          { "type": "paragraph", "content": [{ "type": "text", "text": "Alpha" }] }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "target": {
+                "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                "editorId": "standalone-list",
+                "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                "generation": 1
+              },
+              "point": {
+                "kind": "transaction",
+                "target": {
+                  "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                  "editorId": "standalone-list",
+                  "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                  "generation": 1
+                },
+                "revision": 3,
+                "transactionId": 1,
+                "phase": "before"
+              },
+              "coverage": {
+                "complete": true,
+                "gaps": [],
+                "truncated": false,
+                "limits": {
+                  "maxItems": 100,
+                  "maxDepth": 24,
+                  "maxNodes": 4000,
+                  "maxStringLength": 16000,
+                  "maxBytes": 128000
+                },
+                "notes": []
+              }
+            }
+          },
+          {
+            "query": { "kind": "selection" },
+            "result": {
+              "kind": "available",
+              "value": { "type": "text", "anchor": 8, "head": 8 },
+              "target": {
+                "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                "editorId": "standalone-list",
+                "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                "generation": 1
+              },
+              "point": {
+                "kind": "transaction",
+                "target": {
+                  "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                  "editorId": "standalone-list",
+                  "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                  "generation": 1
+                },
+                "revision": 3,
+                "transactionId": 1,
+                "phase": "before"
+              },
+              "coverage": {
+                "complete": true,
+                "gaps": [],
+                "truncated": false,
+                "limits": {
+                  "maxItems": 100,
+                  "maxDepth": 24,
+                  "maxNodes": 4000,
+                  "maxStringLength": 16000,
+                  "maxBytes": 128000
+                },
+                "notes": []
+              }
+            }
+          },
+          {
+            "query": { "kind": "contributions" },
+            "result": {
+              "kind": "unobserved",
+              "reason": "Retained inspector projections describe the end of the dispatch. Inspect their explicit before projection when available.",
+              "target": {
+                "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                "editorId": "standalone-list",
+                "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                "generation": 1
+              },
+              "point": {
+                "kind": "transaction",
+                "target": {
+                  "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                  "editorId": "standalone-list",
+                  "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                  "generation": 1
+                },
+                "revision": 3,
+                "transactionId": 1,
+                "phase": "before"
+              },
+              "coverage": {
+                "complete": false,
+                "gaps": [],
+                "truncated": false,
+                "limits": {
+                  "maxItems": 100,
+                  "maxDepth": 24,
+                  "maxNodes": 4000,
+                  "maxStringLength": 16000,
+                  "maxBytes": 128000
+                },
+                "notes": []
+              }
+            }
+          }
+        ]
+      },
+      "after": {
+        "point": {
+          "kind": "transaction",
+          "target": {
+            "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+            "editorId": "standalone-list",
+            "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+            "generation": 1
+          },
+          "revision": 3,
+          "transactionId": 1,
+          "phase": "after"
+        },
+        "queries": [
+          {
+            "query": { "kind": "document" },
+            "result": {
+              "kind": "available",
+              "value": {
+                "type": "doc",
+                "content": [
+                  {
+                    "type": "bullet_list",
+                    "content": [
+                      {
+                        "type": "list_item",
+                        "content": [
+                          { "type": "paragraph", "content": [{ "type": "text", "text": "Alpha" }] }
+                        ]
+                      },
+                      { "type": "list_item", "content": [{ "type": "paragraph" }] }
+                    ]
+                  }
+                ]
+              },
+              "target": {
+                "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                "editorId": "standalone-list",
+                "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                "generation": 1
+              },
+              "point": {
+                "kind": "transaction",
+                "target": {
+                  "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                  "editorId": "standalone-list",
+                  "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                  "generation": 1
+                },
+                "revision": 3,
+                "transactionId": 1,
+                "phase": "after"
+              },
+              "coverage": {
+                "complete": true,
+                "gaps": [],
+                "truncated": false,
+                "limits": {
+                  "maxItems": 100,
+                  "maxDepth": 24,
+                  "maxNodes": 4000,
+                  "maxStringLength": 16000,
+                  "maxBytes": 128000
+                },
+                "notes": []
+              }
+            }
+          },
+          {
+            "query": { "kind": "selection" },
+            "result": {
+              "kind": "available",
+              "value": { "type": "text", "anchor": 12, "head": 12 },
+              "target": {
+                "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                "editorId": "standalone-list",
+                "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                "generation": 1
+              },
+              "point": {
+                "kind": "transaction",
+                "target": {
+                  "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                  "editorId": "standalone-list",
+                  "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                  "generation": 1
+                },
+                "revision": 3,
+                "transactionId": 1,
+                "phase": "after"
+              },
+              "coverage": {
+                "complete": true,
+                "gaps": [],
+                "truncated": false,
+                "limits": {
+                  "maxItems": 100,
+                  "maxDepth": 24,
+                  "maxNodes": 4000,
+                  "maxStringLength": 16000,
+                  "maxBytes": 128000
+                },
+                "notes": []
+              }
+            }
+          },
+          {
+            "query": { "kind": "contributions" },
+            "result": {
+              "kind": "available",
+              "value": [
+                {
+                  "id": "prosemirror-history",
+                  "version": "1",
+                  "evidence": {
+                    "kind": "available",
+                    "value": {
+                      "kind": "dispatch",
+                      "before": { "undoDepth": 0, "redoDepth": 0 },
+                      "after": { "undoDepth": 1, "redoDepth": 0 },
+                      "root": { "historyTransaction": false, "addToHistory": "unspecified" },
+                      "applied": [{ "historyTransaction": false, "addToHistory": "unspecified" }]
+                    }
+                  }
+                }
+              ],
+              "target": {
+                "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                "editorId": "standalone-list",
+                "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                "generation": 1
+              },
+              "point": {
+                "kind": "transaction",
+                "target": {
+                  "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                  "editorId": "standalone-list",
+                  "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                  "generation": 1
+                },
+                "revision": 3,
+                "transactionId": 1,
+                "phase": "after"
+              },
+              "coverage": {
+                "complete": true,
+                "gaps": [],
+                "truncated": false,
+                "limits": {
+                  "maxItems": 100,
+                  "maxDepth": 24,
+                  "maxNodes": 4000,
+                  "maxStringLength": 16000,
+                  "maxBytes": 128000
+                },
+                "notes": []
+              }
+            }
+          },
+          {
+            "query": { "kind": "transaction", "id": 1 },
+            "result": {
+              "kind": "available",
+              "value": {
+                "id": 1,
+                "timestamp": 1793823716188,
+                "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                "applicationStatus": "applied",
+                "appliedTransactionCount": 1,
+                "appendedTransactionCount": 0,
+                "docChanged": true,
+                "selectionSet": false,
+                "stepCount": 1,
+                "totalDuration": 1.399999976158142,
+                "parentDispatchId": null,
+                "error": null,
+                "captureErrors": [],
+                "applyDuration": 0.19999998807907104,
+                "viewUpdateDuration": 0.6000000238418579,
+                "customDispatchDuration": 1,
+                "phaseTimings": [
+                  { "phase": "customDispatch", "startOffset": 0.19999998807907104, "duration": 1 },
+                  {
+                    "phase": "apply",
+                    "startOffset": 0.19999998807907104,
+                    "duration": 0.19999998807907104
+                  },
+                  { "phase": "viewUpdate", "startOffset": 0.5, "duration": 0.6000000238418579 }
+                ],
+                "transactions": [
+                  {
+                    "index": 0,
+                    "appended": false,
+                    "docChanged": true,
+                    "selectionSet": false,
+                    "storedMarksSet": false,
+                    "steps": [
+                      {
+                        "stepType": "replace",
+                        "from": 8,
+                        "to": 8,
+                        "slice": {
+                          "content": [
+                            { "type": "list_item", "content": [{ "type": "paragraph" }] },
+                            { "type": "list_item", "content": [{ "type": "paragraph" }] }
+                          ],
+                          "openStart": 2,
+                          "openEnd": 2
+                        },
+                        "structure": true
+                      }
+                    ],
+                    "maps": [
+                      {
+                        "index": 0,
+                        "ranges": [{ "oldStart": 8, "oldEnd": 8, "newStart": 8, "newEnd": 12 }],
+                        "documentSizeBefore": 11,
+                        "documentSizeAfter": 15,
+                        "mirror": null
+                      }
+                    ],
+                    "meta": { "kind": "available", "value": {} },
+                    "captureError": null
+                  }
+                ],
+                "selectionBefore": { "type": "text", "anchor": 8, "head": 8 },
+                "selectionAfter": { "type": "text", "anchor": 12, "head": 12 },
+                "timings": [
+                  {
+                    "pluginKey": "history$",
+                    "pluginLabel": "history",
+                    "hook": "state.apply",
+                    "duration": 0.09999996423721313,
+                    "startOffset": 0.30000001192092896
+                  }
+                ],
+                "markers": [],
+                "projections": [
+                  {
+                    "id": "prosemirror-history",
+                    "version": "1",
+                    "evidence": {
+                      "kind": "available",
+                      "value": {
+                        "kind": "dispatch",
+                        "before": { "undoDepth": 0, "redoDepth": 0 },
+                        "after": { "undoDepth": 1, "redoDepth": 0 },
+                        "root": { "historyTransaction": false, "addToHistory": "unspecified" },
+                        "applied": [{ "historyTransaction": false, "addToHistory": "unspecified" }]
+                      }
+                    }
+                  }
+                ],
+                "provenance": {
+                  "kind": "unobserved",
+                  "transactions": [{ "id": 0, "appliedIndex": 0, "origin": { "kind": "root" } }],
+                  "filters": [],
+                  "appends": []
+                }
+              },
+              "target": {
+                "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                "editorId": "standalone-list",
+                "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                "generation": 1
+              },
+              "point": {
+                "kind": "transaction",
+                "target": {
+                  "sourceId": "source-09be0880-91b1-4c42-9cfc-98d6f663ffcd",
+                  "editorId": "standalone-list",
+                  "sessionId": "session-a4143f31-b800-4d81-9cf1-23e4e1d86608",
+                  "generation": 1
+                },
+                "revision": 3,
+                "transactionId": 1,
+                "phase": "after"
+              },
+              "coverage": {
+                "complete": true,
+                "gaps": [],
+                "truncated": false,
+                "limits": {
+                  "maxItems": 100,
+                  "maxDepth": 24,
+                  "maxNodes": 4000,
+                  "maxStringLength": 16000,
+                  "maxBytes": 128000
+                },
+                "notes": []
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "omissions": [
+    {
+      "scope": "replay",
+      "reason": "This artifact contains query evidence, not executable EditorState, undo branches, provider state, DOM, or a browser action report."
+    },
+    {
+      "scope": "history",
+      "reason": "Only the selected 1 dispatch IDs and bounded current query scopes are included. Unselected or expired observations are not reconstructed."
+    },
+    {
+      "scope": "budget",
+      "reason": "Queries and dispatches that exceed the total byte budget are omitted. A missing query is not evidence that the editor contained no data."
+    },
+    {
+      "scope": "current/decorations",
+      "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+    },
+    {
+      "scope": "current/nodeViews",
+      "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+    },
+    {
+      "scope": "dispatch/1/before/contributions",
+      "reason": "unobserved: Retained inspector projections describe the end of the dispatch. Inspect their explicit before projection when available."
+    }
+  ]
+}

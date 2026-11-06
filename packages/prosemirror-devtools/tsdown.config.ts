@@ -8,6 +8,9 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     core: "src/core/index.ts",
+    recordings: "src/recordings/index.ts",
+    "recordings-panel": "src/recordings-panel.ts",
+    agent: "src/agent/index.ts",
     performance: "src/performance/index.ts",
     "styles/index": "src/styles/index.ts",
     // The extension is usable without the panel. Keeping it as an internal
@@ -26,6 +29,13 @@ export default defineConfig({
     "angular/index": "src/adapters/angular/index.ts",
     "angular/production/index": "src/adapters/angular/production/index.ts",
     tiptap: "src/adapters/tiptap/index.ts",
+    standalone: "src/standalone.ts",
+    "react-prosemirror": "src/adapters/react-prosemirror/index.ts",
+    "inspectors/history": "src/inspectors/history.ts",
+    "inspectors/collab": "src/inspectors/collab.ts",
+    "inspectors/transport": "src/inspectors/transport.ts",
+    "inspectors/yjs": "src/inspectors/yjs.ts",
+    "inspectors/tiptap": "src/inspectors/tiptap.ts",
   },
   format: "esm",
   dts: true,

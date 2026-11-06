@@ -1,0 +1,390 @@
+{
+  "recordingId": "bc521e68-8e55-440b-bbb4-b7301ed617fe",
+  "versions": {
+    "inspectionProtocol": "1",
+    "recordingFormat": "1"
+  },
+  "target": {
+    "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+    "editorId": "standalone-list",
+    "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+    "generation": 2
+  },
+  "currentPoint": {
+    "kind": "live",
+    "target": {
+      "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+      "editorId": "standalone-list",
+      "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+      "generation": 2
+    },
+    "revision": 3,
+    "stateId": 3,
+    "dispatchId": 1,
+    "diagnosticsVersion": 2
+  },
+  "events": {
+    "kind": "unobserved",
+    "reason": "No matching observation is retained. An empty trace does not prove the event did not happen.",
+    "target": {
+      "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+      "editorId": "standalone-list",
+      "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+      "generation": 2
+    },
+    "point": {
+      "kind": "live",
+      "target": {
+        "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+        "editorId": "standalone-list",
+        "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+        "generation": 2
+      },
+      "revision": 3,
+      "stateId": 3,
+      "dispatchId": 1,
+      "diagnosticsVersion": 2
+    },
+    "coverage": {
+      "complete": false,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "selection": {
+    "kind": "available",
+    "value": {
+      "type": "text",
+      "anchor": 12,
+      "head": 12,
+      "from": 12,
+      "to": 12,
+      "empty": true
+    },
+    "target": {
+      "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+      "editorId": "standalone-list",
+      "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+      "generation": 2
+    },
+    "point": {
+      "kind": "live",
+      "target": {
+        "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+        "editorId": "standalone-list",
+        "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+        "generation": 2
+      },
+      "revision": 3,
+      "stateId": 3,
+      "dispatchId": 1,
+      "diagnosticsVersion": 2
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "beforePoint": {
+    "kind": "transaction",
+    "target": {
+      "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+      "editorId": "standalone-list",
+      "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+      "generation": 2
+    },
+    "revision": 3,
+    "transactionId": 1,
+    "phase": "before"
+  },
+  "documentBefore": {
+    "kind": "available",
+    "value": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "bullet_list",
+          "content": [
+            {
+              "type": "list_item",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Alpha"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "target": {
+      "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+      "editorId": "standalone-list",
+      "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+      "generation": 2
+    },
+    "point": {
+      "kind": "transaction",
+      "target": {
+        "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+        "editorId": "standalone-list",
+        "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+        "generation": 2
+      },
+      "revision": 3,
+      "transactionId": 1,
+      "phase": "before"
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "afterPoint": {
+    "kind": "transaction",
+    "target": {
+      "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+      "editorId": "standalone-list",
+      "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+      "generation": 2
+    },
+    "revision": 3,
+    "transactionId": 1,
+    "phase": "after"
+  },
+  "documentAfter": {
+    "kind": "available",
+    "value": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "bullet_list",
+          "content": [
+            {
+              "type": "list_item",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Alpha"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "list_item",
+              "content": [
+                {
+                  "type": "paragraph"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "target": {
+      "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+      "editorId": "standalone-list",
+      "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+      "generation": 2
+    },
+    "point": {
+      "kind": "transaction",
+      "target": {
+        "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+        "editorId": "standalone-list",
+        "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+        "generation": 2
+      },
+      "revision": 3,
+      "transactionId": 1,
+      "phase": "after"
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "transaction": {
+    "point": {
+      "kind": "transaction",
+      "target": {
+        "sourceId": "source-38be5c1a-0401-41e2-9b8d-b9811acf7c0a",
+        "editorId": "standalone-list",
+        "sessionId": "session-27972179-cde2-471d-9dff-0d0a7a5d8a55",
+        "generation": 2
+      },
+      "revision": 3,
+      "transactionId": 1,
+      "phase": "after"
+    },
+    "kind": "available",
+    "id": 1,
+    "applicationStatus": "applied",
+    "appliedTransactionCount": 1,
+    "appendedTransactionCount": 0,
+    "docChanged": true,
+    "stepCount": 1,
+    "selectionBefore": {
+      "type": "text",
+      "anchor": 8,
+      "head": 8
+    },
+    "selectionAfter": {
+      "type": "text",
+      "anchor": 12,
+      "head": 12
+    },
+    "transactions": [
+      {
+        "index": 0,
+        "appended": false,
+        "docChanged": true,
+        "selectionSet": false,
+        "storedMarksSet": false,
+        "steps": [
+          {
+            "stepType": "replace",
+            "from": 8,
+            "to": 8,
+            "slice": {
+              "content": [
+                {
+                  "type": "list_item",
+                  "content": [
+                    {
+                      "type": "paragraph"
+                    }
+                  ]
+                },
+                {
+                  "type": "list_item",
+                  "content": [
+                    {
+                      "type": "paragraph"
+                    }
+                  ]
+                }
+              ],
+              "openStart": 2,
+              "openEnd": 2
+            },
+            "structure": true
+          }
+        ],
+        "maps": [
+          {
+            "index": 0,
+            "ranges": [
+              {
+                "oldStart": 8,
+                "oldEnd": 8,
+                "newStart": 8,
+                "newEnd": 12
+              }
+            ],
+            "documentSizeBefore": 11,
+            "documentSizeAfter": 15,
+            "mirror": null
+          }
+        ],
+        "meta": {
+          "kind": "available",
+          "value": {}
+        },
+        "captureError": null
+      }
+    ],
+    "provenance": {
+      "kind": "unobserved",
+      "transactions": [
+        {
+          "id": 0,
+          "appliedIndex": 0,
+          "origin": {
+            "kind": "root"
+          }
+        }
+      ],
+      "filters": [],
+      "appends": []
+    },
+    "error": null,
+    "captureErrors": []
+  },
+  "omissions": [
+    {
+      "scope": "replay",
+      "reason": "This artifact contains query evidence, not executable EditorState, undo branches, provider state, DOM, or a browser action report."
+    },
+    {
+      "scope": "history",
+      "reason": "Only the selected 1 dispatch IDs and bounded current query scopes are included. Unselected or expired observations are not reconstructed."
+    },
+    {
+      "scope": "budget",
+      "reason": "Queries and dispatches that exceed the total byte budget are omitted. A missing query is not evidence that the editor contained no data."
+    },
+    {
+      "scope": "current/events",
+      "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+    },
+    {
+      "scope": "current/decorations",
+      "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+    },
+    {
+      "scope": "current/nodeViews",
+      "reason": "unobserved: No matching observation is retained. An empty trace does not prove the event did not happen."
+    },
+    {
+      "scope": "dispatch/1/before/contributions",
+      "reason": "unobserved: Retained inspector projections describe the end of the dispatch. Inspect their explicit before projection when available."
+    }
+  ]
+}

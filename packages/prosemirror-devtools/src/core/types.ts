@@ -2,6 +2,13 @@ import type { EditorState, Plugin, Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import type { DevtoolsDiagnosticsController } from "./diagnostics";
 import type { RecordedStepDetails } from "./transaction-changes";
+import type {
+  CaptureProfile,
+  CaptureStatus,
+  InspectionTarget,
+  InspectorProjection,
+  ProseMirrorInspector,
+} from "../inspection/types";
 
 export type DevtoolsTheme = "light" | "dark" | "system";
 
@@ -99,6 +106,7 @@ export interface AppliedTransactionRecord {
   /** Normalized maps and lazy per-step document changes; optional for older external records. */
   stepDetails?: readonly RecordedStepDetails[];
   meta: Record<string, unknown>;
+  captureError?: string;
 }
 
 export interface TransactionRecord {
@@ -129,6 +137,50 @@ export interface TransactionRecord {
   readonly markers: readonly DevtoolsMarker[];
   readonly measureName: string | null;
   readonly error: string | null;
+  readonly captureErrors?: readonly string[];
+  readonly inspection?: {
+    readonly revision: number;
+    readonly stateBeforeId: number;
+    readonly stateAfterId: number;
+    readonly parentDispatchId: number | null;
+    readonly projections: readonly InspectorProjection[];
+    readonly provenance: TransactionProvenance;
+  };
+}
+
+export interface TransactionProvenance {
+  readonly kind: "partial" | "unobserved";
+  readonly transactions: readonly {
+    readonly id: number;
+    readonly appliedIndex: number | null;
+    readonly origin:
+      | { readonly kind: "root" }
+      | { readonly kind: "append"; readonly pluginKey: string }
+      | { readonly kind: "unknown" };
+  }[];
+  readonly filters: readonly {
+    readonly transactionId: number;
+    readonly pluginKey: string;
+    readonly pluginLabel: string;
+    readonly outcome: "accepted" | "rejected" | "error";
+    readonly error: string | null;
+  }[];
+  readonly appends: readonly {
+    readonly pluginKey: string;
+    readonly pluginLabel: string;
+    readonly inputTransactionIds: readonly number[];
+    readonly outputTransactionId: number | null;
+    readonly outcome: "none" | "returned" | "error";
+    readonly error: string | null;
+  }[];
+}
+
+export interface LiveInspectionState {
+  readonly target: InspectionTarget;
+  readonly revision: number;
+  readonly capture: CaptureStatus;
+  readonly inspectors: readonly ProseMirrorInspector[];
+  readonly getState: () => EditorState;
 }
 
 export interface RegisteredProseMirrorInstance {
@@ -144,6 +196,8 @@ export interface RegisteredProseMirrorInstance {
   pluginTimings: readonly PluginTimingSummary[];
   /** Optional bounded event, decoration, and NodeView observations. */
   diagnostics?: DevtoolsDiagnosticsController;
+  /** Framework-neutral live internals. Serializable consumers use the inspection client. */
+  inspection?: LiveInspectionState;
 }
 
 export interface DevtoolsSnapshot {
@@ -169,6 +223,10 @@ export interface RegisterProseMirrorInstanceOptions {
    */
   transactionLimit?: number | null;
   diagnostics?: DevtoolsDiagnosticsController;
+  captureProfile?: "bounded" | CaptureProfile;
+  inspectors?: readonly ProseMirrorInspector[];
+  /** Explicit model state source for framework-owned controlled dispatch. */
+  getState?: () => EditorState;
 }
 
 export interface AttachProseMirrorDevtoolsOptions extends RegisterProseMirrorInstanceOptions {
@@ -218,6 +276,7 @@ export interface FinishTransactionMeasurement {
   stateAfter: EditorState;
   appliedTransactions?: readonly Transaction[];
   error?: unknown;
+  captureError?: unknown;
 }
 
 /**
@@ -245,6 +304,7 @@ export interface DevtoolsDispatchEvent {
 export type DevtoolsDispatchListener = (events: readonly DevtoolsDispatchEvent[]) => void;
 
 export type DevtoolsStoreReader = Readonly<{
+  sourceId: string;
   getSnapshot: () => DevtoolsSnapshot;
   subscribe: (listener: () => void) => () => void;
   getActiveInstanceId: () => string | null;
@@ -261,6 +321,8 @@ export type DevtoolsInstanceManager = Readonly<{
   unregister: (id: string, view?: EditorView) => void;
   setActiveInstance: (id: string) => void;
   clearTransactions: (id: string) => void;
+  pauseCapture: (id: string, sessionId?: string) => void;
+  resumeCapture: (id: string, sessionId?: string) => void;
   /** Closes buffered instrumentation owned by a private lifecycle namespace. */
   closeSession: (instanceId: string, sessionId: string) => void;
 }>;
@@ -287,6 +349,25 @@ export type DevtoolsTransactionRecorder = Readonly<{
 }>;
 
 export type DevtoolsPluginTimingRecorder = Readonly<{
+  observeFilter: (observation: {
+    instanceId: string;
+    sessionId?: string;
+    pluginKey: string;
+    pluginLabel: string;
+    transaction: Transaction;
+    outcome: "accepted" | "rejected" | "error";
+    error?: unknown;
+  }) => void;
+  observeAppend: (observation: {
+    instanceId: string;
+    sessionId?: string;
+    pluginKey: string;
+    pluginLabel: string;
+    transactions: readonly Transaction[];
+    appended: Transaction | null | undefined;
+    error?: unknown;
+    didThrow: boolean;
+  }) => void;
   measurePluginHook: <T>(
     instanceId: string,
     pluginKey: string,

@@ -15,10 +15,12 @@ import { createTransactionRecorder } from "./transaction-recorder";
  * begin/finish lifecycle. The instance store owns immediate values and committed delivery. This
  * split keeps flushing internal: consumers only subscribe and always receive coherent updates.
  */
-export function createProseMirrorDevtoolsStore(): DevtoolsStore {
+export function createProseMirrorDevtoolsStore(options: { sourceId?: string } = {}): DevtoolsStore {
+  const sourceId = options.sourceId ?? createDevtoolsSessionId("source");
   const activeMeasurements = createActiveTransactionMeasurements();
   const performanceEntries = createPerformanceEntryStore();
   const instanceStore = createInstanceStore({
+    sourceId,
     clearRecords(records) {
       for (const record of records) performanceEntries.clear(record);
     },
@@ -55,6 +57,7 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
   };
 
   return {
+    sourceId,
     getSnapshot: instanceStore.getSnapshot,
     subscribe: instanceStore.subscribe,
     getActiveInstanceId: instanceStore.getActiveInstanceId,
@@ -68,11 +71,15 @@ export function createProseMirrorDevtoolsStore(): DevtoolsStore {
     unregister: instanceStore.unregister,
     setActiveInstance: instanceStore.setActiveInstance,
     clearTransactions: instanceStore.clearTransactions,
+    pauseCapture: instanceStore.pauseCapture,
+    resumeCapture: instanceStore.resumeCapture,
     closeSession,
     beginTransaction: transactionRecorder.beginTransaction,
     recordPhase: transactionRecorder.recordPhase,
     finishTransaction: transactionRecorder.finishTransaction,
     measurePluginHook: pluginTimingRecorder.measurePluginHook,
+    observeFilter: pluginTimingRecorder.observeFilter,
+    observeAppend: pluginTimingRecorder.observeAppend,
     addMarker: markerRecorder.addMarker,
     measureMarker: markerRecorder.measureMarker,
   };

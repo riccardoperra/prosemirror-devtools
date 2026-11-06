@@ -1,10 +1,12 @@
 import { createMemo, For, Show, type JSX } from "solid-js";
 
 import type { DevtoolsDiagnosticEvent } from "../../../core/diagnostics";
+import type { TransactionRecord } from "../../../core/types";
 import { formatDateTime, formatMs } from "../../formatters";
 import { JsonTree } from "../../json-tree";
 import { panelStyles } from "../../styles";
 import { Badge } from "../../ui/badge";
+import { DispatchEffects } from "../dispatch/dispatch-effects";
 import { EVENT_PAGE_SIZE, eventSource, eventStatus } from "./use-events";
 
 export function EventStatusBadge(props: { event: DevtoolsDiagnosticEvent }): JSX.Element {
@@ -20,6 +22,13 @@ export function EventDetails(props: {
   event: DevtoolsDiagnosticEvent;
   events: readonly DevtoolsDiagnosticEvent[];
   onSelect: (id: number) => void;
+  retainedDispatch?:
+    | ((dispatch: DevtoolsDiagnosticEvent["dispatches"][number]) => TransactionRecord | undefined)
+    | undefined;
+  onInspectDispatch?:
+    | ((dispatch: DevtoolsDiagnosticEvent["dispatches"][number]) => void)
+    | undefined;
+  onInspectPlugin?: ((key: string) => void) | undefined;
 }): JSX.Element {
   const parent = createMemo(() => props.events.find((event) => event.id === props.event.parentId));
   const children = createMemo(() =>
@@ -48,6 +57,17 @@ export function EventDetails(props: {
       <div style={{ padding: "10px", "overflow-wrap": "anywhere" }}>
         <strong class={panelStyles.pmMono}>{props.event.name}</strong>
         <p>{eventSource(props.event)}</p>
+        <Show when={props.onInspectPlugin && props.event.pluginKey}>
+          {(key) => (
+            <button
+              type="button"
+              class={panelStyles.pmButton}
+              onClick={() => props.onInspectPlugin?.(key())}
+            >
+              Inspect plugin {props.event.pluginLabel ?? key()}
+            </button>
+          )}
+        </Show>
         <time dateTime={new Date(props.event.timestamp).toISOString()}>
           {formatDateTime(props.event.timestamp)}
         </time>
@@ -118,17 +138,40 @@ export function EventDetails(props: {
         <div class={panelStyles.pmDetailHeading}>
           <span class={panelStyles.pmSectionTitle}>Dispatches during this call</span>
         </div>
-        <div style={{ padding: "10px", display: "flex", "flex-wrap": "wrap", gap: "6px" }}>
+        <div style={{ padding: "10px", display: "grid", gap: "6px" }}>
           <Show
             when={props.event.dispatches.length > 0}
             fallback={<span>No dispatch observed.</span>}
           >
             <For each={props.event.dispatches.slice(0, EVENT_PAGE_SIZE)}>
-              {(dispatch) => (
-                <Badge tone="blue">
-                  {dispatch.instanceId} · #{dispatch.id}
-                </Badge>
-              )}
+              {(dispatch) => {
+                const record = createMemo(() => props.retainedDispatch?.(dispatch));
+                return (
+                  <div>
+                    <Show
+                      when={props.onInspectDispatch}
+                      fallback={
+                        <Badge tone="blue">
+                          {dispatch.instanceId} · #{dispatch.id}
+                        </Badge>
+                      }
+                    >
+                      <button
+                        type="button"
+                        class={panelStyles.pmButton}
+                        aria-label={`Inspect dispatch #${dispatch.id} in ${dispatch.instanceId}`}
+                        disabled={!record()}
+                        onClick={() => props.onInspectDispatch?.(dispatch)}
+                      >
+                        {dispatch.instanceId} · #{dispatch.id}
+                      </button>
+                    </Show>
+                    <Show when={record()}>
+                      {(retained) => <DispatchEffects record={retained()} />}
+                    </Show>
+                  </div>
+                );
+              }}
             </For>
             <Show when={props.event.dispatches.length > EVENT_PAGE_SIZE}>
               <span>
@@ -140,7 +183,8 @@ export function EventDetails(props: {
         </div>
         <Show when={props.event.dispatches.length > 0}>
           <p class={panelStyles.pmPerformanceNote}>
-            Match these IDs in History. Dispatch records may have been cleared or expired.
+            Open a retained dispatch in Transactions. Unavailable links belong to a cleared,
+            expired, or different editor session.
           </p>
         </Show>
       </div>

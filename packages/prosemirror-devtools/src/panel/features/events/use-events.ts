@@ -5,6 +5,7 @@ import type {
   DevtoolsDiagnosticsSnapshot,
 } from "../../../core/diagnostics";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
+import { useOptionalPanelInspection } from "../../panel-provider";
 
 export const EVENT_PAGE_SIZE = 100;
 const NO_EVENTS: readonly DevtoolsDiagnosticEvent[] = [];
@@ -30,12 +31,15 @@ export function useEvents(instance: Accessor<RegisteredProseMirrorInstance>) {
   const [query, setQuery] = createSignal("");
   const [plugin, setPlugin] = createSignal("");
   const [status, setStatus] = createSignal<EventStatus | "">("");
-  const [requestedId, setRequestedId] = createSignal<number | null>(null);
+  const inspection = useOptionalPanelInspection();
+  const [localRequestedId, setLocalRequestedId] = createSignal<number | null>(null);
+  const requestedId = inspection?.eventId ?? localRequestedId;
+  const setRequestedId = inspection?.selectEvent ?? setLocalRequestedId;
   const [requestedPage, setRequestedPage] = createSignal(0);
 
   createEffect(() => {
     const source = controller();
-    setRequestedId(null);
+    if (!inspection) setRequestedId(null);
     setRequestedPage(0);
     setPlugin("");
     if (!source) {

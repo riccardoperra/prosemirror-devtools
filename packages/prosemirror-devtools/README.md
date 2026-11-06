@@ -26,6 +26,10 @@ TanStack Devtools.
 > This package is development-only tooling. Recording editor activity and wrapping plugin hooks
 > adds runtime overhead.
 
+The new inspection client, standalone mount, recording, and agent APIs below are available in
+workspace builds of this branch. Their npm release is pending. Build the repository before running
+the native examples.
+
 ## Install
 
 ```sh
@@ -52,19 +56,22 @@ import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { createProseMirrorDevtoolsSession } from "prosemirror-inspector/core";
 
-const devtools = createProseMirrorDevtoolsSession({
-  id: "main-editor",
-  label: "Main editor",
-});
+const devtools = import.meta.env.DEV
+  ? createProseMirrorDevtoolsSession({
+      id: "main-editor",
+      label: "Main editor",
+      captureProfile: "bounded",
+    })
+  : null;
 
-const plugins = devtools.instrumentPlugins(rawPlugins);
+const plugins = devtools ? devtools.instrumentPlugins(rawPlugins) : rawPlugins;
 const state = EditorState.create({ schema, plugins });
 const view = new EditorView(document.querySelector("#editor")!, { state });
 
-devtools.attach(view);
+devtools?.attach(view);
 
 // When the editor is removed:
-devtools.dispose();
+devtools?.dispose();
 view.destroy();
 ```
 
@@ -80,7 +87,21 @@ original objects, so never include both versions in the same state.
 Run session setup only in development. The framework adapters disable their UI and registration
 helpers automatically outside development, but direct core calls do not become no-ops.
 
-### 2a. Render a standalone panel
+### 2a. Mount without a framework
+
+```ts
+import { mountProseMirrorDevtools } from "prosemirror-inspector/standalone";
+
+const panel = mountProseMirrorDevtools(container, { store, defaultPanel: "history" });
+panel.update({ store, theme: "dark" });
+panel.unmount();
+```
+
+The mount uses the same renderer as the framework adapters. `update` replaces the options.
+`unmount` is idempotent. The normal mount is inactive unless `NODE_ENV` is `development`.
+Editor registration remains separate.
+
+### 2b. Render through a framework adapter
 
 Framework adapters export a panel renderer that works without TanStack Devtools. This React
 example uses the framework component in a fixed-height area of the application:
@@ -100,7 +121,7 @@ export function EditorDevtools() {
 The package root also exports the native Solid-rendered `ProseMirrorDevtoolsPanel` for hosts that
 already render Solid components.
 
-### 2b. Add the panel to TanStack Devtools
+### 2c. Add the panel to TanStack Devtools
 
 Install the TanStack Devtools package for your framework:
 
@@ -145,7 +166,7 @@ function runBold() {
 }
 ```
 
-The **Events & commands** and **Decorations & node views** panels consume this capture. It is off
+The **Events & commands** and **Rendering** panels consume this capture. It is off
 by default. `limit` caps retained events, NodeViews, decoration sources, ranges per source, and
 dispatch references per event independently; it defaults to 200 and accepts 1–10,000. These limits
 are separate from transaction history. Panels render captured lists in pages of 100.
@@ -194,22 +215,28 @@ adapter to stay active in a production build.
 
 ## What the panel shows
 
-| Panel                    | Contents                                                                                           |
-| ------------------------ | -------------------------------------------------------------------------------------------------- |
-| State                    | Document tree and positions, node JSON, selection, active marks, and document statistics           |
-| History                  | Root/appended transactions, document restore, step diffs, changed ranges, and position mapping     |
-| Selection                | Anchor/head ancestry, offsets, boundaries, adjacent nodes, ranges, and marks                       |
-| Events & commands        | Opt-in handler outcomes, nested calls, synchronous dispatch IDs, and named commands                |
-| Decorations & node views | Opt-in ranges/specs, position overlays, and NodeView lifecycle counters                            |
-| Performance              | Dispatch timeline, apply/view phases, plugin ranking, hook timings, markers, average, p95, and max |
-| Plugins                  | Searchable plugin order, state, runtime keys, and exposed editor props                             |
-| Schema                   | Node specs, mark specs, and the top node type                                                      |
-| Snapshots                | Local save, restore, import, export, and delete controls                                           |
+| Panel             | Contents                                                                                           |
+| ----------------- | -------------------------------------------------------------------------------------------------- |
+| State             | Document tree and positions, node JSON, selection, active marks, and document statistics           |
+| Transactions      | Root/appended transactions, document restore, step diffs, changed ranges, and position mapping     |
+| Selection         | Anchor/head ancestry, offsets, boundaries, adjacent nodes, ranges, and marks                       |
+| Events & commands | Opt-in handler outcomes, nested calls, synchronous dispatch IDs, and named commands                |
+| Rendering         | Opt-in ranges/specs, position overlays, and NodeView lifecycle counters                            |
+| Performance       | Dispatch timeline, apply/view phases, plugin ranking, hook timings, markers, average, p95, and max |
+| Plugins           | Searchable plugin order, state, runtime keys, and exposed editor props                             |
+| Schema            | Node specs, mark specs, and the top node type                                                      |
+| Snapshots         | Local save, restore, import, export, and delete controls                                           |
 
-When several editors are registered, the toolbar lets you switch the active instance without
-remounting the panel.
+Each panel host keeps its editor and inspection selection. Transactions and Performance share the
+selected dispatch. **Follow live** returns to the current state. Historical document and provider
+reads never substitute live data. The visible Transactions and Rendering names retain the public
+panel IDs `history` and `decorations`.
 
-History’s **Changes & mapping** mode uses captured step maps, including mirrors and custom steps.
+Open **Context** to see capture status and installed inspectors. Expand **Technical details** for
+semantic provider values, coverage, and availability reasons. **Copy diagnostic context** copies
+a bounded target, point, selection, and coverage summary.
+
+Transactions **Changes & mapping** mode uses captured step maps, including mirrors and custom steps.
 Diffs are computed for the selected step, including marks and attributes. Filtered and unobserved
 custom dispatch outcomes do not claim applied mapping results.
 
@@ -268,8 +295,29 @@ Plugin instrumentation is enabled by default for this integration. Pass `instrum
 when you need only transaction history and dispatch phases. Dynamically registered plugins are not
 instrumented automatically.
 
-This adapter uses the `dispatchTransaction` extension middleware introduced in Tiptap 3. For
-Tiptap 2, use the generic core integration.
+The native fixture verifies Tiptap 3.31.4. Tiptap 2 has no native middleware verification here.
+
+With `@tiptap/react`, call `resumeTiptapDevtools(editor)` in the editor effect setup and
+`suspendTiptapDevtools(editor)` in its cleanup. Keep `detachTiptapDevtools` in `onDestroy` for terminal
+cleanup. Suspension releases the registration before Tiptap's deferred destroy and permits Strict
+Mode to resume the same editor. See the
+[native Tiptap fixture](https://github.com/riccardoperra/prosemirror-devtools/tree/main/packages/tiptap-demo).
+
+## Controlled React ProseMirror
+
+Use `createReactProseMirrorDevtools` from `prosemirror-inspector/react-prosemirror` inside
+`@handlewithcare/react-prosemirror`'s `useEditorEffect`. Pass the actual view and a `getState`
+function that reads the application's authoritative controlled model.
+
+Wrap model application in `connection.record(transaction, apply)`. Apply the transaction once,
+update the model reference, and schedule React state from `apply`. Return `connection.dispose`
+from the effect cleanup. The helper does not patch the view dispatcher or force `view.updateState`.
+A later React commit is outside this synchronous measurement boundary.
+
+The [controlled fixture](https://github.com/riccardoperra/prosemirror-devtools/tree/main/packages/react-prosemirror-demo)
+verifies React ProseMirror 3.2.11, React 19.2.8, react-reconciler 0.33.0, and ProseMirror view 1.42.3.
+Its `Connection` and dispatch callback form the complete integration. Keep one compatible
+ProseMirror runtime and guard connection setup in development.
 
 ## Plugin performance
 
@@ -335,7 +383,7 @@ Pass the same store to the session, panel, and TanStack plugin. Sessions also ow
 lifecycle id, so a later editor can safely reuse the same public id after the earlier session is
 disposed.
 
-History is unbounded by default. Use `transactionLimit` when a long-running session needs a fixed
+History is unbounded by default. Use `captureProfile: "bounded"`, `createBoundedCaptureProfile`, or `transactionLimit` when a long-running session needs a fixed
 retention cap, or clear history from the panel. Persistent before/after and intermediate step
 documents are retained until their JSON or diffs are inspected; full EditorState objects are not
 retained by history.
@@ -406,6 +454,14 @@ const plugin = createProseMirrorDevtoolsPlugin({
 React hosts can use `createReactDevtoolsExtension` for React-rendered extension panels. All other
 frameworks can implement the same DOM `mount(container, context) => cleanup` contract.
 
+### Add details to Transactions and Events
+
+Register a `DevtoolsDispatchPresenter` in a panel host's `extensions` option. Match the inspector's descriptor ID and version exactly. Register the inspector separately in the editor session's `inspectors` option. A presenter-only extension uses `panels: []`. The [kitchen sink example](../collab-demo/src/text-impact.ts) defines both parts.
+
+`present({ value, record })` receives an available, serialized capture and its retained dispatch. Return `label` and `text` for the detail in Transactions and in linked Events, with optional `badge` and `note`. Include `listLabel` to show the badge and a short description in the Transactions list. Return `undefined` to hide the sample. Keep the function synchronous and free of side effects because the same dispatch can render in several places.
+
+Registration belongs to each panel host. A host presenter takes precedence over a built-in presenter for the same inspector and version. Two host presenters cannot claim the same pair. If a presenter throws, the detail marks the presentation as unavailable and keeps the raw capture accessible in Transactions.
+
 ## Themes and styling
 
 The native panel accepts `theme="system"`, `"light"`, or `"dark"`. A panel hosted by TanStack
@@ -463,6 +519,79 @@ import {
 } from "prosemirror-inspector/core";
 ```
 
+## Read evidence and run agent checks
+
+```ts
+import { createProseMirrorInspectionClient } from "prosemirror-inspector/core";
+import {
+  evaluateProseMirrorInspection,
+  installProseMirrorChromeBridge,
+} from "prosemirror-inspector/agent";
+
+const client = createProseMirrorInspectionClient({ store });
+const target = client.listEditors()[0]?.target;
+if (target) {
+  const pinned = client.pin({ target });
+  if (pinned.kind === "available") {
+    const document = client.read({ point: pinned.value, query: { kind: "document" } });
+  }
+}
+```
+
+Every result declares its target, point, and coverage. Reusing an expired target or point returns
+`expired`. `evaluateProseMirrorInspection` returns `passed`, `failed`, or `inconclusive` for a
+semantic expectation. A semantic match does not establish browser rendering.
+
+`installProseMirrorChromeBridge(client)` enables experimental Chrome DevTools MCP third-party
+query discovery and returns its cleanup. Enable it only in development with a compatible Chrome
+and MCP setup. It uses the same query catalogue and does not start a server.
+
+The package ships `prosemirror-inspector-integrate`, `prosemirror-inspector-debug`, and
+`prosemirror-inspector-validate` under `skills/`. For Codex projects, copy them into `.agents/skills`
+from the installed package. npm does not activate skills automatically. The
+[agent guide](https://github.com/riccardoperra/prosemirror-devtools/blob/main/docs/agent-validation.md)
+describes installation, prerequisites, browser evidence, and the list and undo scenario.
+
+`await installProseMirrorWebMCPBridge(client)` registers the same tools for native WebMCP
+browser agents. It returns cleanup, or `null` when unsupported. Registration uses the current
+`document.modelContext` API and supports the earlier `navigator.modelContext` API. Enable it
+only in development and call its cleanup when the host is removed. The adapter does not install
+a polyfill or require a Chrome DevTools MCP server. Native WebMCP remains experimental.
+
+## Semantic inspectors
+
+Use `createHistoryInspector({ plugin })` from `prosemirror-inspector/inspectors/history` with the
+installed `history()` plugin. Pass the provider through the session's `inspectors` option.
+It captures public undo and redo depths and observed history metadata.
+
+Use `createPluginStateInspector` from the core entry for bounded application-defined plugin state.
+Historical queries read its captured projection. Use `createTiptapInspector` from
+`prosemirror-inspector/inspectors/tiptap` for extension, options, and storage samples. Known plugin
+associations must be supplied by the application.
+
+The [support matrix](https://github.com/riccardoperra/prosemirror-devtools/blob/main/docs/support-matrix.md)
+and [inspection reference](https://github.com/riccardoperra/prosemirror-devtools/blob/main/docs/inspection.md)
+describe scopes and limits. New entries on the working branch are unreleased until a package
+release includes them.
+
+For official collaboration, use `createCollabInspector` from `prosemirror-inspector/inspectors/collab`.
+Pass the installed `collab()` plugin. For Yjs, use `createYjsInspector` from
+`prosemirror-inspector/inspectors/yjs` with the actual Y.Doc and binding UndoManager.
+`createTransportObserver` from `prosemirror-inspector/inspectors/transport` accepts explicit
+application network signals. The session captures historical semantic projections.
+
+## Share diagnostic recordings
+
+`exportProseMirrorRecording({ client, target })` from `prosemirror-inspector/recordings` exports the
+latest 25 dispatch IDs and bounded current scopes by default, within a hard 2 MB total limit.
+Read the artifact's coverage and omissions. `parseProseMirrorRecording` validates an imported file.
+`createProseMirrorRecordingClient` opens a fresh offline source with only exact captured query scopes.
+
+Use `mountProseMirrorRecordingInspector` from `prosemirror-inspector/recordings-panel` to read it in
+a separate development viewer. Import does not attach a view or restore a live editor. The
+[recording guide](https://github.com/riccardoperra/prosemirror-devtools/blob/main/docs/recordings.md)
+describes export, import, limits, and teardown.
+
 ## Package exports
 
 | Export                                         | Purpose                                                                                          |
@@ -479,6 +608,16 @@ import {
 | `prosemirror-inspector/svelte`                 | Svelte panel and TanStack plugin                                                                 |
 | `prosemirror-inspector/angular`                | Angular panel, injection helper, and TanStack plugin                                             |
 | `prosemirror-inspector/<framework>/production` | Explicit production-enabled version of a framework adapter                                       |
+| `prosemirror-inspector/standalone`             | Framework-neutral development mount, update, and cleanup                                         |
+| `prosemirror-inspector/react-prosemirror`      | Controlled native model recorder for React ProseMirror                                           |
+| `prosemirror-inspector/recordings`             | Bounded diagnostic export, validated import, and offline queries                                 |
+| `prosemirror-inspector/recordings-panel`       | Separate read-only recording component and development mount                                     |
+| `prosemirror-inspector/agent`                  | Read-only agent tools, semantic checks, native WebMCP, and Chrome discovery                      |
+| `prosemirror-inspector/inspectors/history`     | Official undo and redo history observations                                                      |
+| `prosemirror-inspector/inspectors/collab`      | Official collaboration version, pending steps, and original transaction metadata                 |
+| `prosemirror-inspector/inspectors/transport`   | Explicit application transport observations                                                      |
+| `prosemirror-inspector/inspectors/yjs`         | Y.Doc signals, provider projection, and collaborative undo                                       |
+| `prosemirror-inspector/inspectors/tiptap`      | Tiptap extension and storage observations                                                        |
 | `prosemirror-inspector/tiptap`                 | Tiptap 3 lifecycle and transaction-middleware helpers                                            |
 
 ## License

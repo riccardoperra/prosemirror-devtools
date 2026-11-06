@@ -1,4 +1,4 @@
-import type { Plugin } from "prosemirror-state";
+import type { EditorState, Plugin } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 
 import { attachProseMirrorDevtools } from "./attach";
@@ -41,7 +41,12 @@ export interface ProseMirrorDevtoolsSession {
   /** Registers and patches a regular EditorView dispatcher. */
   attach(view: EditorView): AttachedProseMirrorDevtools;
   /** Registers a view for a framework-owned dispatch middleware. */
-  createDispatchRecorder(view: EditorView): ProseMirrorDispatchRecorder;
+  createDispatchRecorder(
+    view: EditorView,
+    options?: { getState?: () => EditorState },
+  ): ProseMirrorDispatchRecorder;
+  pauseCapture(): void;
+  resumeCapture(): void;
   dispose(): void;
 }
 
@@ -86,6 +91,9 @@ export function createProseMirrorDevtoolsSession(
     ...(options.transactionLimit === undefined
       ? {}
       : { transactionLimit: options.transactionLimit }),
+    ...(options.captureProfile === undefined ? {} : { captureProfile: options.captureProfile }),
+    ...(options.inspectors === undefined ? {} : { inspectors: options.inspectors }),
+    ...(options.getState === undefined ? {} : { getState: options.getState }),
     ...(options.performanceMarks === undefined
       ? {}
       : { performanceMarks: options.performanceMarks }),
@@ -141,21 +149,30 @@ export function createProseMirrorDevtoolsSession(
       };
       return attachment;
     },
-    createDispatchRecorder(nextView) {
+    createDispatchRecorder(nextView, recorderOptions = {}) {
       claimView(nextView);
       if (attachment) {
         throw new Error("This session already patches the EditorView dispatcher.");
       }
       if (recorder) return recorder;
-      const nextUnregister = store.register(attachOptions(nextView));
+      const nextOptions = { ...attachOptions(nextView), ...recorderOptions };
+      const nextUnregister = store.register(nextOptions);
       try {
-        recorder = createProseMirrorDispatchRecorder(attachOptions(nextView));
+        recorder = createProseMirrorDispatchRecorder(nextOptions);
         unregister = nextUnregister;
       } catch (error) {
         nextUnregister();
         throw error;
       }
       return recorder;
+    },
+    pauseCapture() {
+      assertActive();
+      store.pauseCapture(options.id, sessionId);
+    },
+    resumeCapture() {
+      assertActive();
+      store.resumeCapture(options.id, sessionId);
     },
     dispose() {
       if (!active) return;
@@ -166,6 +183,7 @@ export function createProseMirrorDevtoolsSession(
           underlyingAttachment?.detach();
           underlyingAttachment = null;
         } else {
+          recorder?.dispose();
           unregister?.();
         }
       } finally {

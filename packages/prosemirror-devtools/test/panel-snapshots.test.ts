@@ -1,7 +1,7 @@
 import { createRoot, createSignal } from "solid-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createProseMirrorDevtoolsStore, loadSnapshots } from "../src/core";
+import { createProseMirrorDevtoolsStore, createSnapshot, loadSnapshots } from "../src/core";
 import { useSnapshots } from "../src/panel/features/snapshots/use-snapshots";
 import { createTestState, createTestView } from "./helpers";
 
@@ -19,6 +19,44 @@ afterEach(() => {
 });
 
 describe("snapshot imports", () => {
+  it("requires a current explicit preview and refuses a remounted target", () => {
+    const source = createTestView(createTestState("saved"));
+    const target = createTestView(createTestState("target"));
+    const replacement = createTestView(createTestState("replacement"));
+    const store = createProseMirrorDevtoolsStore();
+    let unregister = store.register({ id: "editor", view: target });
+    const [instance, setInstance] = createSignal(store.getInstance("editor")!);
+    let dispose = (): void => {};
+    const snapshots = createRoot((cleanup) => {
+      dispose = cleanup;
+      return useSnapshots(instance);
+    });
+    const checkpoint = createSnapshot("source", source);
+    try {
+      snapshots.previewRestore(checkpoint);
+      expect(target.state.doc.textContent).toBe("target");
+      target.dispatch(target.state.tr.insertText(" changed", 7));
+      snapshots.confirmRestore();
+      expect(target.state.doc.textContent).toBe("target changed");
+      expect(snapshots.error()).toContain("target changed");
+      snapshots.previewRestore(checkpoint);
+      unregister();
+      unregister = store.register({ id: "editor", view: replacement });
+      setInstance(store.getInstance("editor")!);
+      snapshots.confirmRestore();
+      expect(replacement.state.doc.textContent).toBe("replacement");
+      snapshots.previewRestore(checkpoint);
+      snapshots.confirmRestore();
+      expect(replacement.state.doc.textContent).toBe("saved");
+    } finally {
+      dispose();
+      unregister();
+      source.destroy();
+      target.destroy();
+      replacement.destroy();
+    }
+  });
+
   it.each(["switch", "dispose", "complete"] as const)(
     "keeps imports with their owner: %s",
     async (action) => {

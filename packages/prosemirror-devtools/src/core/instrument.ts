@@ -256,17 +256,64 @@ function wrapPlugin(plugin: Plugin, index: number, options: InstrumentPluginsOpt
   }
 
   if (spec.filterTransaction) {
-    wrappedSpec.filterTransaction = (transaction, state) =>
-      measure(
-        "filterTransaction",
-        () => spec.filterTransaction?.call(original, transaction, state) ?? true,
-      );
+    const filter = spec.filterTransaction;
+    wrappedSpec.filterTransaction = (transaction, state) => {
+      let outcome: "accepted" | "rejected" | "error" = "error";
+      let error: unknown;
+      try {
+        const accepted = measure("filterTransaction", () =>
+          filter.call(original, transaction, state),
+        );
+        outcome = accepted ? "accepted" : "rejected";
+        return accepted;
+      } catch (caught) {
+        error = caught;
+        throw caught;
+      } finally {
+        if (!options.isActive || options.isActive()) {
+          store.observeFilter({
+            instanceId: options.instanceId,
+            pluginKey,
+            pluginLabel,
+            transaction,
+            outcome,
+            ...(options.sessionId === undefined ? {} : { sessionId: options.sessionId }),
+            ...(outcome === "error" ? { error } : {}),
+          });
+        }
+      }
+    };
   }
   if (spec.appendTransaction) {
-    wrappedSpec.appendTransaction = (transactions, oldState, newState) =>
-      measure("appendTransaction", () =>
-        spec.appendTransaction?.call(original, transactions, oldState, newState),
-      );
+    const append = spec.appendTransaction;
+    wrappedSpec.appendTransaction = (transactions, oldState, newState) => {
+      let appended: ReturnType<NonNullable<PluginSpec<unknown>["appendTransaction"]>>;
+      let didThrow = true;
+      let error: unknown;
+      try {
+        appended = measure("appendTransaction", () =>
+          append.call(original, transactions, oldState, newState),
+        );
+        didThrow = false;
+        return appended;
+      } catch (caught) {
+        error = caught;
+        throw caught;
+      } finally {
+        if (!options.isActive || options.isActive()) {
+          store.observeAppend({
+            instanceId: options.instanceId,
+            pluginKey,
+            pluginLabel,
+            transactions,
+            appended,
+            ...(options.sessionId === undefined ? {} : { sessionId: options.sessionId }),
+            didThrow,
+            ...(didThrow ? { error } : {}),
+          });
+        }
+      }
+    };
   }
   if (spec.props) {
     wrappedSpec.props = wrapProps(

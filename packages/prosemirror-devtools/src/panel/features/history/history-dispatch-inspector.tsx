@@ -4,6 +4,7 @@ import { panelStyles } from "../../styles";
 
 import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../core/types";
 import { DispatchInspector } from "../dispatch/dispatch-inspector";
+import { DispatchEffects } from "../dispatch/dispatch-effects";
 import { ChangesView } from "../changes/changes-view";
 
 export interface HistoryDispatchInspectorProps {
@@ -22,7 +23,7 @@ export function HistoryDispatchInspector(props: HistoryDispatchInspectorProps): 
       <DispatchInspector.Header />
       <DispatchInspector.Metrics />
       <div class={panelStyles.pmPaneHeader}>
-        <div class={panelStyles.pmViewSwitch} role="group" aria-label="History inspection mode">
+        <div class={panelStyles.pmViewSwitch} role="group" aria-label="Transaction inspection mode">
           <button
             type="button"
             aria-pressed={mode() === "details"}
@@ -39,6 +40,7 @@ export function HistoryDispatchInspector(props: HistoryDispatchInspectorProps): 
           </button>
         </div>
       </div>
+      <DispatchEffects record={props.record} showRaw />
       <Show when={mode() === "details"} fallback={<ChangesView record={props.record} />}>
         <DispatchInspector.DetailsWorkspace>
           <DispatchInspector.TransactionDetails />

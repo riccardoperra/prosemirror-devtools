@@ -31,6 +31,9 @@ function equalRegistrationOptions(
     previous.performanceMarks === next.performanceMarks &&
     previous.performanceExtension === next.performanceExtension &&
     previous.diagnostics === next.diagnostics &&
+    previous.captureProfile === next.captureProfile &&
+    previous.inspectors === next.inspectors &&
+    previous.getState === next.getState &&
     previous.enabled === next.enabled
   );
 }
@@ -80,6 +83,10 @@ export function createProseMirrorDevtoolsRegistrationManager(): ProseMirrorDevto
         attachOptions.performanceExtension = options.performanceExtension;
       }
       if (options.diagnostics) attachOptions.diagnostics = options.diagnostics;
+      if (options.captureProfile !== undefined)
+        attachOptions.captureProfile = options.captureProfile;
+      if (options.inspectors !== undefined) attachOptions.inspectors = options.inspectors;
+      if (options.getState !== undefined) attachOptions.getState = options.getState;
 
       attachment = attachProseMirrorDevtools(attachOptions);
       activeOptions = { ...options };

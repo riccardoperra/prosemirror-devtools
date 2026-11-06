@@ -28,9 +28,12 @@ import {
   usePanelDataAccess,
   usePanelMeta,
   usePanelNavigation,
+  usePanelInspection,
 } from "../panel-provider";
 import { useActiveInstance } from "../store/selectors";
 import { EmptyState } from "../ui/empty-state";
+import { HistoricalPanel } from "./historical-panel";
+import { InspectionContextView } from "./inspection-context-view";
 
 const PerformanceView = lazy(async () => {
   const module = await import("../features/performance/performance-view");
@@ -107,44 +110,55 @@ interface ActivePanelViewProps {
 }
 
 function ActivePanelView(props: ActivePanelViewProps): JSX.Element {
+  const inspection = usePanelInspection();
+  const requiresHistoricalRead = (): boolean =>
+    inspection.moment().kind === "transaction" &&
+    ["state", "selection", "schema", "plugins", "decorations"].includes(props.tab);
   return (
     <Show keyed when={props.instance.view}>
       {(_view) => (
-        <Switch>
-          <Match when={props.tab === "state"}>
-            <StateView instance={props.instance} />
-          </Match>
-          <Match when={props.tab === "history"}>
-            <HistoryView instance={props.instance} onClear={props.onClearHistory} />
-          </Match>
-          <Match when={props.tab === "selection"}>
-            <SelectionView instance={props.instance} />
-          </Match>
-          <Match when={props.tab === "decorations"}>
-            <DecorationsView instance={props.instance} />
-          </Match>
-          <Match when={props.tab === "events"}>
-            <EventsView instance={props.instance} />
-          </Match>
-          <Match when={props.tab === "performance"}>
-            <Suspense fallback={<div class={panelStyles.pmEmpty}>Loading performance tools…</div>}>
-              <PerformanceView
-                detailThresholdMs={props.performanceDetailThresholdMs}
-                frameBudgetMs={props.performanceFrameBudgetMs}
-                instance={props.instance}
-              />
-            </Suspense>
-          </Match>
-          <Match when={props.tab === "plugins"}>
-            <PluginsView instance={props.instance} />
-          </Match>
-          <Match when={props.tab === "schema"}>
-            <SchemaView instance={props.instance} />
-          </Match>
-          <Match when={props.tab === "snapshots"}>
-            <SnapshotsView instance={props.instance} />
-          </Match>
-        </Switch>
+        <Show when={!requiresHistoricalRead()} fallback={<HistoricalPanel panel={props.tab} />}>
+          <Switch>
+            <Match when={props.tab === "state"}>
+              <StateView instance={props.instance} />
+            </Match>
+            <Match when={props.tab === "history"}>
+              <HistoryView instance={props.instance} onClear={props.onClearHistory} />
+            </Match>
+            <Match when={props.tab === "selection"}>
+              <SelectionView instance={props.instance} />
+            </Match>
+            <Match when={props.tab === "decorations"}>
+              <DecorationsView instance={props.instance} />
+            </Match>
+            <Match when={props.tab === "events"}>
+              <EventsView instance={props.instance} />
+            </Match>
+            <Match when={props.tab === "performance"}>
+              <Suspense
+                fallback={<div class={panelStyles.pmEmpty}>Loading performance tools…</div>}
+              >
+                <PerformanceView
+                  detailThresholdMs={props.performanceDetailThresholdMs}
+                  frameBudgetMs={props.performanceFrameBudgetMs}
+                  instance={props.instance}
+                />
+              </Suspense>
+            </Match>
+            <Match when={props.tab === "plugins"}>
+              <PluginsView instance={props.instance} />
+            </Match>
+            <Match when={props.tab === "schema"}>
+              <SchemaView instance={props.instance} />
+            </Match>
+            <Match when={props.tab === "inspection-context"}>
+              <InspectionContextView />
+            </Match>
+            <Match when={props.tab === "snapshots"}>
+              <SnapshotsView instance={props.instance} />
+            </Match>
+          </Switch>
+        </Show>
       )}
     </Show>
   );

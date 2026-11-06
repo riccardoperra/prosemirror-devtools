@@ -1,10 +1,8 @@
 import type { Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 
-import {
-  createProseMirrorDispatchRecorder,
-  recordDefaultDispatch,
-} from "./dispatch/record-dispatch";
+import { createCustomDispatchRecorder, recordDefaultDispatch } from "./dispatch/record-dispatch";
+import { claimDispatchCapture } from "./dispatch/capture-owner";
 import { createDevtoolsSessionId } from "./session-id";
 import { prosemirrorDevtoolsStore } from "./store/create-devtools-store";
 import type {
@@ -49,11 +47,18 @@ export function attachProseMirrorDevtools(
     store,
     sessionId,
   };
-  const unregister = store.register(attachmentOptions);
+  const releaseCapture = claimDispatchCapture(options.view, "patched");
+  let unregister: () => void;
+  try {
+    unregister = store.register(attachmentOptions);
+  } catch (error) {
+    releaseCapture();
+    throw error;
+  }
   const originalDispatch = options.view.props.dispatchTransaction;
   const view = options.view;
   const customDispatchRecorder = originalDispatch
-    ? createProseMirrorDispatchRecorder(attachmentOptions)
+    ? createCustomDispatchRecorder(attachmentOptions)
     : null;
   let detached = false;
 
@@ -84,6 +89,8 @@ export function attachProseMirrorDevtools(
       );
     } finally {
       unregister();
+      customDispatchRecorder?.dispose();
+      releaseCapture();
       store.closeSession(options.id, sessionId);
     }
     throw error;
@@ -104,6 +111,8 @@ export function attachProseMirrorDevtools(
         }
       } finally {
         unregister();
+        customDispatchRecorder?.dispose();
+        releaseCapture();
         store.closeSession(options.id, sessionId);
         attachments.delete(view);
       }

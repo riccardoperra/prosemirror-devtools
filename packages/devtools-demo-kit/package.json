@@ -5,7 +5,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./diagnostic-plugin": "./src/diagnostic-plugin.ts",
+    "./recording-ui": "./src/recording-ui.ts",
+    "./comparison-ui": "./src/comparison-ui.ts"
   },
   "dependencies": {
     "prosemirror-commands": "catalog:",

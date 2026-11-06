@@ -208,6 +208,18 @@ describe("devtools panel shell", () => {
       expect(
         container.querySelector('.pm-history-list button[aria-pressed="true"]'),
       ).not.toBeNull();
+      const related = inspector?.querySelector<HTMLDetailsElement>(".pm-dispatch-related");
+      expect(related?.open).toBe(false);
+      related?.querySelector("summary")?.click();
+      expect(related?.open).toBe(true);
+      const documentLink = Array.from(related?.querySelectorAll("button") ?? []).find(
+        (button) => button.textContent === "Document after dispatch",
+      );
+      documentLink?.click();
+      expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe(
+        "State",
+      );
+      container.querySelector<HTMLButtonElement>('[role="tab"][id$="tab-history"]')?.click();
 
       container.querySelector<HTMLButtonElement>(".pm-history-list .pm-button")?.click();
       expect(container.querySelector(".pm-body")?.textContent).toContain(

@@ -1,9 +1,12 @@
+import { readInstanceState } from "../../store/instance-state";
 import { createEffect, createSignal, onCleanup, type Accessor } from "solid-js";
 
 import {
   createSnapshot,
   loadSnapshots,
   persistSnapshots,
+  compareSnapshots,
+  prepareDocumentRestore,
   restoreSnapshot,
 } from "../../../core/snapshots";
 import type { RegisteredProseMirrorInstance, SavedSnapshot } from "../../../core/types";
@@ -13,17 +16,43 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+type SnapshotRestorePreview = Readonly<{
+  snapshot: SavedSnapshot;
+  target: RegisteredProseMirrorInstance;
+  state: RegisteredProseMirrorInstance["view"]["state"];
+  comparison: ReturnType<typeof compareSnapshots>;
+  selectionRestored: boolean;
+}>;
+
 export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>): {
   snapshots: Accessor<readonly SavedSnapshot[]>;
   error: Accessor<string | null>;
   save: () => void;
   importFile: (file: File) => Promise<void>;
-  restore: (snapshot: SavedSnapshot) => void;
+  preview: Accessor<SnapshotRestorePreview | undefined>;
+  previewIsCurrent: Accessor<boolean>;
+  previewRestore: (snapshot: SavedSnapshot) => void;
+  confirmRestore: () => void;
+  cancelRestore: () => void;
   remove: (snapshotId: string) => void;
 } {
   const [snapshots, setSnapshots] = createSignal<SavedSnapshot[]>(loadSnapshots(instance().id));
   const [error, setError] = createSignal<string | null>(null);
+  const [preview, setPreview] = createSignal<SnapshotRestorePreview>();
   let disposed = false;
+  const previewIsCurrent = (): boolean => {
+    const current = preview();
+    const target = instance();
+    return (
+      !!current &&
+      !disposed &&
+      target.id === current.target.id &&
+      target.view === current.target.view &&
+      target.view.state === current.state &&
+      readInstanceState(target) === current.state &&
+      target.inspection?.target.generation === current.target.inspection?.target.generation
+    );
+  };
   onCleanup(() => {
     disposed = true;
   });
@@ -45,16 +74,35 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
     });
   };
 
+  const committedState = (target: RegisteredProseMirrorInstance) => {
+    const state = readInstanceState(target);
+    if (target.view.state !== state) {
+      throw new Error(
+        "The editor is still rendering the latest change. Try again after it finishes.",
+      );
+    }
+    return state;
+  };
+
   const save = (): void => {
-    const current = instance();
-    const snapshot = createSnapshot(current.id, current.view);
-    updateSnapshots((snapshots) => [snapshot, ...snapshots]);
+    try {
+      const current = instance();
+      committedState(current);
+      const snapshot = createSnapshot(current.id, current.view);
+      updateSnapshots((snapshots) => [snapshot, ...snapshots]);
+      setError(null);
+    } catch (saveError) {
+      setError(errorMessage(saveError));
+    }
   };
 
   const importFile = async (file: File): Promise<void> => {
     const target = instance();
     const isCurrent = (): boolean =>
-      !disposed && instance().id === target.id && instance().view === target.view;
+      !disposed &&
+      instance().id === target.id &&
+      instance().view === target.view &&
+      instance().inspection?.target.generation === target.inspection?.target.generation;
     try {
       const imported = await importSnapshotFile(file, target);
       if (!isCurrent()) return;
@@ -66,9 +114,39 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
     }
   };
 
-  const restore = (snapshot: SavedSnapshot): void => {
+  const previewRestore = (snapshot: SavedSnapshot): void => {
     try {
-      restoreSnapshot(instance().view, snapshot);
+      const target = instance();
+      const state = committedState(target);
+      const prepared = prepareDocumentRestore(target.view, snapshot.doc, snapshot.selection);
+      setPreview({
+        snapshot,
+        target,
+        state,
+        comparison: compareSnapshots(
+          { doc: state.doc.toJSON(), selection: state.selection.toJSON() },
+          snapshot,
+        ),
+        selectionRestored: prepared.selectionRestored,
+      });
+      setError(null);
+    } catch (restoreError) {
+      setPreview(undefined);
+      setError(errorMessage(restoreError));
+    }
+  };
+
+  const confirmRestore = (): void => {
+    const current = preview();
+    if (!current || !previewIsCurrent()) {
+      setError(
+        "The restore target changed after this preview. Preview the snapshot again before restoring.",
+      );
+      return;
+    }
+    try {
+      restoreSnapshot(current.target.view, current.snapshot);
+      setPreview(undefined);
       setError(null);
     } catch (restoreError) {
       setError(errorMessage(restoreError));
@@ -79,5 +157,16 @@ export function useSnapshots(instance: Accessor<RegisteredProseMirrorInstance>):
     updateSnapshots((current) => current.filter((snapshot) => snapshot.id !== snapshotId));
   };
 
-  return { snapshots, error, save, importFile, restore, remove };
+  return {
+    snapshots,
+    error,
+    save,
+    importFile,
+    preview,
+    previewIsCurrent,
+    previewRestore,
+    confirmRestore,
+    cancelRestore: () => setPreview(undefined),
+    remove,
+  };
 }

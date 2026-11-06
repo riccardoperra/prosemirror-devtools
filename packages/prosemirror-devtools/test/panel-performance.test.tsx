@@ -373,7 +373,7 @@ describe("performance panel", () => {
       expect(container.querySelectorAll(".pm-performance-toolbar")).toHaveLength(1);
       expect(container.querySelector(".pm-performance-view > .pm-compact-metrics")).toBeNull();
       expect(container.querySelector('[aria-label="Dispatch 1 timings"]')?.textContent).toContain(
-        "Full dispatch18.0 ms",
+        "Synchronous dispatch18.0 ms",
       );
 
       const slowGroup = groups[0];

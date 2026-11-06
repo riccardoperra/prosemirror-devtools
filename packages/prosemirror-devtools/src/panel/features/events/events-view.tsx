@@ -3,8 +3,11 @@ import { For, Show, type JSX } from "solid-js";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { formatMs } from "../../formatters";
 import { cx, panelStyles } from "../../styles";
+import { ResizableSplit } from "../../ui/resizable-split";
 import { EventDetails, EventStatusBadge } from "./event-details";
 import { eventSource, useEvents, type EventStatus } from "./use-events";
+import type { DevtoolsDiagnosticEvent } from "../../../core/diagnostics";
+import { useOptionalPanelContext } from "../../panel-provider";
 
 const SETUP_EXAMPLE = `const session = createProseMirrorDevtoolsSession({
   id: "editor",
@@ -55,10 +58,25 @@ function EventsSetup(): JSX.Element {
 
 export function EventsView(props: { instance: RegisteredProseMirrorInstance }): JSX.Element {
   const events = useEvents(() => props.instance);
+  const panelContext = useOptionalPanelContext();
+  const inspection = panelContext?.inspection;
+  const data = panelContext?.data.data;
+  const retainedDispatch = (dispatch: DevtoolsDiagnosticEvent["dispatches"][number]) => {
+    const target = data?.instance(dispatch.instanceId)();
+    return target?.transactions.find(
+      (record) =>
+        record.id === dispatch.id &&
+        (dispatch.sessionId !== undefined
+          ? record.sessionId === dispatch.sessionId
+          : target.view === props.instance.view) &&
+        (dispatch.generation === undefined ||
+          dispatch.generation === target.inspection?.target.generation),
+    );
+  };
 
   return (
     <Show when={events.controller()} fallback={<EventsSetup />}>
-      <div class={panelStyles.pmSplit}>
+      <ResizableSplit label="Observed calls width">
         <div class={panelStyles.pmPane}>
           <div class={panelStyles.pmPaneHeader}>
             <span class={panelStyles.pmPaneTitle}>Observed calls</span>
@@ -208,11 +226,29 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
             }
           >
             {(event) => (
-              <EventDetails event={event()} events={events.events()} onSelect={events.select} />
+              <EventDetails
+                event={event()}
+                events={events.events()}
+                onSelect={events.select}
+                retainedDispatch={retainedDispatch}
+                onInspectDispatch={
+                  inspection
+                    ? (dispatch) => {
+                        if (retainedDispatch(dispatch))
+                          inspection.selectTransaction({
+                            instanceId: dispatch.instanceId,
+                            id: dispatch.id,
+                            panel: "history",
+                          });
+                      }
+                    : undefined
+                }
+                onInspectPlugin={inspection?.selectPlugin}
+              />
             )}
           </Show>
         </div>
-      </div>
+      </ResizableSplit>
     </Show>
   );
 }

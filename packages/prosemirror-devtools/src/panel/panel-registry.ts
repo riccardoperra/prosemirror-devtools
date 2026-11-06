@@ -42,7 +42,7 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   },
   {
     id: "history",
-    title: "History",
+    title: "Transactions",
     order: 10,
     requiresInstance: true,
     badge: "transactions",
@@ -58,7 +58,7 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   },
   {
     id: "decorations",
-    title: "Decorations",
+    title: "Rendering",
     order: 35,
     requiresInstance: true,
     badge: null,
@@ -92,6 +92,14 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
     id: "snapshots",
     title: "Snapshots",
     order: 50,
+    requiresInstance: true,
+    badge: null,
+    kind: "builtin",
+  },
+  {
+    id: "inspection-context",
+    title: "Context",
+    order: 110,
     requiresInstance: true,
     badge: null,
     kind: "builtin",

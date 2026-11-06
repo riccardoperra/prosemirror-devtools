@@ -6,12 +6,14 @@ import type { DevtoolsExtension } from "../core/extensions";
 import { prosemirrorDevtoolsStore } from "../core/store/create-devtools-store";
 import { DEFAULT_PERFORMANCE_FRAME_BUDGET_MS } from "./panel.constants";
 import { resolvePanelRegistry } from "./panel-registry";
+import { resolveDispatchPresenters } from "./features/dispatch/read-dispatch-effects";
 import type { ProseMirrorDevtoolsPanelProps } from "./panel.types";
 import { PanelProvider } from "./panel-provider";
 import { PanelContent } from "./shell/panel-content";
 import { PanelFrame } from "./shell/panel-frame";
 import { PanelTabList } from "./shell/panel-tab-list";
 import { PanelToolbar } from "./shell/panel-toolbar";
+import { InspectionToolbar } from "./shell/inspection-toolbar";
 
 export type {
   ProseMirrorDevtoolsPanelProps,
@@ -34,6 +36,7 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
     input,
   );
   const panels = createMemo(() => resolvePanelRegistry(props.extensions));
+  const dispatchPresenters = createMemo(() => resolveDispatchPresenters(props.extensions));
 
   return (
     <Show keyed when={props.store}>
@@ -43,6 +46,7 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
           defaultPanel={props.defaultPanel ?? props.defaultTab}
           onActivePanelChange={props.onActivePanelChange}
           panels={panels()}
+          dispatchPresenters={dispatchPresenters()}
           store={store}
           styleTarget={props.styleTarget}
           theme={props.theme}
@@ -52,8 +56,11 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
               class={panelStyles.pmHeader}
               data-embedded={props.embedded ? "true" : undefined}
             >
-              <PanelToolbar embedded={props.embedded} />
-              <PanelTabList />
+              <div class={panelStyles.pmHeaderNavigation}>
+                <PanelToolbar embedded={props.embedded} />
+                <PanelTabList />
+              </div>
+              <InspectionToolbar />
             </header>
             <PanelContent
               performanceDetailThresholdMs={props.performanceDetailThresholdMs}

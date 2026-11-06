@@ -1,3 +1,4 @@
+import { readInstanceState } from "../../store/instance-state";
 import type { ResolvedPos } from "prosemirror-model";
 import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 
@@ -5,6 +6,8 @@ import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { panelStyles } from "../../styles";
 import { Badge } from "../../ui/badge";
+import { ResizableSplit } from "../../ui/resizable-split";
+import { useOptionalPanelContext } from "../../panel-provider";
 
 /** Content boundaries differ from the positions before and after a node. */
 export function inspectPosition(position: ResolvedPos) {
@@ -30,7 +33,7 @@ export function inspectPosition(position: ResolvedPos) {
 }
 
 export function SelectionView(props: { instance: RegisteredProseMirrorInstance }): JSX.Element {
-  const state = createMemo(() => props.instance.view.state);
+  const state = createMemo(() => readInstanceState(props.instance));
   const selection = createMemo(() => state().selection);
   const [endpoint, setEndpoint] = createSignal<"anchor" | "head">("head");
   const [contextOpen, setContextOpen] = createSignal(false);
@@ -67,9 +70,16 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
         .$from.marksAcross(selection().$to)
         ?.map((mark) => mark.toJSON()) ?? null,
   }));
+  const panelContext = useOptionalPanelContext();
+  const panelInspection = panelContext?.inspection;
+  const navigation = panelContext?.navigation;
+  const inspectEndpoint = (panel: string): void => {
+    panelInspection?.selectPosition({ doc: state().doc, pos: position().pos, isRoot: false });
+    navigation?.selectPanel(panel);
+  };
 
   return (
-    <div class={panelStyles.pmSplit}>
+    <ResizableSplit label="Resolved position width">
       <div class={panelStyles.pmPane}>
         <div class={panelStyles.pmPaneHeader}>
           <span class={panelStyles.pmPaneTitle}>Resolved position</span>
@@ -93,6 +103,22 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
           <Badge>depth {inspection().depth}</Badge>
           <Badge>parent offset {inspection().parentOffset}</Badge>
           <Badge>text offset {inspection().textOffset}</Badge>
+          <Show when={navigation}>
+            <button
+              type="button"
+              class={panelStyles.pmButton}
+              onClick={() => inspectEndpoint("state")}
+            >
+              Inspect endpoint in document
+            </button>
+            <button
+              type="button"
+              class={panelStyles.pmButton}
+              onClick={() => inspectEndpoint("schema")}
+            >
+              Schema at endpoint
+            </button>
+          </Show>
         </div>
         <table aria-label="Ancestors at the selected endpoint" class={panelStyles.pmTable}>
           <thead>
@@ -156,6 +182,6 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
           <JsonTree value={marks()} />
         </div>
       </div>
-    </div>
+    </ResizableSplit>
   );
 }

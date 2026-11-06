@@ -10,6 +10,7 @@ import type {
   TransactionMeasurement,
 } from "../types";
 import { createCustomDispatchObserver } from "./observe-custom-dispatch";
+import { claimDispatchCapture } from "./capture-owner";
 
 /**
  * Receives the exact transactions returned by the root `applyTransaction` call. `undefined`
@@ -60,7 +61,13 @@ export function recordSynchronousDispatch({
     options.sessionId,
   );
   const diagnostics = getDiagnosticsRecorder(options.diagnostics);
-  diagnostics?.recordDispatch(options.id, measurement.id);
+  const target = store.getInstance(options.id)?.inspection?.target;
+  diagnostics?.recordDispatch(
+    options.id,
+    measurement.id,
+    measurement.sessionId,
+    target?.generation,
+  );
   // Keep `undefined` distinct from `[]`: only the latter proves that ProseMirror filtered the
   // transaction. Custom dispatchers may not expose enough information to know either way.
   let appliedTransactions: readonly Transaction[] | undefined;
@@ -78,13 +85,24 @@ export function recordSynchronousDispatch({
     // Instrumentation observes failures but must preserve the dispatcher's control flow.
     throw caught;
   } finally {
-    // Read the live state even after an exception: a dispatcher may update the view and then throw.
-    store.finishTransaction(measurement, {
-      stateAfter: getState(),
-      ...(appliedTransactions === undefined ? {} : { appliedTransactions }),
-      ...(didThrow ? { error } : {}),
-    });
-    diagnostics?.observeDocument(getState().doc);
+    let stateAfter = beforeState;
+    let captureError: unknown;
+    try {
+      stateAfter = getState();
+    } catch (caught) {
+      captureError = caught;
+    }
+    try {
+      diagnostics?.observeDocument(stateAfter.doc);
+      store.finishTransaction(measurement, {
+        stateAfter,
+        ...(appliedTransactions === undefined ? {} : { appliedTransactions }),
+        ...(didThrow ? { error } : {}),
+        ...(captureError === undefined ? {} : { captureError }),
+      });
+    } catch (caught) {
+      console.error("[prosemirror-inspector] Dispatch capture failed", caught);
+    }
   }
 }
 
@@ -92,7 +110,12 @@ export function recordSynchronousDispatch({
 export type ProseMirrorDispatchRecorder = Readonly<{
   /** Runs `dispatch` synchronously and records all state/view work that can be observed. */
   record: (transaction: Transaction, dispatch: () => void) => void;
+  dispose(): void;
 }>;
+
+export interface ProseMirrorDispatchRecorderOptions extends AttachProseMirrorDevtoolsOptions {
+  getState?: () => EditorState;
+}
 
 /**
  * Creates an adapter for framework dispatch middleware without replacing the framework's own
@@ -100,23 +123,46 @@ export type ProseMirrorDispatchRecorder = Readonly<{
  * synchronous `record` call; deferred work remains unattributed.
  */
 export function createProseMirrorDispatchRecorder(
-  options: AttachProseMirrorDevtoolsOptions,
+  options: ProseMirrorDispatchRecorderOptions,
+): ProseMirrorDispatchRecorder {
+  const release = claimDispatchCapture(options.view, "middleware");
+  const recorder = createCustomDispatchRecorder(options);
+  return {
+    record: recorder.record,
+    dispose() {
+      recorder.dispose();
+      release();
+    },
+  };
+}
+
+export function createCustomDispatchRecorder(
+  options: ProseMirrorDispatchRecorderOptions,
 ): ProseMirrorDispatchRecorder {
   const store = options.store ?? prosemirrorDevtoolsStore;
   const view = options.view;
-  const observer = createCustomDispatchObserver(view);
+  const getState = options.getState ?? (() => view.state);
+  const observer = createCustomDispatchObserver(view, options.getState);
+  let active = true;
 
   return {
+    dispose() {
+      active = false;
+    },
     record(transaction, dispatch) {
+      if (!active) {
+        dispatch();
+        return;
+      }
       // Use one state identity throughout the measurement. This is also the state against which the
       // observer recognizes the root applyTransaction call.
-      const beforeState = view.state;
+      const beforeState = getState();
       recordSynchronousDispatch({
         store,
         options,
         transaction,
         beforeState,
-        getState: () => view.state,
+        getState,
         run(measurement, captureAppliedTransactions) {
           const session = observer.begin(transaction, beforeState);
           const startedAt = monotonicNow();

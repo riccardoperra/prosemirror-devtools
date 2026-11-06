@@ -1,0 +1,166 @@
+{
+  "target": {
+    "sourceId": "source-c6bce049-14bc-42ea-8596-78347939e7fc",
+    "editorId": "official-A",
+    "sessionId": "session-027402b8-2faa-4fa0-86ee-afb4cdeebf85",
+    "generation": 1
+  },
+  "pending": {
+    "kind": "available",
+    "value": {
+      "kind": "state",
+      "state": {
+        "version": 0,
+        "unconfirmedSteps": 1,
+        "clientId": "A",
+        "origins": [
+          {
+            "pendingStepIndex": 0,
+            "transactionTime": 1793822164429,
+            "originalStepCount": 1,
+            "docChanged": true
+          }
+        ],
+        "originScope": "original-transactions-before-any-rebase"
+      },
+      "before": null,
+      "transport": {
+        "kind": "application-observed",
+        "sequence": 1,
+        "connection": "connected",
+        "counts": {
+          "sends": 0,
+          "receives": 0,
+          "acknowledgements": 0,
+          "errors": 0
+        },
+        "latest": {
+          "observedAt": 1793822164197,
+          "signal": {
+            "kind": "connection",
+            "state": "connected"
+          }
+        },
+        "retention": "latest-signal-only"
+      }
+    },
+    "target": {
+      "sourceId": "source-c6bce049-14bc-42ea-8596-78347939e7fc",
+      "editorId": "official-A",
+      "sessionId": "session-027402b8-2faa-4fa0-86ee-afb4cdeebf85",
+      "generation": 1
+    },
+    "point": {
+      "kind": "live",
+      "target": {
+        "sourceId": "source-c6bce049-14bc-42ea-8596-78347939e7fc",
+        "editorId": "official-A",
+        "sessionId": "session-027402b8-2faa-4fa0-86ee-afb4cdeebf85",
+        "generation": 1
+      },
+      "revision": 15,
+      "stateId": 4,
+      "dispatchId": 2,
+      "diagnosticsVersion": 9
+    },
+    "coverage": {
+      "complete": true,
+      "gaps": [],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": []
+    }
+  },
+  "confirmed": {
+    "kind": "available",
+    "value": {
+      "kind": "state",
+      "state": {
+        "version": 2,
+        "unconfirmedSteps": 0,
+        "clientId": null,
+        "origins": [],
+        "originScope": "original-transactions-before-any-rebase"
+      },
+      "before": null,
+      "transport": {
+        "kind": "application-observed",
+        "sequence": 5,
+        "connection": "connected",
+        "counts": {
+          "sends": 1,
+          "receives": 2,
+          "acknowledgements": 1,
+          "errors": 0
+        },
+        "latest": {
+          "observedAt": 1793822164804,
+          "signal": {
+            "kind": "receive",
+            "messageId": "steps-2",
+            "payload": {
+              "kind": "steps",
+              "version": 1,
+              "count": 1
+            },
+            "dispatch": {
+              "kind": "unknown"
+            }
+          }
+        },
+        "retention": "latest-signal-only"
+      }
+    },
+    "target": {
+      "sourceId": "source-c6bce049-14bc-42ea-8596-78347939e7fc",
+      "editorId": "official-A",
+      "sessionId": "session-027402b8-2faa-4fa0-86ee-afb4cdeebf85",
+      "generation": 1
+    },
+    "point": {
+      "kind": "live",
+      "target": {
+        "sourceId": "source-c6bce049-14bc-42ea-8596-78347939e7fc",
+        "editorId": "official-A",
+        "sessionId": "session-027402b8-2faa-4fa0-86ee-afb4cdeebf85",
+        "generation": 1
+      },
+      "revision": 21,
+      "stateId": 9,
+      "dispatchId": 4,
+      "diagnosticsVersion": 12
+    },
+    "coverage": {
+      "complete": false,
+      "gaps": [
+        {
+          "reason": "paused",
+          "firstDispatchId": 3,
+          "lastDispatchId": 4,
+          "stateBeforeId": 4,
+          "stateAfterId": 9
+        }
+      ],
+      "truncated": false,
+      "limits": {
+        "maxItems": 100,
+        "maxDepth": 24,
+        "maxNodes": 4000,
+        "maxStringLength": 16000,
+        "maxBytes": 128000
+      },
+      "notes": ["Detailed capture is paused. Current state reads remain available."]
+    }
+  },
+  "traceVerdict": {
+    "kind": "inconclusive",
+    "reason": "The evidence required by this assertion is incomplete.",
+    "missing": ["complete-capture"]
+  }
+}

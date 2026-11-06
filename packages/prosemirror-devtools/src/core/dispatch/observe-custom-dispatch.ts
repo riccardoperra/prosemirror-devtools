@@ -113,7 +113,10 @@ function shadowMethod(target: object, property: PropertyKey, value: unknown): Re
  * only reports applied transactions when it can prove that the root result reached the view.
  * Deferred work that runs after `finish` is intentionally not observed.
  */
-export function createCustomDispatchObserver(view: EditorView): Readonly<{
+export function createCustomDispatchObserver(
+  view: EditorView,
+  getModelState?: () => EditorState,
+): Readonly<{
   begin: (
     rootTransaction: Transaction,
     beforeState: EditorState,
@@ -277,8 +280,10 @@ export function createCustomDispatchObserver(view: EditorView): Readonly<{
           // an unknown outcome rather than incorrectly calling a discarded/failed result applied.
           const rootCommitted = !!(
             dispatch.rootResult &&
-            dispatch.successfulUpdates.has(dispatch.rootResult.state) &&
-            view.state === dispatch.rootResult.state
+            (getModelState
+              ? getModelState() === dispatch.rootResult.state
+              : dispatch.successfulUpdates.has(dispatch.rootResult.state) &&
+                view.state === dispatch.rootResult.state)
           );
           dispatch.observation = {
             applyTimings: dispatch.applyTimings,

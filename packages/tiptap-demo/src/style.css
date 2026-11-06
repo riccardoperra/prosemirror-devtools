@@ -1,0 +1,74 @@
+body {
+  margin: 0;
+  background: #f7f8fa;
+  color: #18202b;
+  font:
+    16px system-ui,
+    sans-serif;
+}
+main {
+  max-width: 1200px;
+  margin: auto;
+  padding: 32px;
+}
+h1 {
+  font-size: 28px;
+}
+p {
+  line-height: 1.5;
+}
+button,
+select {
+  font: inherit;
+  padding: 8px 12px;
+  border: 1px solid #bec6d0;
+  border-radius: 5px;
+  background: white;
+  color: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.editor {
+  background: white;
+  border: 1px solid #bec6d0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.ProseMirror {
+  min-height: 120px;
+  outline: none;
+}
+.inspector {
+  height: 560px;
+  border: 1px solid #bec6d0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+pre {
+  overflow: auto;
+  font-size: 12px;
+  padding: 12px;
+  background: #eef1f5;
+}
+output {
+  font-variant-numeric: tabular-nums;
+}
+label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+section {
+  margin: 20px 0;
+}

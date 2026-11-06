@@ -28,22 +28,26 @@ the rest of your development tools.
 
 ## What you can inspect
 
-- **State** — explore the document tree, selection, active marks, and document statistics.
-- **History** — inspect dispatches, step diffs and position mapping, and restore an earlier document.
-- **Selection** — inspect anchor/head ancestry, boundaries, adjacent nodes, and marks.
-- **Events & commands** — trace handler outcomes, nested calls, and explicitly named commands.
-- **Decorations & node views** — inspect ranges, highlight positions, and follow lifecycle counters.
-- **Performance** — compare dispatch, state-apply, view-update, and plugin-hook timings.
-- **Plugins** — inspect plugin order, state, props, and the slowest plugin work.
-- **Schema** — browse the editor's node and mark specifications.
-- **Snapshots** — save and restore documents locally or move them as JSON.
-- **Multiple editors** — register several `EditorView` instances and switch between them in one
+- **State**. explore the document tree, selection, active marks, and document statistics.
+- **Transactions**. inspect dispatches, step diffs and position mapping, and restore an earlier document.
+- **Selection**. inspect anchor/head ancestry, boundaries, adjacent nodes, and marks.
+- **Events & commands**. trace handler outcomes, nested calls, and explicitly named commands.
+- **Rendering**. inspect ranges, highlight positions, and follow lifecycle counters.
+- **Performance**. compare dispatch, state-apply, view-update, and plugin-hook timings.
+- **Plugins**. inspect plugin order, state, props, and the slowest plugin work.
+- **Schema**. browse the editor's node and mark specifications.
+- **Snapshots**. save and restore documents locally or move them as JSON.
+- **Multiple editors**. register several `EditorView` instances and switch between them in one
   panel.
 
 The same panel works in two ways:
 
 - **Standalone**, rendered wherever it fits in your development UI.
 - **Inside TanStack Devtools**, as a native plugin that follows the host theme and layout.
+
+The new inspection client, standalone mount, recording, and agent APIs below are available in
+workspace builds of this branch. Their npm release is pending. Build the repository before running
+the native examples.
 
 ## Getting started
 
@@ -61,19 +65,22 @@ import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { createProseMirrorDevtoolsSession } from "prosemirror-inspector/core";
 
-const devtools = createProseMirrorDevtoolsSession({
-  id: "main-editor",
-  label: "Main editor",
-});
+const devtools = import.meta.env.DEV
+  ? createProseMirrorDevtoolsSession({
+      id: "main-editor",
+      label: "Main editor",
+      captureProfile: "bounded",
+    })
+  : null;
 
-const plugins = devtools.instrumentPlugins(rawPlugins);
+const plugins = devtools ? devtools.instrumentPlugins(rawPlugins) : rawPlugins;
 const state = EditorState.create({ schema, plugins });
 const view = new EditorView(document.querySelector("#editor")!, { state });
 
-devtools.attach(view);
+devtools?.attach(view);
 
 // When the editor is removed:
-devtools.dispose();
+devtools?.dispose();
 view.destroy();
 ```
 
@@ -81,7 +88,19 @@ Here, `schema` and `rawPlugins` are your existing editor configuration. Run this
 development. If you do not need plugin timings, pass `rawPlugins` directly to `EditorState.create`
 and attach the completed view.
 
-### Show it as a standalone panel
+### Mount a panel without a framework
+
+```ts
+import { mountProseMirrorDevtools } from "prosemirror-inspector/standalone";
+
+const panel = mountProseMirrorDevtools(container, { defaultPanel: "state" });
+panel.update({ defaultPanel: "history", theme: "dark" });
+panel.unmount();
+```
+
+The mount uses the shared panel and is inactive outside development. It does not attach an editor.
+
+### Show it through a framework adapter
 
 This React example renders the panel directly in the application. Matching panel adapters are
 available for Preact, Solid, Vue, Svelte, and Angular.
@@ -135,15 +154,31 @@ API reference, read the [package guide](./packages/prosemirror-devtools/README.m
 Events and rendering diagnostics are opt-in. Enable `diagnostics: true` or `{ limit: 200 }` on a
 devtools session, then use its `instrumentPlugins` and `attach` methods. Capture is bounded
 separately from transaction history. See the [diagnostics setup](./packages/prosemirror-devtools/README.md#optional-event-and-rendering-diagnostics)
-and the [review and remaining follow-ups](./docs/devtools-review.md). Collaboration diagnostics are
-deferred.
+and the [inspection reference](./docs/inspection.md).
+
+Use the [support matrix](./docs/support-matrix.md) to choose an editor integration, host, and
+capture profile. Read the [agent validation guide](./docs/agent-validation.md) for the three shipped
+skills, read-only tools, and experimental Chrome discovery bridge. The
+[query reference](./docs/inspection-queries.md) comes from the runtime catalogue.
+
+Use the [recording guide](./docs/recordings.md) to share bounded evidence and inspect it offline.
+
+The [product roadmap](./docs/product-roadmap.md) records the design. The
+[execution ledger](./docs/roadmap/execution.md) records delivery and verification. New capabilities
+on this branch are unreleased until the next package release.
 
 ## Examples
+
+Start with the [kitchen sink](./packages/collab-demo) to try collaboration, undo and redo,
+rendering diagnostics, recordings, and agent tools from one page.
 
 The monorepo keeps one private example per framework so each adapter can be run and tested in its
 native environment:
 
-- [React](./packages/tanstack-devtools-demo)
+- [Standalone ProseMirror, list and undo](./packages/standalone-demo)
+- [Native Tiptap](./packages/tiptap-demo)
+- [Controlled React ProseMirror](./packages/react-prosemirror-demo)
+- [React and TanStack](./packages/tanstack-devtools-demo)
 - [Preact](./packages/preact-demo)
 - [Solid](./packages/solid-demo)
 - [Vue](./packages/vue-demo)
