@@ -14,6 +14,7 @@ import "prosemirror-inspector/styles.css";
 import "./style.css";
 
 import { mountOfficial } from "./official";
+import { textImpactExtension } from "./text-impact";
 import { mountYjs } from "./yjs";
 import { commandLabels, commands, peers, type CollaborationFixture, type Peer } from "./types";
 
@@ -25,9 +26,10 @@ app.innerHTML = `<main class="kitchen-sink">
   <details class="demo-guide" ${import.meta.env.DEV ? "" : "hidden"}>
     <summary>Try the kitchen sink</summary>
     <ol>
-      <li>Hold delivery, insert a sample in each peer, then deliver. In <strong>Context</strong>, compare collaboration and history before and after delivery. Try undo and redo in A.</li>
+      <li>Hold delivery and insert a sample in A. Open <strong>Transactions</strong> to see the pending step, then deliver it and inspect the new dispatch. Try <strong>Insert outside history in A</strong> to see an explicit undo exclusion.</li>
       <li>Pick a transaction and inspect <strong>Rendering</strong> for the highlighted text, paragraph decoration, widget and paragraph NodeView. Compare capture profiles to see which events require instrumentation.</li>
-      <li>Switch to <strong>Tiptap Collaboration with Yjs</strong> for the Yjs undo stack and Tiptap extension data in <strong>Context</strong>.</li>
+      <li>In <strong>Events</strong>, search for <strong>Undo</strong> after undoing an edit. Open the linked dispatch for its effects and diff. Repeat in <strong>Tiptap Collaboration with Yjs</strong> to see what the Yjs sample can explain.</li>
+      <li>Insert a sample to see <strong>Text impact</strong> in Transactions. In Events, select <strong>Insert sample</strong> to see the custom detail next to the linked dispatch.</li>
       <li>Export an editor session and open the recording below. Refresh editor sessions after a fixture reset. Open a second inspector to compare two live selections.</li>
     </ol>
     <p>Both agent bridges expose the same live editor sessions in development.</p>
@@ -43,6 +45,7 @@ app.innerHTML = `<main class="kitchen-sink">
     .map(
       (peer) => `<section><h2>Peer ${peer}</h2><div class="toolbar">
     ${commands.map((command) => `<button id="${command}-${peer}">${commandLabels[command]} in ${peer}</button>`).join("")}
+    ${peer === "A" ? '<button id="sample-excluded" hidden>Insert outside history in A</button>' : ""}
     <button id="pause-${peer}" aria-pressed="false">Pause capture ${peer}</button></div>
     <div id="editor-${peer}" class="editor"></div></section>`,
     )
@@ -59,6 +62,7 @@ function element<T extends HTMLElement>(selector: string, type: { new (): T }): 
   return found;
 }
 const system = element("#system", HTMLSelectElement);
+const excludedSample = element("#sample-excluded", HTMLButtonElement);
 const profile = element("#profile", HTMLSelectElement);
 const hold = element("#hold", HTMLInputElement);
 const delay = element("#delay", HTMLInputElement);
@@ -79,6 +83,7 @@ const panel = import.meta.env.DEV
       store,
       theme: "light",
       defaultPanel: "history",
+      extensions: [textImpactExtension],
     })
   : null;
 if (!panel) {
@@ -165,6 +170,7 @@ function reset(): void {
     instrumentPlugins: profile.value === "instrumented",
   };
   fixture = system.value === "yjs" ? mountYjs(options) : mountOfficial(options);
+  excludedSample.hidden = !import.meta.env.DEV || system.value !== "official";
   coverage.textContent = !import.meta.env.DEV
     ? "Diagnostics are disabled in this production build."
     : profile.value === "attach"
@@ -177,6 +183,7 @@ function reset(): void {
 const handlers = [
   [element("#deliver", HTMLButtonElement), deliver],
   [element("#reset", HTMLButtonElement), reset],
+  [excludedSample, () => fixture?.runCommand("A", "sampleExcluded")],
   ...peers.flatMap((peer): [HTMLButtonElement, () => void][] => [
     ...commands.map((command): [HTMLButtonElement, () => void] => [
       element(`#${command}-${peer}`, HTMLButtonElement),

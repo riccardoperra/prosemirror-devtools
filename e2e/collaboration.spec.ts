@@ -172,6 +172,23 @@ test("kitchen sink combines collaboration, history, rendering and offline record
   await expect(second).toHaveText(initial);
   const edited = await first.innerText();
 
+  const panel = page.getByRole("tabpanel");
+  const effects = () => panel.getByRole("region", { name: "Captured dispatch effects" });
+  await expect(
+    page.getByRole("button", { name: "Inspect dispatch #1", exact: true }),
+  ).toContainText("Text impact +20 characters");
+  await expect(effects()).toContainText("Text added 16 → 36 characters");
+  await page.getByRole("tab", { name: "Events", exact: true }).click();
+  await page.getByRole("button", { name: /^Inspect Insert sample, call #/ }).click();
+  await expect(effects()).toContainText("Text impact Text added 16 → 36 characters");
+  await page.getByRole("tab", { name: /^Transactions/ }).click();
+  await page.getByRole("button", { name: "Open another inspector", exact: true }).click();
+  const another = page.getByRole("region", { name: "Additional inspector", exact: true });
+  const otherEffects = another.getByRole("region", { name: "Captured dispatch effects" });
+  await expect(otherEffects).toContainText("Local steps queued");
+  await expect(otherEffects).not.toContainText("Text impact");
+  await page.getByRole("button", { name: "Close another inspector", exact: true }).click();
+
   const { editors } = object(await callTool(page, "prosemirror_editors"));
   if (!Array.isArray(editors)) throw new Error("Expected both kitchen sink editors.");
   const editor = editors.find(
@@ -189,6 +206,10 @@ test("kitchen sink combines collaboration, history, rendering and offline record
     available(await callTool(page, "prosemirror_read", { point: history.point, query })).value;
   expect(await read({ kind: "contribution", id: "prosemirror-collab" })).toMatchObject({
     state: { version: 0, unconfirmedSteps: 1 },
+  });
+  expect(await read({ kind: "contribution", id: "kitchen-sink-text-impact" })).toMatchObject({
+    kind: "current",
+    characters: 36,
   });
   expect(await read({ kind: "events", name: "Insert sample" })).toMatchObject([
     { kind: "command", name: "Insert sample" },

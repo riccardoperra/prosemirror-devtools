@@ -454,6 +454,14 @@ const plugin = createProseMirrorDevtoolsPlugin({
 React hosts can use `createReactDevtoolsExtension` for React-rendered extension panels. All other
 frameworks can implement the same DOM `mount(container, context) => cleanup` contract.
 
+### Add details to Transactions and Events
+
+Register a `DevtoolsDispatchPresenter` in a panel host's `extensions` option. Match the inspector's descriptor ID and version exactly. Register the inspector separately in the editor session's `inspectors` option. A presenter-only extension uses `panels: []`. The [kitchen sink example](../collab-demo/src/text-impact.ts) defines both parts.
+
+`present({ value, record })` receives an available, serialized capture and its retained dispatch. Return `label` and `text` for the detail in Transactions and in linked Events, with optional `badge` and `note`. Include `listLabel` to show the badge and a short description in the Transactions list. Return `undefined` to hide the sample. Keep the function synchronous and free of side effects because the same dispatch can render in several places.
+
+Registration belongs to each panel host. A host presenter takes precedence over a built-in presenter for the same inspector and version. Two host presenters cannot claim the same pair. If a presenter throws, the detail marks the presentation as unavailable and keeps the raw capture accessible in Transactions.
+
 ## Themes and styling
 
 The native panel accepts `theme="system"`, `"light"`, or `"dark"`. A panel hosted by TanStack

@@ -7,6 +7,7 @@ export const commandLabels = {
   undo: "Undo",
   redo: "Redo",
   sample: "Insert sample",
+  sampleExcluded: "Insert outside history",
 } satisfies Record<string, string>;
 export type DemoCommand = keyof typeof commandLabels;
 export const commands = ["undo", "redo", "sample"] satisfies readonly DemoCommand[];

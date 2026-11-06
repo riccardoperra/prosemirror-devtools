@@ -14,6 +14,8 @@ import { createTiptapInspector } from "prosemirror-inspector/inspectors/tiptap";
 import { createTransportObserver } from "prosemirror-inspector/inspectors/transport";
 import { createYjsInspector, type YjsInspector } from "prosemirror-inspector/inspectors/yjs";
 
+import { textImpactInspector } from "./text-impact";
+
 import {
   commandLabels,
   peers,
@@ -70,7 +72,7 @@ export function mountYjs({
           captureProfile: "bounded",
           instrumentPlugins,
           ...(diagnostics ? { diagnostics } : {}),
-          inspectors: [inspector, createTiptapInspector({ editor })],
+          inspectors: [inspector, createTiptapInspector({ editor }), textImpactInspector],
         });
       },
       dispatchTransaction(props) {
@@ -147,6 +149,7 @@ export function mountYjs({
     inspectorId: "yjs",
     flush,
     runCommand(peer, command) {
+      if (command === "sampleExcluded") return;
       const { editor, diagnostics } = clients[peer];
       const run = () => {
         if (command !== "sample") return editor.commands[command]();

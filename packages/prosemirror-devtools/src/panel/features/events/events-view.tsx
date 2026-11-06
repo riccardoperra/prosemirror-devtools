@@ -61,9 +61,9 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
   const panelContext = useOptionalPanelContext();
   const inspection = panelContext?.inspection;
   const data = panelContext?.data.data;
-  const canInspectDispatch = (dispatch: DevtoolsDiagnosticEvent["dispatches"][number]): boolean => {
+  const retainedDispatch = (dispatch: DevtoolsDiagnosticEvent["dispatches"][number]) => {
     const target = data?.instance(dispatch.instanceId)();
-    return !!target?.transactions.some(
+    return target?.transactions.find(
       (record) =>
         record.id === dispatch.id &&
         (dispatch.sessionId !== undefined
@@ -230,11 +230,11 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
                 event={event()}
                 events={events.events()}
                 onSelect={events.select}
-                canInspectDispatch={inspection ? canInspectDispatch : undefined}
+                retainedDispatch={retainedDispatch}
                 onInspectDispatch={
                   inspection
                     ? (dispatch) => {
-                        if (canInspectDispatch(dispatch))
+                        if (retainedDispatch(dispatch))
                           inspection.selectTransaction({
                             instanceId: dispatch.instanceId,
                             id: dispatch.id,

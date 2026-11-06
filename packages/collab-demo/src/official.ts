@@ -11,6 +11,8 @@ import { createCollabInspector } from "prosemirror-inspector/inspectors/collab";
 import { createHistoryInspector } from "prosemirror-inspector/inspectors/history";
 import { createTransportObserver } from "prosemirror-inspector/inspectors/transport";
 
+import { textImpactInspector } from "./text-impact";
+
 import {
   commandLabels,
   peers,
@@ -50,6 +52,7 @@ export function mountOfficial({
           inspectors: [
             createCollabInspector({ plugin, ...(transport ? { transport } : {}) }),
             createHistoryInspector({ plugin: undoPlugin }),
+            textImpactInspector,
           ],
         })
       : null;
@@ -117,13 +120,21 @@ export function mountOfficial({
             payload: { kind: "steps", version: fromVersion, count: batch.steps.length },
             dispatch: { kind: "unknown" },
           });
-          client.view.dispatch(
-            receiveTransaction(
-              client.view.state,
-              batch.steps,
-              batch.steps.map(() => batch.clientID),
-            ),
-          );
+          const receive = () => {
+            client.view.dispatch(
+              receiveTransaction(
+                client.view.state,
+                batch.steps,
+                batch.steps.map(() => batch.clientID),
+              ),
+            );
+            return true;
+          };
+          const diagnostics = client.session?.diagnostics;
+          if (diagnostics) {
+            const action = recipient === peer ? "Confirm" : "Receive";
+            diagnostics.traceCommand(`Collab: ${action} ${messageId}`, receive);
+          } else receive();
           if (recipient === peer)
             client.transport?.observe({
               kind: "acknowledge",
@@ -138,10 +149,18 @@ export function mountOfficial({
     runCommand(peer, command) {
       const { view, session } = clients[peer];
       const run = () => {
-        if (command !== "sample") return { undo, redo }[command](view.state, view.dispatch, view);
+        if (command === "undo" || command === "redo")
+          return { undo, redo }[command](view.state, view.dispatch, view);
         const { $from } = view.state.selection;
         const at = $from.parent.isTextblock ? $from.end() : $from.pos;
-        view.dispatch(view.state.tr.insertText(` Sample from peer ${peer}.`, at));
+        const transaction = view.state.tr.insertText(
+          command === "sampleExcluded"
+            ? " Edit outside undo history."
+            : ` Sample from peer ${peer}.`,
+          at,
+        );
+        if (command === "sampleExcluded") transaction.setMeta("addToHistory", false);
+        view.dispatch(transaction);
         return true;
       };
       if (session?.diagnostics) session.diagnostics.traceCommand(commandLabels[command], run);
