@@ -1,6 +1,6 @@
 {
   "name": "prosemirror-inspector",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Compact, multi-instance ProseMirror developer tools with transaction and plugin performance profiling.",
   "type": "module",
   "main": "./dist/index.js",
