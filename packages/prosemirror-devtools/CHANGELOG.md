@@ -1,5 +1,14 @@
 # prosemirror-inspector
 
+## 0.1.0
+
+### Minor Changes
+
+- 1db65c9: Add read-only agent tools, semantic checks with explicit evidence requirements, experimental Chrome discovery, and three versioned agent skills with real integration fixtures.
+- 4a3d144: Add explicit inspection targets, coherent bounded queries, capture gaps, semantic history and collaboration providers, native editor recorders, and diagnostic recordings.
+- acafcdd: Add host-local historical navigation, contextual document inspection, checkpoint comparison, and a separate read-only recording viewer.
+- 21e6e13: Add native WebMCP registration for the shared read-only inspection tools. Restore the compact live header and move diagnostic details to a separate Context panel. Group related dispatch links to keep transaction details visible.
+
 ## 0.0.2
 
 ### Patch Changes
