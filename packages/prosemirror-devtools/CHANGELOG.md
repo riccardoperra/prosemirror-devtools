@@ -1,5 +1,15 @@
 # prosemirror-inspector
 
+## 0.2.0
+
+### Minor Changes
+
+- c2e1f19: Add an opt-in WebMCP panel that lists registered ProseMirror tools and records their calls. Connect native WebMCP and Chrome DevTools MCP calls to the same history and show a live tool call in the standalone demo.
+
+### Patch Changes
+
+- 960faed: Update the TanStack Devtools and framework dependencies. Adapt the Svelte panel to the new mount and cleanup API, and migrate the Performance graphs to TanStack Charts 1.5.
+
 ## 0.1.0
 
 ### Minor Changes
