@@ -60,20 +60,22 @@ export function PluginCostChart(props: PluginCostChartProps): JSX.Element {
     });
     return defineChart({
       marks: [mark, labelsMark] as const,
-      x: { scale: scaleLinear().domain([0, maximum * 1.24]), axis: false },
-      y: {
-        scale: scaleBand<string>()
-          .domain(rows.map((row) => row.pluginKey))
-          .paddingInner(0.08)
-          .paddingOuter(0.04),
-        axis: {
-          line: false,
-          ticks: {
-            size: 0,
-            padding: 6,
-            format: (value) => labels.get(String(value)) ?? String(value),
+      scales: {
+        x: { scale: scaleLinear().domain([0, maximum * 1.24]), axis: false },
+        y: {
+          scale: scaleBand<string>()
+            .domain(rows.map((row) => row.pluginKey))
+            .paddingInner(0.08)
+            .paddingOuter(0.04),
+          axis: {
+            line: false,
+            ticks: {
+              size: 0,
+              padding: 6,
+              format: (value) => labels.get(String(value)) ?? String(value),
+            },
+            tickLabels: { fontSize: 10, fontWeight: 650, thin: false },
           },
-          tickLabels: { fontSize: 10, fontWeight: 650, thin: false },
         },
       },
       animate: false,

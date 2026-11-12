@@ -46,8 +46,8 @@ catalogs:
       specifier: ^0.0.13
       version: 0.0.13
     '@tanstack/charts':
-      specifier: ^0.7.2
-      version: 0.7.2
+      specifier: ^1.5.0
+      version: 1.5.0
     '@tanstack/devtools-utils':
       specifier: ^0.7.2
       version: 0.7.2
@@ -58,8 +58,8 @@ catalogs:
       specifier: ^0.10.14
       version: 0.10.14
     '@tanstack/solid-charts':
-      specifier: ^0.7.2
-      version: 0.7.2
+      specifier: ^1.5.0
+      version: 1.5.0
     '@tanstack/solid-devtools':
       specifier: ^0.8.14
       version: 0.8.14
@@ -112,8 +112,8 @@ catalogs:
       specifier: 1.12.0
       version: 1.12.0
     d3-scale:
-      specifier: ^4.0.2
-      version: 4.0.2
+      specifier: ^4.0.3
+      version: 4.0.3
     dayjs:
       specifier: ^1.11.23
       version: 1.11.23
@@ -420,13 +420,13 @@ importers:
         version: 3.2.11(@tiptap/core@3.31.4(@tiptap/pm@3.31.4))(@tiptap/pm@3.31.4)(@tiptap/react@3.31.4(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.4(@tiptap/pm@3.31.4))(@tiptap/pm@3.31.4)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(react-dom@19.2.8(react@19.2.8))(react-reconciler@0.33.0(react@19.2.8))(react@19.2.8)
       '@tanstack/charts':
         specifier: 'catalog:'
-        version: 0.7.2
+        version: 1.5.0(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@22.1.3(@angular/common@22.1.3(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2)))(preact@10.29.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svelte@5.56.9)(vue@3.5.41(typescript@6.0.3))
       '@tanstack/react-devtools':
         specifier: 'catalog:'
         version: 0.10.14(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)
       '@tanstack/solid-charts':
         specifier: 'catalog:'
-        version: 0.7.2(solid-js@1.9.15)
+        version: 1.5.0(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@22.1.3(@angular/common@22.1.3(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2)))(preact@10.29.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svelte@5.56.9)(vue@3.5.41(typescript@6.0.3))
       '@tiptap/core':
         specifier: 'catalog:'
         version: 3.31.4(@tiptap/pm@3.31.4)
@@ -456,7 +456,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       d3-scale:
         specifier: 'catalog:'
-        version: 4.0.2
+        version: 4.0.3
       jsdom:
         specifier: 'catalog:'
         version: 27.4.0
@@ -2833,8 +2833,49 @@ packages:
     peerDependencies:
       '@angular/core': '>=21.0.0'
 
-  '@tanstack/charts@0.7.2':
-    resolution: {integrity: sha512-FlQ0FUm5pm7++E5/7yJMZJ7v/3UtoRl6aMXqpYUwSyS6lGmDCd2Zcp7wa5RbzG/BBDeau2+3CuIcFq1xLgJK5Q==}
+  '@tanstack/charts@1.5.0':
+    resolution: {integrity: sha512-V6zu8kuTE4lYjZ7MCdSzfI5cwdtj+FKQ4Pr5NwdK+OZ5D4fjegSE7CdVOmk960U8zmgYFabow4hi1wwfqJzUBQ==}
+    peerDependencies:
+      '@angular/core': '>=19'
+      '@angular/platform-browser': '>=19'
+      alpinejs: '>=3.15'
+      lit: '>=3.1.3'
+      octane: ^0.1.13
+      preact: '>=10'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+      react-native: ^0.86.0 || ^0.88.0
+      react-native-svg: '>=15.15.4 <16'
+      solid-js: ^1.8
+      svelte: ^5.20.0
+      vue: '>=3.5'
+    peerDependenciesMeta:
+      '@angular/core':
+        optional: true
+      '@angular/platform-browser':
+        optional: true
+      alpinejs:
+        optional: true
+      lit:
+        optional: true
+      octane:
+        optional: true
+      preact:
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
+      react-native-svg:
+        optional: true
+      solid-js:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
 
   '@tanstack/devtools-client@0.0.8':
     resolution: {integrity: sha512-cG3iZkGWCwN330bLBKa8+9r4Of2AXNoz2zUqcsy/4XsD3105ghVBx78cGyvJj9fSclNomPxoqAnDGXXhg1WLvA==}
@@ -2903,10 +2944,10 @@ packages:
       react: '>=16.8'
       react-dom: '>=16.8'
 
-  '@tanstack/solid-charts@0.7.2':
-    resolution: {integrity: sha512-JG7W3wocalP9eQMT2I1jvt2N4ttwtdA5bs/A3eiWASftifHNx+4Kl8r7mQ6wWajyalw9FpOglT07bytHQzM0SA==}
+  '@tanstack/solid-charts@1.5.0':
+    resolution: {integrity: sha512-+bt6V5xCSYuMeSyeM1Z/2ygb3yQwER14K8vwvvHjxppx0kRa7fLT+5Vi+CLXHzseNIlGheiAZiVFQyoMU5ndpA==}
     peerDependencies:
-      solid-js: '>=1.8'
+      solid-js: ^1.8
 
   '@tanstack/solid-devtools@0.8.14':
     resolution: {integrity: sha512-IV0ONBeQMNRBSkVtwkcgsBK2j5huHz3VyhQXuoaOkfOlG/rVnX+suB4Wr+59eJVxm5+T1o7slvxk4a0zcZq3bw==}
@@ -3609,6 +3650,10 @@ packages:
 
   d3-scale@4.0.2:
     resolution: {integrity: sha512-GZW464g1SH7ag3Y7hXjf8RoUuAFIqklOAq3MRl4OaWabTFJY9PN/E1YklhXLh+OQ3fM9yS2nOkCoS+WLZ6kvxQ==}
+    engines: {node: '>=12'}
+
+  d3-scale@4.0.3:
+    resolution: {integrity: sha512-66cWobCNzcMvlfoaDHCxuIv9TBUWG1BLOWdv9kHHFuCr1JdqAWPvTmsaEYDD5NRMyWZ5+7u0GqiCDfMXMqh3hg==}
     engines: {node: '>=12'}
 
   d3-selection@3.0.0:
@@ -6890,7 +6935,7 @@ snapshots:
       - solid-js
       - utf-8-validate
 
-  '@tanstack/charts@0.7.2':
+  '@tanstack/charts@1.5.0(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@22.1.3(@angular/common@22.1.3(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2)))(preact@10.29.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svelte@5.56.9)(vue@3.5.41(typescript@6.0.3))':
     dependencies:
       '@types/d3-force': 3.0.10
       '@types/d3-geo': 3.1.1
@@ -6910,6 +6955,16 @@ snapshots:
       d3-selection: 3.0.0
       d3-shape: 3.2.0
       d3-zoom: 3.0.0
+      tslib: 2.8.1
+    optionalDependencies:
+      '@angular/core': 22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2)
+      '@angular/platform-browser': 22.1.3(@angular/common@22.1.3(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))
+      preact: 10.29.8
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      solid-js: 1.9.15
+      svelte: 5.56.9
+      vue: 3.5.41(typescript@6.0.3)
 
   '@tanstack/devtools-client@0.0.8':
     dependencies:
@@ -6984,10 +7039,23 @@ snapshots:
       - solid-js
       - utf-8-validate
 
-  '@tanstack/solid-charts@0.7.2(solid-js@1.9.15)':
+  '@tanstack/solid-charts@1.5.0(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@22.1.3(@angular/common@22.1.3(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2)))(preact@10.29.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svelte@5.56.9)(vue@3.5.41(typescript@6.0.3))':
     dependencies:
-      '@tanstack/charts': 0.7.2
+      '@tanstack/charts': 1.5.0(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@22.1.3(@angular/common@22.1.3(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2)))(preact@10.29.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svelte@5.56.9)(vue@3.5.41(typescript@6.0.3))
       solid-js: 1.9.15
+    transitivePeerDependencies:
+      - '@angular/core'
+      - '@angular/platform-browser'
+      - alpinejs
+      - lit
+      - octane
+      - preact
+      - react
+      - react-dom
+      - react-native
+      - react-native-svg
+      - svelte
+      - vue
 
   '@tanstack/solid-devtools@0.8.14(csstype@3.2.3)(solid-js@1.9.15)':
     dependencies:
@@ -7751,6 +7819,14 @@ snapshots:
       d3-shape: 1.3.7
 
   d3-scale@4.0.2:
+    dependencies:
+      d3-array: 3.2.4
+      d3-format: 3.1.2
+      d3-interpolate: 3.0.1
+      d3-time: 3.1.0
+      d3-time-format: 4.1.0
+
+  d3-scale@4.0.3:
     dependencies:
       d3-array: 3.2.4
       d3-format: 3.1.2
