@@ -3,7 +3,7 @@ import { mountDemoEditor, type DemoEditorController } from "@prosemirror-devtool
 
 export function ProseMirrorEditor({ latencyEnabled }: { latencyEnabled: boolean }) {
   const editorHost = useRef<HTMLDivElement>(null);
-  const editor = useRef<DemoEditorController>();
+  const editor = useRef<DemoEditorController | null>(null);
 
   useEffect(() => {
     const host = editorHost.current;

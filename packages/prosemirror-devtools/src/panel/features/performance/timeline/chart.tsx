@@ -95,27 +95,29 @@ export function PluginTimelineChart(props: PluginTimelineChartProps): JSX.Elemen
 
       return {
         marks: [intervalMark] as const,
-        x: {
-          scale: scaleLinear().domain([0, domainEnd]),
-          grid: true,
-          axis: {
-            line: true,
-            ticks: {
-              count: 9,
-              size: 3,
-              padding: 5,
-              format: (value: number) => axisTime(Number(value)),
+        scales: {
+          x: {
+            scale: scaleLinear().domain([0, domainEnd]),
+            grid: true,
+            axis: {
+              line: true,
+              ticks: {
+                count: 9,
+                size: 3,
+                padding: 5,
+                format: (value: number) => axisTime(Number(value)),
+              },
+              tickLabels: { fontSize: 9, thin: { minGap: 18, priority: "ends" as const } },
             },
-            tickLabels: { fontSize: 9, thin: { minGap: 18, priority: "ends" as const } },
           },
-        },
-        y: {
-          scale: scaleBand<string>()
-            .domain(props.lanes.map((lane) => lane.laneKey))
-            .paddingInner(0.22)
-            .paddingOuter(0.08),
-          grid: false,
-          axis: false,
+          y: {
+            scale: scaleBand<string>()
+              .domain(props.lanes.map((lane) => lane.laneKey))
+              .paddingInner(0.22)
+              .paddingOuter(0.08),
+            grid: false,
+            axis: false,
+          },
         },
         color: {
           domain: colorDomain,

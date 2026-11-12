@@ -1,4 +1,4 @@
-import { createSveltePlugin } from "@tanstack/devtools-utils/svelte";
+import type { Component } from "svelte";
 
 import type { ProseMirrorDevtoolsPanelInit } from "../types";
 import { ProseMirrorDevtoolsPanel, type ProseMirrorDevtoolsSveltePanelProps } from "./panel";
@@ -7,14 +7,18 @@ export interface CreateProseMirrorDevtoolsSveltePluginOptions extends ProseMirro
   name?: string;
 }
 
-export type ProseMirrorDevtoolsSveltePlugin = ReturnType<
-  ReturnType<typeof createSveltePlugin<ProseMirrorDevtoolsSveltePanelProps>>[0]
->;
+export interface ProseMirrorDevtoolsSveltePlugin {
+  name: string;
+  component: Component<ProseMirrorDevtoolsSveltePanelProps>;
+  props: ProseMirrorDevtoolsSveltePanelProps;
+}
 
 export function createProseMirrorDevtoolsPlugin(
   options: CreateProseMirrorDevtoolsSveltePluginOptions = {},
 ): ProseMirrorDevtoolsSveltePlugin {
-  const [Plugin] = createSveltePlugin(options.name ?? "ProseMirror", ProseMirrorDevtoolsPanel);
-  const props: ProseMirrorDevtoolsSveltePanelProps = { devtoolsProps: options };
-  return Plugin(props);
+  return {
+    name: options.name ?? "ProseMirror",
+    component: ProseMirrorDevtoolsPanel,
+    props: { devtoolsProps: options },
+  };
 }

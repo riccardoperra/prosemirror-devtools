@@ -469,27 +469,29 @@ export function DispatchTimeline(props: DispatchTimelineProps): JSX.Element {
     });
     const definition = defineChart({
       marks: [mark] as const,
-      x: {
-        scale: scaleBand<string>().domain(domain).paddingInner(0.08).paddingOuter(0.03),
-        axis: {
-          line: true,
-          ticks: false,
-          tickLabels: false,
-        },
-      },
-      y: {
-        scale: createDispatchDurationScale(scale.maximum, scale.detailThresholdMs),
-        grid: false,
-        axis: {
-          line: true,
-          ticks: {
-            values: durationAxisTicks(scale.maximum, scale.detailThresholdMs),
-            size: 0,
-            padding: 4,
-            format: formatAxisDuration,
+      scales: {
+        x: {
+          scale: scaleBand<string>().domain(domain).paddingInner(0.08).paddingOuter(0.03),
+          axis: {
+            line: true,
+            ticks: false,
+            tickLabels: false,
           },
-          tickLabels: { fontSize: 8, thin: false },
-          label: { text: "Time (ms)", offset: 30 },
+        },
+        y: {
+          scale: createDispatchDurationScale(scale.maximum, scale.detailThresholdMs),
+          grid: false,
+          axis: {
+            line: true,
+            ticks: {
+              values: durationAxisTicks(scale.maximum, scale.detailThresholdMs),
+              size: 0,
+              padding: 4,
+              format: formatAxisDuration,
+            },
+            tickLabels: { fontSize: 8, thin: false },
+            label: { text: "Time (ms)", offset: 30 },
+          },
         },
       },
       margin: chartMargin,
