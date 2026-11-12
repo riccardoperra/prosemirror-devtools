@@ -1,3 +1,4 @@
+import { createProseMirrorWebMcpInspector } from "prosemirror-inspector";
 import {
   installProseMirrorChromeBridge,
   installProseMirrorWebMCPBridge,
@@ -32,10 +33,15 @@ if (!listItem) throw new Error("The fixture requires list_item");
 const splitItem = splitListItem(listItem);
 const store = createProseMirrorDevtoolsStore();
 const inspectionClient = import.meta.env.DEV ? createProseMirrorInspectionClient({ store }) : null;
-const disposeBridge = inspectionClient ? installProseMirrorChromeBridge(inspectionClient) : null;
-const disposeWebMCP = import.meta.env.DEV
-  ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
-  : null;
+const webMcp = inspectionClient ? createProseMirrorWebMcpInspector() : null;
+const disposeBridge =
+  inspectionClient && webMcp
+    ? installProseMirrorChromeBridge(inspectionClient, { inspector: webMcp })
+    : null;
+const disposeWebMCP =
+  inspectionClient && webMcp
+    ? await installProseMirrorWebMCPBridge(inspectionClient, webMcp)
+    : null;
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing application container");
 app.innerHTML = `<main>
@@ -44,6 +50,10 @@ app.innerHTML = `<main>
   <div class="toolbar">
     <button id="focus">Focus editor</button><button id="undo">Undo</button><button id="redo">Redo</button><button id="reset">Reset fixture</button>
     <label>Capture profile <select id="profile"><option value="instrumented">Instrument before state</option><option value="attach">Attach only</option></select></label>
+  </div>
+  <div id="webmcp-demo" class="toolbar" hidden>
+    <button id="webmcp-call">List editors via WebMCP</button>
+    <output id="webmcp-status" aria-live="polite"></output>
   </div>
   <p id="coverage"></p><div id="editor" class="editor"></div>
   <output id="status" aria-live="polite"></output>
@@ -148,7 +158,12 @@ function reset(): void {
 }
 reset();
 const panel = import.meta.env.DEV
-  ? mountProseMirrorDevtools(inspectorContainer, { store, defaultPanel: "history", theme: "light" })
+  ? mountProseMirrorDevtools(inspectorContainer, {
+      store,
+      defaultPanel: "history",
+      theme: "light",
+      extensions: webMcp ? [webMcp.extension] : [],
+    })
   : null;
 if (!panel) inspectorContainer.hidden = true;
 const cleanupRecordings = inspectionClient
@@ -157,11 +172,42 @@ const cleanupRecordings = inspectionClient
 const disposeComparison = import.meta.env.DEV
   ? mountComparisonControls({ container: app, store })
   : () => {};
+type RegisteredBrowserTool = { readonly name: string };
+const modelContext = (
+  document as Document & {
+    modelContext?: {
+      getTools?: () => Promise<readonly RegisteredBrowserTool[]>;
+      executeTool?: (
+        tool: RegisteredBrowserTool,
+        input: Record<string, unknown>,
+      ) => Promise<unknown>;
+    };
+  }
+).modelContext;
+const webMcpDemo = element("#webmcp-demo", HTMLDivElement);
+const webMcpStatus = element("#webmcp-status", HTMLOutputElement);
+const canInvokeWebMcp =
+  disposeWebMCP &&
+  typeof modelContext?.getTools === "function" &&
+  typeof modelContext.executeTool === "function";
+webMcpDemo.hidden = !canInvokeWebMcp;
+async function runWebMcpExample(): Promise<void> {
+  try {
+    const tools = await modelContext?.getTools?.();
+    const tool = tools?.find(({ name }) => name === "prosemirror_editors");
+    if (!tool) throw new Error("The ProseMirror editors tool is unavailable.");
+    await modelContext?.executeTool?.(tool, {});
+    webMcpStatus.textContent = "Call complete. Open the WebMCP tab to inspect the result.";
+  } catch (error) {
+    webMcpStatus.textContent = error instanceof Error ? error.message : String(error);
+  }
+}
 const clickHandlers = [
   [element("#focus", HTMLButtonElement), () => focusEditor()],
   [undoButton, () => runCommand("Undo", undo)],
   [redoButton, () => runCommand("Redo", redo)],
   [element("#reset", HTMLButtonElement), reset],
+  [element("#webmcp-call", HTMLButtonElement), () => void runWebMcpExample()],
 ] satisfies [HTMLButtonElement, () => void][];
 for (const [button, listener] of clickHandlers) button.addEventListener("click", listener);
 profile.addEventListener("change", reset);
@@ -169,6 +215,7 @@ function dispose(): void {
   window.removeEventListener("pagehide", dispose);
   disposeBridge?.();
   disposeWebMCP?.();
+  webMcp?.dispose();
   for (const [button, listener] of clickHandlers) button.removeEventListener("click", listener);
   profile.removeEventListener("change", reset);
   cleanupRecordings();

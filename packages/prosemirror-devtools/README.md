@@ -462,6 +462,30 @@ Register a `DevtoolsDispatchPresenter` in a panel host's `extensions` option. Ma
 
 Registration belongs to each panel host. A host presenter takes precedence over a built-in presenter for the same inspector and version. Two host presenters cannot claim the same pair. If a presenter throws, the detail marks the presentation as unavailable and keeps the raw capture accessible in Transactions.
 
+### Inspect WebMCP calls
+
+Pass the inspector's extension to the standalone panel or the TanStack plugin. To record tool
+executions, pass the same inspector to the bridges your app uses.
+
+```ts
+import { createProseMirrorWebMcpInspector } from "prosemirror-inspector";
+import {
+  installProseMirrorChromeBridge,
+  installProseMirrorWebMCPBridge,
+} from "prosemirror-inspector/agent";
+
+const webMcp = createProseMirrorWebMcpInspector();
+const extensions = [webMcp.extension];
+const disposeChromeBridge = installProseMirrorChromeBridge(client, { inspector: webMcp });
+const disposeWebMcpBridge = await installProseMirrorWebMCPBridge(client, webMcp);
+```
+
+Register custom ProseMirror tools through `webMcp.registerTool(tool)`. It returns a cleanup
+function for each tool. The **WebMCP** tab lists native registrations and retains recent
+executions from both bridges in memory. Each call shows its source, status, duration, and input
+and result previews. The inspector records calls while other tabs are open. On teardown, call
+`disposeChromeBridge()`, `disposeWebMcpBridge?.()`, and `webMcp.dispose()`.
+
 ## Themes and styling
 
 The native panel accepts `theme="system"`, `"light"`, or `"dark"`. A panel hosted by TanStack
