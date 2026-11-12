@@ -447,11 +447,27 @@ export function createProseMirrorAgentTools(client: ProseMirrorInspectionClient)
 
 export function installProseMirrorChromeBridge(
   client: ProseMirrorInspectionClient,
-  options: { readonly target?: EventTarget } = {},
+  options: {
+    readonly target?: EventTarget;
+    readonly inspector?: {
+      traceChromeToolCall<T>(name: string, input: unknown, execute: () => T): T;
+    };
+  } = {},
 ): () => void {
   const host = options.target ?? globalThis.window;
   if (!host) throw new Error("A browser event target is required.");
-  const group = createProseMirrorAgentTools(client);
+  const catalogue = createProseMirrorAgentTools(client);
+  const { inspector } = options;
+  const group = inspector
+    ? {
+        ...catalogue,
+        tools: catalogue.tools.map((tool) => ({
+          ...tool,
+          execute: (input: unknown) =>
+            inspector.traceChromeToolCall(tool.name, input, () => tool.execute(input)),
+        })),
+      }
+    : catalogue;
   const discover = (event: Event): void => {
     if ("respondWith" in event && typeof event.respondWith === "function") event.respondWith(group);
   };
