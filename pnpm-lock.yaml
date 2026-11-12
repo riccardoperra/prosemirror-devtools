@@ -43,32 +43,32 @@ catalogs:
       specifier: ^7.3.0
       version: 7.3.0
     '@tanstack/angular-devtools':
-      specifier: ^0.0.11
-      version: 0.0.11
+      specifier: ^0.0.13
+      version: 0.0.13
     '@tanstack/charts':
       specifier: ^0.7.2
       version: 0.7.2
     '@tanstack/devtools-utils':
-      specifier: ^0.6.0
-      version: 0.6.0
+      specifier: ^0.7.2
+      version: 0.7.2
     '@tanstack/preact-devtools':
-      specifier: ^0.10.12
-      version: 0.10.12
+      specifier: ^0.10.15
+      version: 0.10.15
     '@tanstack/react-devtools':
-      specifier: ^0.10.10
-      version: 0.10.10
+      specifier: ^0.10.14
+      version: 0.10.14
     '@tanstack/solid-charts':
       specifier: ^0.7.2
       version: 0.7.2
     '@tanstack/solid-devtools':
-      specifier: ^0.8.12
-      version: 0.8.12
+      specifier: ^0.8.14
+      version: 0.8.14
     '@tanstack/svelte-devtools':
-      specifier: ^0.1.5
-      version: 0.1.5
+      specifier: ^0.1.8
+      version: 0.1.8
     '@tanstack/vue-devtools':
-      specifier: ^0.2.26
-      version: 0.2.26
+      specifier: ^0.2.28
+      version: 0.2.28
     '@tiptap/core':
       specifier: 3.31.4
       version: 3.31.4
@@ -260,7 +260,7 @@ importers:
         version: link:../devtools-demo-kit
       '@tanstack/angular-devtools':
         specifier: 'catalog:'
-        version: 0.0.11(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(csstype@3.2.3)(solid-js@1.9.15)
+        version: 0.0.13(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(csstype@3.2.3)(solid-js@1.9.15)
       prosemirror-inspector:
         specifier: workspace:*
         version: link:../prosemirror-devtools
@@ -379,7 +379,7 @@ importers:
         version: link:../devtools-demo-kit
       '@tanstack/preact-devtools':
         specifier: 'catalog:'
-        version: 0.10.12(csstype@3.2.3)(preact@10.29.8)(solid-js@1.9.15)
+        version: 0.10.15(csstype@3.2.3)(preact@10.29.8)(solid-js@1.9.15)
       preact:
         specifier: 'catalog:'
         version: 10.29.8
@@ -407,7 +407,7 @@ importers:
     dependencies:
       '@tanstack/devtools-utils':
         specifier: 'catalog:'
-        version: 0.6.0(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(@types/react@19.2.18)(preact@10.29.8)(react@19.2.8)(solid-js@1.9.15)(svelte@5.56.9)(vue@3.5.41(typescript@6.0.3))
+        version: 0.7.2(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(@types/react@19.2.18)(preact@10.29.8)(react@19.2.8)(solid-js@1.9.15)(svelte@5.56.9)(vue@3.5.41(typescript@6.0.3))
       solid-js:
         specifier: 'catalog:'
         version: 1.9.15
@@ -423,7 +423,7 @@ importers:
         version: 0.7.2
       '@tanstack/react-devtools':
         specifier: 'catalog:'
-        version: 0.10.10(@neodrag/core@3.0.0-next.11)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)
+        version: 0.10.14(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)
       '@tanstack/solid-charts':
         specifier: 'catalog:'
         version: 0.7.2(solid-js@1.9.15)
@@ -589,7 +589,7 @@ importers:
         version: link:../devtools-demo-kit
       '@tanstack/solid-devtools':
         specifier: 'catalog:'
-        version: 0.8.12(csstype@3.2.3)(solid-js@1.9.15)
+        version: 0.8.14(csstype@3.2.3)(solid-js@1.9.15)
       prosemirror-inspector:
         specifier: workspace:*
         version: link:../prosemirror-devtools
@@ -654,7 +654,7 @@ importers:
         version: link:../devtools-demo-kit
       '@tanstack/svelte-devtools':
         specifier: 'catalog:'
-        version: 0.1.5(csstype@3.2.3)(solid-js@1.9.15)(svelte@5.56.9)
+        version: 0.1.8(csstype@3.2.3)(solid-js@1.9.15)(svelte@5.56.9)
       dayjs:
         specifier: 'catalog:'
         version: 1.11.23
@@ -685,7 +685,7 @@ importers:
         version: link:../devtools-demo-kit
       '@tanstack/react-devtools':
         specifier: 'catalog:'
-        version: 0.10.10(@neodrag/core@3.0.0-next.11)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)
+        version: 0.10.14(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)
       prosemirror-commands:
         specifier: 'catalog:'
         version: 1.7.2
@@ -813,7 +813,7 @@ importers:
         version: link:../devtools-demo-kit
       '@tanstack/vue-devtools':
         specifier: 'catalog:'
-        version: 0.2.26(csstype@3.2.3)(solid-js@1.9.15)
+        version: 0.2.28(csstype@3.2.3)(solid-js@1.9.15)
       prosemirror-inspector:
         specifier: workspace:*
         version: link:../prosemirror-devtools
@@ -2827,8 +2827,8 @@ packages:
       svelte: ^5.46.4
       vite: ^8.0.0-beta.7 || ^8.0.0
 
-  '@tanstack/angular-devtools@0.0.11':
-    resolution: {integrity: sha512-iHZsgR+oWkNVHZ1V+pqgT5atV88nkX9JuDvztmmTIZ0B+hQip1r79Fq7dWBJS3l0XesxvVkn8flVgX8u4rqRig==}
+  '@tanstack/angular-devtools@0.0.13':
+    resolution: {integrity: sha512-w7XccHywjrRj6rGkQrKVOhaNkr5Jsq9xiWVlEnm3btjpGEVKk1menArn1X0fqM06LZS/hxn8Rv/0bJ4rQkd33Q==}
     engines: {node: '>=18'}
     peerDependencies:
       '@angular/core': '>=21.0.0'
@@ -2840,10 +2840,6 @@ packages:
     resolution: {integrity: sha512-cG3iZkGWCwN330bLBKa8+9r4Of2AXNoz2zUqcsy/4XsD3105ghVBx78cGyvJj9fSclNomPxoqAnDGXXhg1WLvA==}
     engines: {node: '>=18'}
 
-  '@tanstack/devtools-event-bus@0.4.2':
-    resolution: {integrity: sha512-2LHzhwBFlKHCcklsQrGe8TeyjHd4XAF8nuCO6wHmva5fePUkJUULbu6CsCNAlGlCi0KkEsMXZSvRdR4HgMq4yA==}
-    engines: {node: '>=18'}
-
   '@tanstack/devtools-event-bus@0.4.3':
     resolution: {integrity: sha512-NeegBt5/n2E5q4DbrXHqECBq42+kDi6JBOp8/+RNqkIE+P4hJpbM36kGyjnGQFMWOoku31qhMyX9/48VuTTdmg==}
     engines: {node: '>=18'}
@@ -2853,28 +2849,21 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@tanstack/devtools-ui@0.7.0':
-    resolution: {integrity: sha512-px/a+JgRSVHDj/hID1cwfsIi+ly5l7t3Yw7fLw4G556HXCNgDri36fupt9h7oBeEKntpsx3ep/XtZn51rrCv2g==}
+  '@tanstack/devtools-ui@0.7.2':
+    resolution: {integrity: sha512-Ij6EpEXkx13OOVMJPCJpMzWzVV/mcsqfXM4d+ZjqCrQtgbt7cd2rsCseuKuYNmuGhJiOLYNXzYU5da7UqCY54g==}
     engines: {node: '>=18'}
     peerDependencies:
-      solid-js: '>=1.9.7'
+      solid-js: ^1.9.13
 
-  '@tanstack/devtools-ui@0.7.1':
-    resolution: {integrity: sha512-3xQ/ezZ2qVNszhjpCN2N3jn7uHc2J1PMgcyjHzH4XZBt9xAQyMMcPNoR2cd7rzReyxWoJpZUWiDBmOJiCtLj9A==}
+  '@tanstack/devtools-utils@0.7.2':
+    resolution: {integrity: sha512-77pwyXlWsxiJJh/GKXjFNVl2Y2VnqDY4SFN9zsJcIcNElswZNg1Qtl1pPkukZwMcONxAPp7Rfa23O1R5SxOCZA==}
     engines: {node: '>=18'}
-    peerDependencies:
-      solid-js: '>=1.9.7'
-
-  '@tanstack/devtools-utils@0.6.0':
-    resolution: {integrity: sha512-ebYkWwe/OqzkgQzqGlJ5fyjaNX/CSBKluGOAW9KvhKeAM6+/kQ7+BQGqWQUnXE5CQ6pjtjyyLkYBEQ2vmctaug==}
-    engines: {node: '>=18'}
-    hasBin: true
     peerDependencies:
       '@angular/core': '>=19.0.0'
       '@types/react': '>=17.0.0'
       preact: '>=10.0.0'
       react: '>=17.0.0'
-      solid-js: '>=1.9.7'
+      solid-js: ^1.9.13
       svelte: '>=5.0.0'
       vue: '>=3.2.0'
     peerDependenciesMeta:
@@ -2893,28 +2882,20 @@ packages:
       vue:
         optional: true
 
-  '@tanstack/devtools@0.14.0':
-    resolution: {integrity: sha512-tN0SEi1BVaJYtkZbgYpvLsInjwNRAZkR3r6slSvz9Jm+bfkhcdjuOSrZp0cAwOGwdnauHZ1mYgtfe2AfC/V1NQ==}
+  '@tanstack/devtools@0.16.0':
+    resolution: {integrity: sha512-SgmsZ1RwWgohY+S2GhZ1bCttZ+bICb8EKaI1DUFBrs/CXL67IaW25TouoHflj5fGzrppfDM2ld56+TLuzMwJSA==}
     engines: {node: '>=18'}
-    hasBin: true
     peerDependencies:
-      solid-js: '>=1.9.7'
+      solid-js: ^1.9.13
 
-  '@tanstack/devtools@0.14.2':
-    resolution: {integrity: sha512-8FVVmDU+x3iEwrl5rtbIhud8gwp9eSXPlhs36SCV59yAtXmheFFvLqLAUXpfIU79sZVBg3LLTy2VlTIXaWbaBw==}
-    engines: {node: '>=18'}
-    hasBin: true
-    peerDependencies:
-      solid-js: '>=1.9.7'
-
-  '@tanstack/preact-devtools@0.10.12':
-    resolution: {integrity: sha512-m5js5Va2IeqxW2ZPE3wgN5gNu5Tud/Gc/Ku2uKeHF+nUFwCOSFLwXRnnh1BCEffxIp8/W2Zw4TR56iLaJAYOvw==}
+  '@tanstack/preact-devtools@0.10.15':
+    resolution: {integrity: sha512-PyhCy7D7Rwp9ucyOYk0D0k6rRSgMdus2eoZs9yltc4bXt9DtqHKfBnI2CfCW1LT3G+BKfjmExbHK72flDV0rLA==}
     engines: {node: '>=18'}
     peerDependencies:
       preact: '>=10.0.0'
 
-  '@tanstack/react-devtools@0.10.10':
-    resolution: {integrity: sha512-hYH34MSVbajs1pUc22ftSapyKQp2gOh0w34a7ouYOdIcbXD6YPckSR2YpAWGq1rrs6N0l/rvV6LM/G1pgN5ARg==}
+  '@tanstack/react-devtools@0.10.14':
+    resolution: {integrity: sha512-wFoNpqiU03MDbY1RljhX4vMUoGWwqpa5AZthWEaJRrojBFWFoB57lzzIM5r+EPGi+BsEX+OcXkn8Zkfoe4hGiA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/react': '>=16.8'
@@ -2927,20 +2908,20 @@ packages:
     peerDependencies:
       solid-js: '>=1.8'
 
-  '@tanstack/solid-devtools@0.8.12':
-    resolution: {integrity: sha512-THj3KcmkPM2nqMkxt++8n28WrHHMh35JeFe8f/ZyMp99zM5ay/JYrE+tyE9NWPNhnxsOPqIUrNqwRRRK2g3Itw==}
+  '@tanstack/solid-devtools@0.8.14':
+    resolution: {integrity: sha512-IV0ONBeQMNRBSkVtwkcgsBK2j5huHz3VyhQXuoaOkfOlG/rVnX+suB4Wr+59eJVxm5+T1o7slvxk4a0zcZq3bw==}
     engines: {node: '>=18'}
     peerDependencies:
-      solid-js: '>=1.9.7'
+      solid-js: ^1.9.13
 
-  '@tanstack/svelte-devtools@0.1.5':
-    resolution: {integrity: sha512-kdGwPQ1pRP9eBWBAY9eup3PnHus3MMVAq1lJtRvDaIbS6+6Z4XFOCfsd55fEcc39H4PMf8zowAZuGtKKE7B3ug==}
+  '@tanstack/svelte-devtools@0.1.8':
+    resolution: {integrity: sha512-nynsVK7BJrsh7JpHwIrxBq+X7XMgKt3c4pXaasBOX5Ly/RN7/0MNemu/hkgomD9OtLedxcaB/0+/FJ/luVA5sg==}
     engines: {node: '>=18'}
     peerDependencies:
       svelte: '>=5.0.0'
 
-  '@tanstack/vue-devtools@0.2.26':
-    resolution: {integrity: sha512-H4F10MzyKhvkVIBs19xyb651FOMyS+Iylf8+hhTsFw5YO1Dx69LUcQO+P8KXbLV6Eg5Miydfs67hQDUgpg3XXg==}
+  '@tanstack/vue-devtools@0.2.28':
+    resolution: {integrity: sha512-9u41nAP8vLTkF6yO/AwFyzTljhOvQMOyuDXh2KqDKwMVG6OVtr+1YFA76I0fx8kyecrhzd1o7k8VQCzq6M8gqA==}
     engines: {node: '>=18'}
 
   '@tiptap/core@3.31.4':
@@ -3103,6 +3084,7 @@ packages:
 
   '@tiptap/y-tiptap@3.0.12':
     resolution: {integrity: sha512-MlmBpmm4xiRDZmk4hiwnjScOrUtiEBYwqeJBvrDil30Eq1GqrZEox1mciBpOnnpfN731fH07OPeGS7uHryPX0g==}
+    deprecated: Persistent position migrations can cause excessive collaborative document growth. Upgrade all collaborating clients to 3.1.0 or later.
     peerDependencies:
       prosemirror-model: 1.25.12
       prosemirror-state: 1.4.4
@@ -6897,10 +6879,10 @@ snapshots:
       vite: 8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(sass@1.101.0)(yaml@2.9.0)
       vitefu: 1.1.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(sass@1.101.0)(yaml@2.9.0))
 
-  '@tanstack/angular-devtools@0.0.11(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(csstype@3.2.3)(solid-js@1.9.15)':
+  '@tanstack/angular-devtools@0.0.13(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(csstype@3.2.3)(solid-js@1.9.15)':
     dependencies:
       '@angular/core': 22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2)
-      '@tanstack/devtools': 0.14.2(csstype@3.2.3)(solid-js@1.9.15)
+      '@tanstack/devtools': 0.16.0(csstype@3.2.3)(solid-js@1.9.15)
       tslib: 2.8.1
     transitivePeerDependencies:
       - bufferutil
@@ -6933,13 +6915,6 @@ snapshots:
     dependencies:
       '@tanstack/devtools-event-client': 0.5.0
 
-  '@tanstack/devtools-event-bus@0.4.2':
-    dependencies:
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@tanstack/devtools-event-bus@0.4.3':
     dependencies:
       ws: 8.21.3
@@ -6949,7 +6924,7 @@ snapshots:
 
   '@tanstack/devtools-event-client@0.5.0': {}
 
-  '@tanstack/devtools-ui@0.7.0(csstype@3.2.3)(solid-js@1.9.15)':
+  '@tanstack/devtools-ui@0.7.2(csstype@3.2.3)(solid-js@1.9.15)':
     dependencies:
       clsx: 2.1.1
       dayjs: 1.11.23
@@ -6958,16 +6933,7 @@ snapshots:
     transitivePeerDependencies:
       - csstype
 
-  '@tanstack/devtools-ui@0.7.1(csstype@3.2.3)(solid-js@1.9.15)':
-    dependencies:
-      clsx: 2.1.1
-      dayjs: 1.11.23
-      goober: 2.1.19(csstype@3.2.3)
-      solid-js: 1.9.15
-    transitivePeerDependencies:
-      - csstype
-
-  '@tanstack/devtools-utils@0.6.0(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(@types/react@19.2.18)(preact@10.29.8)(react@19.2.8)(solid-js@1.9.15)(svelte@5.56.9)(vue@3.5.41(typescript@6.0.3))':
+  '@tanstack/devtools-utils@0.7.2(@angular/core@22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2))(@types/react@19.2.18)(preact@10.29.8)(react@19.2.8)(solid-js@1.9.15)(svelte@5.56.9)(vue@3.5.41(typescript@6.0.3))':
     optionalDependencies:
       '@angular/core': 22.1.3(@angular/compiler@22.1.3)(rxjs@7.8.2)(zone.js@0.16.2)
       '@types/react': 19.2.18
@@ -6977,25 +6943,7 @@ snapshots:
       svelte: 5.56.9
       vue: 3.5.41(typescript@6.0.3)
 
-  '@tanstack/devtools@0.14.0(@neodrag/core@3.0.0-next.11)(csstype@3.2.3)(solid-js@1.9.15)':
-    dependencies:
-      '@neodrag/solid': 3.0.0-next.11(@neodrag/core@3.0.0-next.11)(solid-js@1.9.15)
-      '@solid-primitives/event-listener': 2.4.6(solid-js@1.9.15)
-      '@solid-primitives/keyboard': 1.3.7(solid-js@1.9.15)
-      '@solid-primitives/resize-observer': 2.2.0(solid-js@1.9.15)
-      '@tanstack/devtools-client': 0.0.8
-      '@tanstack/devtools-event-bus': 0.4.2
-      '@tanstack/devtools-ui': 0.7.0(csstype@3.2.3)(solid-js@1.9.15)
-      clsx: 2.1.1
-      goober: 2.1.19(csstype@3.2.3)
-      solid-js: 1.9.15
-    transitivePeerDependencies:
-      - '@neodrag/core'
-      - bufferutil
-      - csstype
-      - utf-8-validate
-
-  '@tanstack/devtools@0.14.2(csstype@3.2.3)(solid-js@1.9.15)':
+  '@tanstack/devtools@0.16.0(csstype@3.2.3)(solid-js@1.9.15)':
     dependencies:
       '@neodrag/core': 3.0.0-next.11
       '@neodrag/solid': 3.0.0-next.11(@neodrag/core@3.0.0-next.11)(solid-js@1.9.15)
@@ -7004,7 +6952,7 @@ snapshots:
       '@solid-primitives/resize-observer': 2.2.0(solid-js@1.9.15)
       '@tanstack/devtools-client': 0.0.8
       '@tanstack/devtools-event-bus': 0.4.3
-      '@tanstack/devtools-ui': 0.7.1(csstype@3.2.3)(solid-js@1.9.15)
+      '@tanstack/devtools-ui': 0.7.2(csstype@3.2.3)(solid-js@1.9.15)
       clsx: 2.1.1
       goober: 2.1.19(csstype@3.2.3)
       solid-js: 1.9.15
@@ -7013,9 +6961,9 @@ snapshots:
       - csstype
       - utf-8-validate
 
-  '@tanstack/preact-devtools@0.10.12(csstype@3.2.3)(preact@10.29.8)(solid-js@1.9.15)':
+  '@tanstack/preact-devtools@0.10.15(csstype@3.2.3)(preact@10.29.8)(solid-js@1.9.15)':
     dependencies:
-      '@tanstack/devtools': 0.14.2(csstype@3.2.3)(solid-js@1.9.15)
+      '@tanstack/devtools': 0.16.0(csstype@3.2.3)(solid-js@1.9.15)
       preact: 10.29.8
     transitivePeerDependencies:
       - bufferutil
@@ -7023,15 +6971,14 @@ snapshots:
       - solid-js
       - utf-8-validate
 
-  '@tanstack/react-devtools@0.10.10(@neodrag/core@3.0.0-next.11)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)':
+  '@tanstack/react-devtools@0.10.14(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)':
     dependencies:
-      '@tanstack/devtools': 0.14.0(@neodrag/core@3.0.0-next.11)(csstype@3.2.3)(solid-js@1.9.15)
+      '@tanstack/devtools': 0.16.0(csstype@3.2.3)(solid-js@1.9.15)
       '@types/react': 19.2.18
       '@types/react-dom': 19.2.4(@types/react@19.2.18)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
     transitivePeerDependencies:
-      - '@neodrag/core'
       - bufferutil
       - csstype
       - solid-js
@@ -7042,18 +6989,18 @@ snapshots:
       '@tanstack/charts': 0.7.2
       solid-js: 1.9.15
 
-  '@tanstack/solid-devtools@0.8.12(csstype@3.2.3)(solid-js@1.9.15)':
+  '@tanstack/solid-devtools@0.8.14(csstype@3.2.3)(solid-js@1.9.15)':
     dependencies:
-      '@tanstack/devtools': 0.14.2(csstype@3.2.3)(solid-js@1.9.15)
+      '@tanstack/devtools': 0.16.0(csstype@3.2.3)(solid-js@1.9.15)
       solid-js: 1.9.15
     transitivePeerDependencies:
       - bufferutil
       - csstype
       - utf-8-validate
 
-  '@tanstack/svelte-devtools@0.1.5(csstype@3.2.3)(solid-js@1.9.15)(svelte@5.56.9)':
+  '@tanstack/svelte-devtools@0.1.8(csstype@3.2.3)(solid-js@1.9.15)(svelte@5.56.9)':
     dependencies:
-      '@tanstack/devtools': 0.14.2(csstype@3.2.3)(solid-js@1.9.15)
+      '@tanstack/devtools': 0.16.0(csstype@3.2.3)(solid-js@1.9.15)
       svelte: 5.56.9
     transitivePeerDependencies:
       - bufferutil
@@ -7061,9 +7008,9 @@ snapshots:
       - solid-js
       - utf-8-validate
 
-  '@tanstack/vue-devtools@0.2.26(csstype@3.2.3)(solid-js@1.9.15)':
+  '@tanstack/vue-devtools@0.2.28(csstype@3.2.3)(solid-js@1.9.15)':
     dependencies:
-      '@tanstack/devtools': 0.14.2(csstype@3.2.3)(solid-js@1.9.15)
+      '@tanstack/devtools': 0.16.0(csstype@3.2.3)(solid-js@1.9.15)
     transitivePeerDependencies:
       - bufferutil
       - csstype

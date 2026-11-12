@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TanStackDevtools } from "@tanstack/svelte-devtools";
+  import { TanStackDevtools, type TanStackDevtoolsSvelteInit } from "@tanstack/svelte-devtools";
   import { createPlaygroundExtension } from "@prosemirror-devtools/demo-kit";
   import { prosemirrorDevtoolsStore } from "prosemirror-inspector";
   import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/svelte";
@@ -7,7 +7,11 @@
 
   let latencyEnabled = $state(false);
   const plugin = createProseMirrorDevtoolsPlugin({ defaultPanel: "playground-integration", extensions: [createPlaygroundExtension("Svelte")], store: prosemirrorDevtoolsStore });
-  const config = { position: "bottom-right", hideUntilHover: false, openHotkey: ["CtrlOrMeta", "Shift", "D"] } as const;
+  const config = {
+    position: "bottom-right",
+    hideUntilHover: false,
+    openHotkey: ["CtrlOrMeta", "Shift", "D"],
+  } satisfies NonNullable<TanStackDevtoolsSvelteInit["config"]>;
 </script>
 
 <main class="playground">

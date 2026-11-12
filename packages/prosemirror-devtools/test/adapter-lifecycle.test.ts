@@ -171,13 +171,15 @@ describe("framework panel lifecycle", () => {
     expect(fixture.dispose).toHaveBeenCalledTimes(2);
   });
 
-  it("cleans up the imperative Svelte wrapper through Svelte 5 unmount", async () => {
+  it("mounts and cleans up the Svelte panel when the host initially reports it closed", async () => {
     const fixture = createPanelFixture();
+    const props = { devtoolsProps: fixture.props, devtoolsOpen: false };
     const component = mount(SveltePanel, {
       target: fixture.host,
-      props: { devtoolsProps: fixture.props },
+      props,
     });
     flushSync();
+    expect(fixture.host.querySelector(".pm-devtools")).not.toBeNull();
     expect(fixture.mountPanel).toHaveBeenCalledOnce();
     await unmount(component);
     expect(fixture.dispose).toHaveBeenCalledOnce();
