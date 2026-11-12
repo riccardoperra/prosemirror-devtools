@@ -16,10 +16,8 @@ const fixture = resolve(root, "packages/standalone-demo");
 const fixtureRequire = createRequire(resolve(fixture, "package.json"));
 const require = createRequire(import.meta.url);
 const { createServer } = await import(pathToFileURL(fixtureRequire.resolve("vite")).href);
-const mcp = resolve(
-  dirname(require.resolve("chrome-devtools-mcp/package.json")),
-  "build/src/bin/chrome-devtools-mcp.js",
-);
+const mcpManifest = require.resolve("chrome-devtools-mcp/package.json");
+const mcp = resolve(dirname(mcpManifest), require(mcpManifest).bin["chrome-devtools-mcp"]);
 const reportPath = resolve(root, "test-results/chrome-mcp.json");
 const children = [];
 const errors = new Map();
