@@ -36,7 +36,7 @@ for (const host of ["standalone", "tanstack"]) {
       expect(panelBounds!.height).toBe(initialBounds!.height);
       await page.getByRole("tab", { name: "Document", exact: true }).click();
       await page.getByRole("tab", { name: "Selection", exact: true }).click();
-      await expect(panel).toContainText("Head");
+      await expect(panel).toContainText("Resolved positions");
       await expect(context).not.toBeVisible();
       await page
         .getByRole("textbox", {
@@ -68,10 +68,10 @@ for (const host of ["standalone", "tanstack"]) {
       } else {
         await expect(divider).toBeHidden();
       }
-      await expect(dispatch.getByText("Related evidence", { exact: true })).toBeVisible();
+      await expect(dispatch.locator("header")).toContainText('insert "x"');
       await expect(
-        dispatch.getByRole("navigation", { name: "Related dispatch evidence" }),
-      ).not.toBeVisible();
+        dispatch.getByRole("button", { name: "Performance", exact: true }),
+      ).toBeVisible();
       if (width === 1280 && host === "tanstack") {
         await expect(
           dispatch.getByRole("complementary", { name: "Transaction details" }),
