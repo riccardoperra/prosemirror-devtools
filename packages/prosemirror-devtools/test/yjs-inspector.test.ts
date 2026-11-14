@@ -1,7 +1,7 @@
 import { Editor, Extension } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import StarterKit from "@tiptap/starter-kit";
-import { yUndoPluginKey } from "@tiptap/y-tiptap";
+import { ySyncPluginKey, yUndoPluginKey } from "@tiptap/y-tiptap";
 import * as Y from "yjs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -15,6 +15,7 @@ import {
   dispatchTiptapTransaction,
   setupTiptapDevtools,
 } from "../src/adapters/tiptap";
+import { readDispatchEffects } from "../src/panel/features/dispatch/read-dispatch-effects";
 import { createYjsInspector, type YjsInspector } from "../src/inspectors/yjs";
 import { createTransportObserver, type TransportObserver } from "../src/inspectors/transport";
 
@@ -27,6 +28,7 @@ function createEditor(
   store: DevtoolsStore,
   transport: TransportObserver,
   describeOrigin?: (origin: unknown) => string,
+  syncPluginKey?: typeof ySyncPluginKey,
 ): { editor: Editor; inspector: YjsInspector } {
   const holder: { inspector: YjsInspector | null } = { inspector: null };
   const native = Extension.create({
@@ -38,6 +40,7 @@ function createEditor(
         document,
         transport,
         ...(describeOrigin ? { describeOrigin } : {}),
+        ...(syncPluginKey ? { syncPluginKey } : {}),
         getUndoManager: () => yUndoPluginKey.getState(editor.state)?.undoManager,
       });
       holder.inspector = inspector;
@@ -189,6 +192,92 @@ describe("independent Yjs inspector", () => {
     } finally {
       disconnectA();
       disconnectB();
+    }
+  });
+});
+
+describe("Yjs dispatch origin", () => {
+  const relay = (from: Y.Doc, to: Y.Doc) => {
+    const origin = { relay: `${from.clientID}->${to.clientID}` };
+    const listener = (update: Uint8Array, updateOrigin: unknown) => {
+      if (typeof updateOrigin === "object" && updateOrigin && "relay" in updateOrigin) return;
+      Y.applyUpdate(to, update, origin);
+    };
+    from.on("update", listener);
+    return () => from.off("update", listener);
+  };
+  const pair = (syncPluginKey?: typeof ySyncPluginKey) => {
+    const store = createProseMirrorDevtoolsStore();
+    const docA = new Y.Doc();
+    const docB = new Y.Doc();
+    documents.add(docA);
+    documents.add(docB);
+    const a = createEditor(docA, "A", store, createTransportObserver(), undefined, syncPluginKey);
+    const b = createEditor(docB, "B", store, createTransportObserver(), undefined, syncPluginKey);
+    const disconnect = [relay(docA, docB), relay(docB, docA)];
+    const last = (id: string) => {
+      const record = store.getInstance(id)?.transactions.at(-1);
+      if (!record) throw new Error(`No dispatch was captured for ${id}`);
+      const projection = record.inspection?.projections.find((entry) => entry.id === "yjs");
+      return { record, evidence: projection?.evidence };
+    };
+    return { a, b, last, disconnect: () => disconnect.forEach((stop) => stop()) };
+  };
+
+  it("captures the receiving editor's dispatch as remote and the typing editor's as local", () => {
+    const { a, b, last, disconnect } = pair(ySyncPluginKey);
+    try {
+      a.editor.commands.insertContent("Alpha");
+      expect(b.editor.state.doc.textContent).toBe("Alpha");
+      expect(last("A").evidence).toMatchObject({
+        kind: "available",
+        value: { dispatchOrigin: { kind: "available", value: { root: { kind: "local" } } } },
+      });
+      const received = last("B");
+      expect(received.record.docChanged).toBe(true);
+      expect(received.evidence).toMatchObject({
+        kind: "available",
+        value: { dispatchOrigin: { kind: "available", value: { root: { kind: "remote-yjs" } } } },
+      });
+      expect(readDispatchEffects(received.record).map(({ effect }) => effect)).toContainEqual(
+        expect.objectContaining({ badge: "Remote · Yjs", listLabel: expect.any(String) }),
+      );
+      expect(readDispatchEffects(last("A").record).map(({ effect }) => effect)).toContainEqual(
+        expect.objectContaining({ badge: "Local · Yjs" }),
+      );
+
+      expect(a.editor.commands.undo()).toBe(true);
+      expect(b.editor.state.doc.textContent).toBe("");
+      expect(last("A").evidence).toMatchObject({
+        value: {
+          dispatchOrigin: { kind: "available", value: { root: { kind: "yjs-undo-redo" } } },
+        },
+      });
+      expect(last("B").evidence).toMatchObject({
+        value: { dispatchOrigin: { kind: "available", value: { root: { kind: "remote-yjs" } } } },
+      });
+    } finally {
+      disconnect();
+    }
+  });
+
+  it("leaves the dispatch origin unobserved without the sync plugin key", () => {
+    const { a, b, last, disconnect } = pair();
+    try {
+      a.editor.commands.insertContent("Alpha");
+      expect(b.editor.state.doc.textContent).toBe("Alpha");
+      const received = last("B");
+      expect(received.evidence).toMatchObject({
+        kind: "available",
+        value: {
+          dispatchOrigin: { kind: "unobserved", reason: expect.stringContaining("syncPluginKey") },
+        },
+      });
+      expect(readDispatchEffects(received.record).map(({ effect }) => effect)).toContainEqual(
+        expect.objectContaining({ badge: "Yjs sample" }),
+      );
+    } finally {
+      disconnect();
     }
   });
 });
