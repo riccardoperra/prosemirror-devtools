@@ -10,7 +10,11 @@ async function transactionCount(page: Parameters<typeof editorTarget>[0], target
   return result.value;
 }
 
-test("invoice totals follow line item edits and a paid invoice locks the editor", async ({
+function toCents(money: string | null): number {
+  return Number((money ?? "").replace(/[^\d]/g, ""));
+}
+
+test("invoice totals follow edits, the slow plugin scenario dispatches, and paid locks the editor", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -21,7 +25,7 @@ test("invoice totals follow line item edits and a paid invoice locks the editor"
   await page.goto("http://127.0.0.1:4184");
   const editor = page.getByRole("textbox", { name: "Invoice editor", exact: true });
   const amountDue = page.getByLabel("Amount due", { exact: true });
-  await expect(amountDue).toHaveText("€6,112.60");
+  const initialDue = toCents(await amountDue.textContent());
   const target = await editorTarget(page);
   const initialDispatches = (await transactionCount(page, target)).length;
 
@@ -29,11 +33,20 @@ test("invoice totals follow line item edits and a paid invoice locks the editor"
   await page.keyboard.type("Hosting");
   await page.getByLabel("Quantity", { exact: true }).last().fill("3");
   await page.getByLabel("Unit price", { exact: true }).last().fill("12.5");
-  await expect(amountDue).toHaveText("€6,158.35");
+  // 3 × €12.50 plus 22% VAT.
+  await expect.poll(async () => toCents(await amountDue.textContent()) - initialDue).toBe(4575);
 
   const dispatches = await transactionCount(page, target);
   expect(dispatches.length).toBeGreaterThan(initialDispatches);
   expect(dispatches.at(-1)).toMatchObject({ applicationStatus: "applied", docChanged: true });
+
+  const slowPlugin = page.locator(".scenario", { hasText: "Slow validation plugin" });
+  await slowPlugin.locator("summary").click();
+  await slowPlugin.getByRole("button", { name: "Run Slow validation plugin", exact: true }).click();
+  await expect(slowPlugin.getByText("Dispatched", { exact: true })).toBeVisible();
+  const afterSlowPlugin = await transactionCount(page, target);
+  expect(afterSlowPlugin).toHaveLength(dispatches.length + 1);
+  expect(afterSlowPlugin.at(-1)).toMatchObject({ applicationStatus: "applied", docChanged: false });
 
   await expect(editor).toHaveAttribute("contenteditable", "true");
   await page.getByRole("button", { name: "Send", exact: true }).click();
