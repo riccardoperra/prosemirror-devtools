@@ -27,6 +27,17 @@ The domain model in `src/invoice/model.ts` has no editor imports. Money is integ
 changes go through a transition table, totals and installments are always derived, and paid or void
 invoices are read-only.
 
+## Outline
+
+The left sidebar opens with an outline of the document from `readOutline` in
+`src/invoice/outline.ts`: every page, and inside it the invoice sections and headings, with badges
+for invalid rows and open comments. Clicking an entry selects it, focuses the editor, and scrolls it
+into view under a spotlight decoration. The spotlight stays visible when the invoice is paid and
+the editor cannot take focus. The entry that holds the selection is highlighted.
+
+The outline is computed once per document, and each block's counts are cached per node, so a
+keystroke in a 2,000-row invoice recomputes one section.
+
 ## Scenarios
 
 The left panel lists named scenarios from `src/scenarios.ts`. Each one runs a command and says which

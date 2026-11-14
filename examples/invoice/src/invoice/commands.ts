@@ -3,10 +3,12 @@ import { Fragment } from "prosemirror-model";
 import {
   AllSelection,
   NodeSelection,
+  Selection,
   TextSelection,
   type EditorState,
   type Transaction,
 } from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
 
 import { tagDomainEvent, traceCommand } from "../devtools/session";
 import {
@@ -22,7 +24,9 @@ import {
 import type { FieldKey } from "./fields";
 import { generateLineItems, initialInvoice, lineItemPages } from "./fixture";
 import { canTransition, cents, reprice, type InvoiceMeta, type InvoiceStatus } from "./model";
+import type { OutlineEntry } from "./outline";
 import { getFindState, setFindQuery } from "./plugins/find";
+import { setSpotlight, type SpotlightRange } from "./plugins/spotlight";
 import { setValidationDelay } from "./plugins/validation";
 
 type Build = (state: EditorState) => Transaction | null;
@@ -361,5 +365,60 @@ export function selectRange(editor: Editor, from: number, to: number): boolean {
 export function selectRow(editor: Editor, pos: number): boolean {
   return traceCommand(editor, "Select row", () =>
     editor.chain().focus().setNodeSelection(pos).run(),
+  );
+}
+
+/**
+ * Selects, spotlights, and smoothly scrolls to a range. Focus fails silently on a read-only editor,
+ * which is why the spotlight decoration carries the highlight. The sticky top bar is cleared by the
+ * spotlight's scroll-margin.
+ */
+export function revealSelection(
+  view: EditorView,
+  select: (doc: EditorState["doc"]) => Selection,
+  spotlight: SpotlightRange,
+): boolean {
+  const { state } = view;
+  view.dispatch(setSpotlight(state.tr.setSelection(select(state.doc)), spotlight));
+  view.focus();
+  const element = view.dom.querySelector(
+    spotlight.kind === "node" ? ".is-spotlit" : ".spotlight-text",
+  );
+  if (!element) return true;
+  // Smooth scrolling across a 2,000-row invoice takes seconds, so far jumps skip to one screen away.
+  const distance = element.getBoundingClientRect().top;
+  if (Math.abs(distance) > 2 * window.innerHeight) {
+    window.scrollBy(0, distance - Math.sign(distance) * window.innerHeight);
+  }
+  element.scrollIntoView({
+    behavior: "smooth",
+    block: spotlight.kind === "node" ? "start" : "center",
+  });
+  return true;
+}
+
+export function revealOutlineEntry(editor: Editor, entry: OutlineEntry): boolean {
+  const { target } = entry;
+  const node = editor.state.doc.nodeAt(entry.pos);
+  if (!node) return false;
+  return traceCommand(editor, "Jump to outline entry", () =>
+    revealSelection(
+      editor.view,
+      (doc) =>
+        target.kind === "node"
+          ? NodeSelection.create(doc, target.pos)
+          : Selection.near(doc.resolve(target.pos)),
+      { kind: "node", from: entry.pos, to: entry.pos + node.nodeSize },
+    ),
+  );
+}
+
+export function revealRange(editor: Editor, from: number, to: number): boolean {
+  return traceCommand(editor, "Jump to range", () =>
+    revealSelection(editor.view, (doc) => TextSelection.create(doc, from, to), {
+      kind: "text",
+      from,
+      to,
+    }),
   );
 }

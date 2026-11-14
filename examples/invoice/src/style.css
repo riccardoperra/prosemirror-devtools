@@ -54,6 +54,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+@keyframes spotlight-in {
+  from {
+    outline-color: var(--accent);
+    outline-offset: 10px;
+  }
+}
+
 /* TanStack Devtools mounts the inspector in this document, so app rules must not leak past the app root. :where keeps their specificity unchanged. */
 :where(.workbench) {
   & {
@@ -672,6 +679,32 @@ body {
     }
   }
 
+  /* The spotlight marks where a jump landed, with or without focus. */
+
+  .is-spotlit,
+  .spotlight-text {
+    scroll-margin-top: calc(var(--topbar-height) + 24px);
+  }
+
+  .is-spotlit {
+    border-radius: var(--radius-sm);
+    outline: 2px solid var(--accent-ring);
+    outline-offset: 4px;
+    animation: spotlight-in 900ms var(--ease-out);
+  }
+
+  .spotlight-text {
+    border-radius: 2px;
+    background: rgb(35 131 226 / 0.16);
+    box-shadow: 0 0 0 2px rgb(35 131 226 / 0.16);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .is-spotlit {
+      animation: none;
+    }
+  }
+
   /* Node decorations land on the node view's outer element, so state classes sit one level up. */
   .node-lineItem.is-active > .line-item {
     background: var(--accent-soft);
@@ -890,6 +923,78 @@ body {
     padding: 0 8px;
     color: var(--text-faint);
     font-size: 12px;
+  }
+
+  /* Outline: pages and their sections, highlighted by where the selection is */
+
+  .outline nav {
+    max-height: 38vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .outline ol,
+  .outline ul {
+    display: grid;
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .outline ul {
+    padding-left: 12px;
+  }
+
+  .outline-entry {
+    width: 100%;
+    justify-content: space-between;
+    height: auto;
+    min-height: 26px;
+    padding: 3px 8px;
+    color: var(--text-muted);
+    text-align: left;
+  }
+
+  .outline ol > li > .outline-entry {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .outline-entry[aria-current="location"] {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .outline-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .outline-badge {
+    flex: none;
+    min-width: 18px;
+    margin-left: auto;
+    padding: 0 5px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 16px;
+    text-align: center;
+  }
+
+  .outline-badge + .outline-badge {
+    margin-left: 0;
+  }
+
+  .outline-badge.is-issue {
+    background: var(--status-void-bg);
+    color: var(--status-void-fg);
+  }
+
+  .outline-badge.is-comment {
+    background: var(--highlight);
+    color: #8a6d1f;
   }
 
   /* Scenarios */

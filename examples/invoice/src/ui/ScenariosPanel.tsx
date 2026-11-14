@@ -3,13 +3,15 @@ import { useState } from "react";
 
 import { panelSections, scenarios } from "../scenarios";
 import { LoadLab } from "./LoadLab";
+import { OutlinePanel } from "./OutlinePanel";
 
 type Outcome = "applied" | "no-op";
 
 export function ScenariosPanel({ editor }: { editor: Editor }) {
   const [outcomes, setOutcomes] = useState<Readonly<Record<string, Outcome>>>({});
   return (
-    <aside className="sidebar sidebar-start" aria-label="Scenarios and load lab">
+    <aside className="sidebar sidebar-start" aria-label="Outline, scenarios and load lab">
+      <OutlinePanel editor={editor} />
       <details className="sidebar-section scenarios" open>
         <summary>
           <h2>Scenarios</h2>

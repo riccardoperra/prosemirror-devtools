@@ -5,6 +5,7 @@ import { DomainEvents } from "../plugins/domain-events";
 import { Find } from "../plugins/find";
 import { LineItemIds } from "../plugins/line-item-ids";
 import { ReadOnlyByStatus } from "../plugins/read-only";
+import { Spotlight } from "../plugins/spotlight";
 import { LineItemValidation } from "../plugins/validation";
 import { Comment } from "./comment";
 import { InvoiceDocument } from "./document";
@@ -40,4 +41,5 @@ export const invoiceExtensions = [
   ActiveRow,
   DomainEvents,
   ReadOnlyByStatus,
+  Spotlight,
 ];
