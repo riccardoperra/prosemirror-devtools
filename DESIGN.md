@@ -136,7 +136,9 @@ A titled block inside a detail pane or a sections layout.
   border.
 - Heading: `pmDetailHeading`, 32px minimum height, `--pm-panel-2` background, section title,
   then badges, then right-aligned actions. Square corners.
-- Body: content directly inside the section, on the `--pm-panel` background.
+- Body: content directly inside the section, on the `--pm-panel` background. Use
+  `pmSectionBody` (8px 10px padding, 4px gap) for text and stacked rows; consecutive bodies are
+  separated by a border. Use `pmCode` for monospace payloads such as tool input and output.
 - Sections stack directly. No margin between them: the background must not show through as an
   empty strip.
 
@@ -258,7 +260,8 @@ The panel resets every property it relies on for its own controls and containers
 such as `button {}` while component classes, declared later, still win. Host rules that are more
 specific than one class (for example `.app button`) can still leak; components must set every
 property they depend on. Every component then sets its own radius, padding, border and
-background. Test the panel inside
+background. This includes `<pre>` blocks: hosts commonly style `pre` globally, so `pmCode` sets
+its own background, border and padding. Test the panel inside
 a host that styles `button`, `input` and `select` globally. The standalone demo does this
 (`packages/standalone-demo/src/style.css`), so any rounding or padding that appears there and not
 in this guide is a leak.

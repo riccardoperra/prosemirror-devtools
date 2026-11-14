@@ -74,22 +74,12 @@ function OutcomeBadge(props: { call: WebMcpCall }): JSX.Element {
 
 function Payload(props: { label: string; value: string }): JSX.Element {
   return (
-    <div class={panelStyles.pmDetailBlock}>
+    <section aria-label={props.label} class={panelStyles.pmSection}>
       <div class={panelStyles.pmDetailHeading}>
         <span class={panelStyles.pmSectionTitle}>{props.label}</span>
       </div>
-      <pre
-        class={panelStyles.pmMono}
-        style={{
-          margin: 0,
-          padding: "10px",
-          "white-space": "pre-wrap",
-          "overflow-wrap": "anywhere",
-        }}
-      >
-        {props.value}
-      </pre>
-    </div>
+      <pre class={panelStyles.pmCode}>{props.value}</pre>
+    </section>
   );
 }
 
@@ -104,38 +94,38 @@ function CallDetails(props: { call: WebMcpCall }): JSX.Element {
 
   return (
     <>
-      <div class={panelStyles.pmDetailHeading}>
-        <span class={panelStyles.pmSectionTitle}>Call #{props.call.id}</span>
-        <StatusBadge call={props.call} />
-        <Show when={resultKind(props.call)}>{(kind) => <ResultBadge kind={kind()} prefix />}</Show>
-        <Show when={duration()}>
-          <Badge>{duration()}</Badge>
-        </Show>
-      </div>
-      <div
-        class={panelStyles.pmDetailBlock}
-        style={{ padding: "10px", display: "grid", gap: "4px" }}
-      >
-        <strong class={panelStyles.pmMono}>{props.call.name}</strong>
-        <span>{callSources[props.call.source].label}</span>
-        <time
-          class={panelStyles.pmRowDetail}
-          dateTime={new Date(props.call.timestamp).toISOString()}
-        >
-          {new Date(props.call.timestamp).toLocaleTimeString()}
-        </time>
-      </div>
-      <Show when={props.call.status === "succeeded" && props.call.resultReason}>
-        {(reason) => (
-          <p class={panelStyles.pmPerformanceNote}>
-            <strong>Reason</strong> {reason()}
-          </p>
-        )}
-      </Show>
-      <p class={panelStyles.pmPerformanceNote}>
-        The status reports whether the tool returned. The result kind reports what the evidence
-        established.
-      </p>
+      <section aria-label="Call summary" class={panelStyles.pmSection}>
+        <div class={panelStyles.pmDetailHeading}>
+          <span class={panelStyles.pmSectionTitle}>Call #{props.call.id}</span>
+          <StatusBadge call={props.call} />
+          <Show when={resultKind(props.call)}>
+            {(kind) => <ResultBadge kind={kind()} prefix />}
+          </Show>
+          <Show when={duration()}>
+            <Badge>{duration()}</Badge>
+          </Show>
+        </div>
+        <div class={panelStyles.pmSectionBody}>
+          <strong class={panelStyles.pmMono}>{props.call.name}</strong>
+          <span class={panelStyles.pmRowDetail}>
+            {callSources[props.call.source].label} ·{" "}
+            <time dateTime={new Date(props.call.timestamp).toISOString()}>
+              {new Date(props.call.timestamp).toLocaleTimeString()}
+            </time>
+          </span>
+          <Show when={props.call.status === "succeeded" && props.call.resultReason}>
+            {(reason) => (
+              <p class={panelStyles.pmCallReason}>
+                <strong>Reason</strong> {reason()}
+              </p>
+            )}
+          </Show>
+        </div>
+        <p class={panelStyles.pmSectionNote}>
+          The status reports whether the tool returned. The result kind reports what the evidence
+          established.
+        </p>
+      </section>
       <Payload label="Input" value={props.call.input} />
       {outcome()}
     </>
@@ -243,9 +233,9 @@ function ToolList(props: { tools: readonly WebMcpToolMetadata[] }): JSX.Element 
     <ul class={panelStyles.pmList}>
       <For each={props.tools}>
         {(tool) => (
-          <li class={panelStyles.pmPerformanceNote}>
+          <li class={panelStyles.pmSectionBody}>
             <strong class={panelStyles.pmMono}>{tool.name}</strong>
-            <div>{tool.description}</div>
+            <span class={panelStyles.pmMuted}>{tool.description}</span>
           </li>
         )}
       </For>
@@ -270,7 +260,7 @@ function AvailableTools(props: { recorder: Recorder }): JSX.Element {
 
   return (
     <div class={panelStyles.pmPane}>
-      <section aria-label="Native WebMCP tools" class={panelStyles.pmDetailBlock}>
+      <section aria-label="Native WebMCP tools" class={panelStyles.pmSection}>
         <div class={panelStyles.pmDetailHeading}>
           <span class={panelStyles.pmSectionTitle}>Native WebMCP</span>
           <Badge tone={props.recorder.isSupported ? "green" : undefined}>
@@ -280,7 +270,7 @@ function AvailableTools(props: { recorder: Recorder }): JSX.Element {
         <Show
           when={nativeTools().length > 0}
           fallback={
-            <p class={panelStyles.pmPerformanceNote}>
+            <p class={panelStyles.pmSectionNote}>
               {props.recorder.isSupported
                 ? "No WebMCP tools registered through this inspector."
                 : "Native WebMCP is unavailable in this document, so no tools are registered with the browser."}
@@ -290,7 +280,7 @@ function AvailableTools(props: { recorder: Recorder }): JSX.Element {
           <ToolList tools={nativeTools()} />
         </Show>
       </section>
-      <section aria-label="Chrome DevTools MCP tools" class={panelStyles.pmDetailBlock}>
+      <section aria-label="Chrome DevTools MCP tools" class={panelStyles.pmSection}>
         <div class={panelStyles.pmDetailHeading}>
           <span class={panelStyles.pmSectionTitle}>Chrome DevTools MCP</span>
           <Badge tone={chromeState().tone as BadgeTone}>{chromeState().label}</Badge>
@@ -298,7 +288,7 @@ function AvailableTools(props: { recorder: Recorder }): JSX.Element {
         <Show
           when={chrome()}
           fallback={
-            <p class={panelStyles.pmPerformanceNote}>
+            <p class={panelStyles.pmSectionNote}>
               No Chrome DevTools MCP bridge is connected to this inspector.
             </p>
           }
@@ -306,7 +296,7 @@ function AvailableTools(props: { recorder: Recorder }): JSX.Element {
           {(exposure) => (
             <>
               <Show when={exposure().discoveredAt === null}>
-                <p class={panelStyles.pmPerformanceNote}>
+                <p class={panelStyles.pmSectionNote}>
                   Offered through devtoolstooldiscovery. A Chrome DevTools MCP client has not
                   discovered them yet.
                 </p>
