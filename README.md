@@ -173,21 +173,21 @@ on this branch are unreleased until the next package release.
 
 ## Examples
 
-Start with the [kitchen sink](./packages/collab-demo) to try collaboration, undo and redo,
+Start with the [kitchen sink](./examples/kitchen-sink) to try collaboration, undo and redo,
 rendering diagnostics, recordings, and agent tools from one page.
 
 The monorepo keeps one private example per framework so each adapter can be run and tested in its
 native environment:
 
-- [Standalone ProseMirror, list and undo](./packages/standalone-demo)
-- [Native Tiptap](./packages/tiptap-demo)
-- [Controlled React ProseMirror](./packages/react-prosemirror-demo)
-- [React and TanStack](./packages/tanstack-devtools-demo)
-- [Preact](./packages/preact-demo)
-- [Solid](./packages/solid-demo)
-- [Vue](./packages/vue-demo)
-- [Svelte](./packages/svelte-demo)
-- [Angular](./packages/angular-demo)
+- [Standalone ProseMirror, list and undo](./examples/standalone)
+- [Native Tiptap](./examples/tiptap)
+- [Controlled React ProseMirror](./examples/react-prosemirror)
+- [React and TanStack](./examples/tanstack)
+- [Preact](./examples/preact)
+- [Solid](./examples/solid)
+- [Vue](./examples/vue)
+- [Svelte](./examples/svelte)
+- [Angular](./examples/angular)
 
 ## License
 

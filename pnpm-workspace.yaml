@@ -1,5 +1,6 @@
 packages:
   - "packages/*"
+  - "examples/*"
 
 overrides:
   # The WASI parser binding pins an alpha rejected by its WASM runtime peer ranges.

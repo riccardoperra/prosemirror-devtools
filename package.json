@@ -28,7 +28,7 @@
     "changeset:status": "changeset status --since=main",
     "ci:publish": "changeset publish",
     "ci:version": "changeset version",
-    "dev": "pnpm --filter prosemirror-inspector run build && pnpm --parallel --filter prosemirror-inspector --filter './packages/*-demo' run dev",
+    "dev": "pnpm --filter prosemirror-inspector run build && pnpm --parallel --filter prosemirror-inspector --filter './examples/*' run dev",
     "format": "oxfmt .",
     "format:check": "oxfmt . --check",
     "lint": "oxlint .",

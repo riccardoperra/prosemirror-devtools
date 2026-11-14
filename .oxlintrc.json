@@ -14,7 +14,7 @@
   },
   "overrides": [
     {
-      "files": ["packages/tanstack-devtools-demo/**/*.{ts,tsx}"],
+      "files": ["examples/tanstack/**/*.{ts,tsx}"],
       "rules": {
         "react/only-export-components": ["warn", { "allowConstantExport": true }]
       }
