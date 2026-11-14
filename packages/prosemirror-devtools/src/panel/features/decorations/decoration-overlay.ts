@@ -8,7 +8,8 @@ export interface DecorationOverlayRange {
 
 type Rect = { left: number; right: number; top: number; bottom: number };
 
-function clipToEditor(layer: HTMLElement, view: EditorView, host: Window): void {
+/** Clips a fixed overlay layer to the editor and its scrolling ancestors. */
+export function clipToEditor(layer: HTMLElement, view: EditorView, host: Window): void {
   const clip = { left: 0, top: 0, right: host.innerWidth, bottom: host.innerHeight };
   let element: Element | null = view.dom;
   while (element) {

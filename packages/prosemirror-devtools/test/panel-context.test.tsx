@@ -228,9 +228,9 @@ describe("host inspection context", () => {
       expect(host.querySelector('[data-node-type="text"]')?.getAttribute("data-inspected")).toBe(
         "true",
       );
-      host.querySelector<HTMLButtonElement>('[aria-label="Show exported document HTML"]')?.click();
-      expect(host.querySelector('[aria-label="Exported document HTML"]')?.textContent).toBe(
-        "<p><strong>hello</strong></p>",
+      host.querySelector<HTMLButtonElement>('[aria-label="Show document DOM"]')?.click();
+      expect(host.querySelector('[data-dom-role="mark"] .pm-doc-row-main')?.textContent).toBe(
+        "<strong>strong 1–6",
       );
     } finally {
       dispose();
