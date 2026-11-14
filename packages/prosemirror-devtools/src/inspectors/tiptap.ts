@@ -1,4 +1,3 @@
-import { getExtensionField, type Editor } from "@tiptap/core";
 import type { EditorState, PluginKey } from "prosemirror-state";
 
 import { resolveInspectionLimits, serializeInspectionValue } from "../inspection/serialization";
@@ -9,13 +8,42 @@ import type {
 } from "../inspection/types";
 import type { SerializedValue } from "../core/types";
 
+/** The part of a Tiptap 3 extension the inspector reads, so the package never imports Tiptap. */
+export interface TiptapInspectableExtension {
+  readonly name: string;
+  readonly type: string;
+  readonly options: unknown;
+  readonly config: { readonly priority?: unknown };
+  readonly parent?: TiptapInspectableExtension | null;
+}
+
+/** The part of a Tiptap 3 editor the inspector reads. */
+export interface TiptapInspectableEditor {
+  readonly isDestroyed: boolean;
+  readonly storage: object;
+  readonly extensionManager: { readonly extensions: readonly TiptapInspectableExtension[] };
+}
+
+// Mirrors Tiptap's getExtensionField for `priority`: an extension inherits it from its parent.
+function extensionPriority(extension: TiptapInspectableExtension): number | undefined {
+  for (
+    let current: TiptapInspectableExtension | null | undefined = extension;
+    current;
+    current = current.parent
+  ) {
+    const priority = current.config.priority;
+    if (priority !== undefined) return typeof priority === "number" ? priority : undefined;
+  }
+  return undefined;
+}
+
 export interface TiptapPluginAssociation {
   readonly extensionName: string;
   readonly pluginKeys: readonly PluginKey[];
 }
 
 export interface TiptapInspectorOptions {
-  readonly editor: Editor;
+  readonly editor: TiptapInspectableEditor;
   /** Associations known by the extension author, never inferred from names or timing. */
   readonly pluginAssociations?: readonly TiptapPluginAssociation[];
   readonly limits?: Partial<InspectionLimits>;
@@ -77,7 +105,7 @@ export function createTiptapInspector({
           return {
             name: extension.name,
             type: extension.type,
-            priority: getExtensionField(extension, "priority") ?? 100,
+            priority: extensionPriority(extension) ?? 100,
             options: serializeInspectionValue(extension.options, limits),
             storage: serializeInspectionValue(Reflect.get(editor.storage, extension.name), limits),
             plugins: association
