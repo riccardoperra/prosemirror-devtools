@@ -4,6 +4,7 @@ import { NodeSelection, TextSelection } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { useMemo, useSyncExternalStore, type ReactNode } from "react";
 
+import type { CollabSession } from "../collab/session";
 import { revealSelection } from "../invoice/commands";
 import { formatMoney, type Cents } from "../invoice/model";
 import { readInvoiceDebugState, type InvoiceDebugState } from "./debug-state";
@@ -196,7 +197,50 @@ function EventsSection({ events }: { events: readonly DomainEventEntry[] }) {
   );
 }
 
-export function InvoicePanel({ context }: { context: DevtoolsExtensionContext }) {
+function formatBytes(bytes: number): string {
+  return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function CollaborationSection({ collab }: { collab: CollabSession }) {
+  const snapshot = useSyncExternalStore(collab.subscribe, collab.getSnapshot);
+  const facts: readonly (readonly [string, ReactNode])[] = [
+    ["Room", <code key="room">{snapshot.room}</code>],
+    ["Transport", "BroadcastChannel, this browser only"],
+    ["Last sync", snapshot.lastSyncAt ? formatTime(snapshot.lastSyncAt) : "no remote change yet"],
+    ["Sent", formatBytes(snapshot.bytesSent)],
+    ["Received", formatBytes(snapshot.bytesReceived)],
+  ];
+  return (
+    <Section title="Collaboration" meta={`${snapshot.peers.length} online`}>
+      <ul className="invoice-panel__peers">
+        {snapshot.peers.map((peer) => (
+          <li key={peer.clientId}>
+            <span className="invoice-panel__peer-dot" style={{ background: peer.color }} />
+            {peer.name}
+            {peer.self ? <small>you</small> : null}
+            <code>{peer.clientId}</code>
+          </li>
+        ))}
+      </ul>
+      <dl className="invoice-panel__facts">
+        {facts.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </Section>
+  );
+}
+
+export function InvoicePanel({
+  context,
+  collab,
+}: {
+  context: DevtoolsExtensionContext;
+  collab: CollabSession | null;
+}) {
   const instance = context.data.instance(sessionId);
   // EditorState is immutable, so its identity is a faithful snapshot of every dispatch.
   const view = useSyncExternalStore(instance.subscribe, () => instance()?.view);
@@ -212,6 +256,7 @@ export function InvoicePanel({ context }: { context: DevtoolsExtensionContext })
   return (
     <div className="invoice-panel" data-theme={context.host.theme}>
       <div className="invoice-panel__column">
+        {collab ? <CollaborationSection collab={collab} /> : null}
         <DocumentSection document={debug.document} />
         <Section title="Find" meta={debug.find.query ? `“${debug.find.query}”` : "idle"}>
           <p className="invoice-panel__empty">
@@ -232,15 +277,16 @@ export function InvoicePanel({ context }: { context: DevtoolsExtensionContext })
   );
 }
 
-export const invoiceDevtoolsExtension = createReactDevtoolsExtension({
-  id: "invoice-workbench",
-  panels: [
-    {
-      id: "invoice",
-      title: "Invoice",
-      order: 40,
-      requiresInstance: true,
-      render: (context) => <InvoicePanel context={context} />,
-    },
-  ],
-});
+export const createInvoiceDevtoolsExtension = (collab: CollabSession | null) =>
+  createReactDevtoolsExtension({
+    id: "invoice-workbench",
+    panels: [
+      {
+        id: "invoice",
+        title: "Invoice",
+        order: 40,
+        requiresInstance: true,
+        render: (context) => <InvoicePanel context={context} collab={collab} />,
+      },
+    ],
+  });

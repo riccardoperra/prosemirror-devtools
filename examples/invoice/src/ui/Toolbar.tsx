@@ -15,6 +15,8 @@ import {
   setStatus,
   undo,
 } from "../invoice/commands";
+import { useCollab } from "../collab/context";
+import { newRoomUrl, secondUserUrl } from "../collab/config";
 import { useDevtools } from "../devtools/context";
 import { readMeta, rowsInRange } from "../invoice/document";
 import { fieldKeys, fieldRegistry, type FieldKey } from "../invoice/fields";
@@ -48,6 +50,7 @@ interface ToolbarProps {
 export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
   const [field, setField] = useState<FieldKey>("customer.name");
   const devtools = useDevtools();
+  const collab = useCollab();
   const recordingFile = useRef<HTMLInputElement>(null);
   const state = useEditorState({
     editor,
@@ -131,6 +134,17 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
           </button>
         ))}
       </div>
+      {collab ? (
+        <div className="toolbar-group">
+          <button
+            type="button"
+            title="Opens this room in a new tab as another user. Tabs sync over BroadcastChannel, so only tabs of this browser join."
+            onClick={() => window.open(secondUserUrl(location.href, collab.config), "_blank")}
+          >
+            <Glyph>⧉</Glyph>Open as second user
+          </button>
+        </div>
+      ) : null}
       <div className="toolbar-group">
         <MoreMenu label="More">
           {(close) => {
@@ -174,6 +188,11 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
                   () => deleteRows(editor),
                   true,
                 )}
+                {collab
+                  ? null
+                  : item("Collaborate in two tabs", false, () =>
+                      location.assign(newRoomUrl(location.href)),
+                    )}
                 {devtools ? (
                   <>
                     <hr />

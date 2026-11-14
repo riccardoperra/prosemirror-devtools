@@ -76,6 +76,23 @@ build without the showcase flag ships none of it. It wires:
   `mountProseMirrorRecordingInspector` is inert outside development, and the Pages showcase is a
   production build.
 
+## Two tabs, two users
+
+Add `?room=<id>&user=<name>` to collaborate through Yjs, or pick **More › Collaborate in two
+tabs**. **Open as second user** opens the same room in a new tab under another name and color.
+
+The transport is `src/collab/broadcast-provider.ts`, a BroadcastChannel provider. It only reaches
+tabs of the same browser and origin, which also holds on GitHub Pages. A joining tab sends its state
+vector and receives what it lacks, and awareness carries names, colors, carets, and selections.
+Only the first peer of an empty room seeds the fixture.
+
+In a room, `@tiptap/extension-collaboration` replaces prosemirror-history, so undo, redo, and the
+"Undo a bulk edit" scenario use the Yjs undo manager. `@tiptap/extension-collaboration-caret`
+draws remote carets. The id normalizer derives a duplicate's new id from the document alone, so
+peers never overwrite each other's ids, and editability still follows the shared status. The
+inspector adds `createYjsInspector` and a `createTransportObserver` fed by the provider, and the
+Invoice tab adds a Collaboration section with peers, last sync, and bytes sent and received.
+
 ## The Invoice tab
 
 The inspector gets an **Invoice** tab from `src/devtools/InvoicePanel.tsx`, a React panel extension.

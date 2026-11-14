@@ -1,23 +1,32 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { readCollabConfig } from "./collab/config";
+import { CollabContext } from "./collab/context";
 import { DevtoolsContext } from "./devtools/context";
 import { InvoiceEditor } from "./ui/InvoiceEditor";
 import "./style.css";
 
-// A dynamic import keeps the shell, its panel styles, and its fonts out of production bundles.
-const devtools = import.meta.env.DEV ? await import("./devtools/shell") : null;
+const collabConfig = readCollabConfig(location.search);
+// Dynamic imports keep Yjs out of single-user tabs and the devtools shell, its panel styles, and
+// its fonts out of production bundles.
+const collab = collabConfig
+  ? (await import("./collab/session")).createCollabSession(collabConfig)
+  : null;
+const devtools = import.meta.env.DEV
+  ? await (await import("./devtools/shell")).createDevtoolsShell(collab)
+  : null;
 
 function App() {
   return (
-    <>
-      <DevtoolsContext.Provider value={devtools?.devtoolsActions ?? null}>
+    <CollabContext.Provider value={collab}>
+      <DevtoolsContext.Provider value={devtools?.actions ?? null}>
         <main className="workbench">
-          <InvoiceEditor devtools={devtools?.InvoiceDevtools ?? null} />
+          <InvoiceEditor devtools={devtools?.editorExtension ?? null} />
         </main>
       </DevtoolsContext.Provider>
-      {devtools ? <devtools.DevtoolsShell /> : null}
-    </>
+      {devtools ? <devtools.Shell /> : null}
+    </CollabContext.Provider>
   );
 }
 
@@ -31,8 +40,9 @@ root.render(
 );
 function dispose(): void {
   window.removeEventListener("pagehide", dispose);
-  devtools?.disposeDevtools();
   root.unmount();
+  devtools?.dispose();
+  collab?.dispose();
 }
 window.addEventListener("pagehide", dispose, { once: true });
 import.meta.hot?.dispose(dispose);

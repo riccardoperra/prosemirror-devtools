@@ -274,3 +274,33 @@
     overflow: visible;
   }
 }
+
+.invoice-panel__peers {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.invoice-panel__peers li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invoice-panel__peers small {
+  color: var(--ip-muted);
+}
+
+.invoice-panel__peers code {
+  margin-left: auto;
+  color: var(--ip-faint);
+  font-family: var(--ip-mono);
+}
+
+.invoice-panel__peer-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}

@@ -19,8 +19,9 @@ import { Signature, Signatures } from "./signatures";
 import { Timesheet } from "./timesheet";
 import { Totals } from "./totals";
 
-export const invoiceExtensions = [
-  StarterKit.configure({ document: false, trailingNode: false }),
+/** Collaboration brings its own Yjs undo manager, so it replaces prosemirror-history. */
+export const createInvoiceExtensions = ({ history }: { history: boolean }) => [
+  StarterKit.configure({ document: false, trailingNode: false, undoRedo: history ? {} : false }),
   Page,
   Timesheet,
   PaymentSchedule,

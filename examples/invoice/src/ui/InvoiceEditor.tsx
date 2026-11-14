@@ -5,7 +5,8 @@ import { resumeTiptapDevtools, suspendTiptapDevtools } from "prosemirror-inspect
 
 import { findQuery } from "../invoice/commands";
 import { readMeta } from "../invoice/document";
-import { invoiceExtensions } from "../invoice/extensions";
+import { useCollab } from "../collab/context";
+import { createInvoiceExtensions } from "../invoice/extensions";
 import { initialInvoice } from "../invoice/fixture";
 import { InvoiceViewContext } from "../invoice/view-context";
 import { CommentsSidebar } from "./CommentsSidebar";
@@ -16,10 +17,16 @@ import { Toolbar } from "./Toolbar";
 
 /** The devtools extension arrives from the lazily loaded shell, so production never bundles it. */
 export function InvoiceEditor({ devtools }: { devtools: AnyExtension | null }) {
-  const [extensions] = useState(() => [...invoiceExtensions, ...(devtools ? [devtools] : [])]);
+  const collab = useCollab();
+  const [extensions] = useState(() => [
+    ...createInvoiceExtensions({ history: !collab }),
+    ...(collab?.extensions ?? []),
+    ...(devtools ? [devtools] : []),
+  ]);
   const editor = useEditor({
     extensions,
-    content: initialInvoice,
+    // A collaborative document comes from the room. Only its first peer seeds the fixture.
+    ...(collab ? {} : { content: initialInvoice }),
     immediatelyRender: false,
     shouldRerenderOnTransaction: false,
     enableExtensionDispatchTransaction: true,
@@ -36,6 +43,9 @@ export function InvoiceEditor({ devtools }: { devtools: AnyExtension | null }) {
     },
   });
   useEffect(() => {
+    if (editor && collab) void collab.seed(editor, initialInvoice);
+  }, [editor, collab]);
+  useEffect(() => {
     if (!editor || !devtools) return;
     resumeTiptapDevtools(editor);
     return () => suspendTiptapDevtools(editor);
@@ -48,6 +58,7 @@ export function InvoiceEditor({ devtools }: { devtools: AnyExtension | null }) {
 }
 
 function InvoiceWorkspace({ editor }: { editor: Editor }) {
+  const collab = useCollab();
   const [findOpen, setFindOpen] = useState(false);
   const view = useEditorState({
     editor,
@@ -70,9 +81,11 @@ function InvoiceWorkspace({ editor }: { editor: Editor }) {
           onToggleFind={() => (findOpen ? closeFind() : setFindOpen(true))}
         />
         <p className="topbar-note">
-          {import.meta.env.DEV
-            ? "⌘⇧D outside the editor opens the inspector"
-            : "Diagnostics are off in production"}
+          {collab
+            ? `${collab.config.user.name} · room ${collab.config.room} · this browser only`
+            : import.meta.env.DEV
+              ? "⌘⇧D outside the editor opens the inspector"
+              : "Diagnostics are off in production"}
         </p>
         {findOpen ? <FindBar editor={editor} onClose={closeFind} /> : null}
       </header>

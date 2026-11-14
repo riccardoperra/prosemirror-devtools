@@ -24,6 +24,7 @@ catalog:
   "@handlewithcare/react-prosemirror": 3.3.0
   "@tiptap/core": 3.31.4
   "@tiptap/extension-collaboration": 3.31.4
+  "@tiptap/extension-collaboration-caret": 3.31.4
   "@tiptap/pm": 3.31.4
   "@tiptap/react": 3.31.4
   "@tiptap/starter-kit": 3.31.4

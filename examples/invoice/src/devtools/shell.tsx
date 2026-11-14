@@ -8,38 +8,41 @@ import { createProseMirrorInspectionClient } from "prosemirror-inspector/core";
 import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/react/production";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
-import { invoiceDevtoolsExtension } from "./InvoicePanel";
+import type { CollabSession } from "../collab/session";
+import { devtoolsActions } from "./actions";
+import { createInvoiceDevtools } from "./extension";
+import { createInvoiceDevtoolsExtension } from "./InvoicePanel";
 import { RecordingDialog } from "./RecordingDialog";
 import { store } from "./session";
 
-export { devtoolsActions } from "./actions";
-export { InvoiceDevtools } from "./extension";
-
-const client = createProseMirrorInspectionClient({ store });
-const webMcp = createProseMirrorWebMcpInspector();
-const disposeChromeBridge = installProseMirrorChromeBridge(client, { inspector: webMcp });
-const disposeWebMcpBridge = await installProseMirrorWebMCPBridge(client, webMcp);
-
-const inspectorPlugin = createProseMirrorDevtoolsPlugin({
-  store,
-  defaultPanel: "history",
-  extensions: [invoiceDevtoolsExtension, webMcp.extension],
-});
-
-export function DevtoolsShell() {
-  return (
-    <>
-      <TanStackDevtools
-        config={{ position: "bottom-right", openHotkey: ["CtrlOrMeta", "Shift", "D"] }}
-        plugins={[inspectorPlugin]}
-      />
-      <RecordingDialog />
-    </>
-  );
-}
-
-export function disposeDevtools(): void {
-  disposeChromeBridge();
-  disposeWebMcpBridge?.();
-  webMcp.dispose();
+export async function createDevtoolsShell(collab: CollabSession | null) {
+  const client = createProseMirrorInspectionClient({ store });
+  const webMcp = createProseMirrorWebMcpInspector();
+  const disposeChromeBridge = installProseMirrorChromeBridge(client, { inspector: webMcp });
+  const disposeWebMcpBridge = await installProseMirrorWebMCPBridge(client, webMcp);
+  const inspectorPlugin = createProseMirrorDevtoolsPlugin({
+    store,
+    defaultPanel: "history",
+    extensions: [createInvoiceDevtoolsExtension(collab), webMcp.extension],
+  });
+  return {
+    actions: devtoolsActions,
+    editorExtension: createInvoiceDevtools(collab),
+    Shell() {
+      return (
+        <>
+          <TanStackDevtools
+            config={{ position: "bottom-right", openHotkey: ["CtrlOrMeta", "Shift", "D"] }}
+            plugins={[inspectorPlugin]}
+          />
+          <RecordingDialog />
+        </>
+      );
+    },
+    dispose() {
+      disposeChromeBridge();
+      disposeWebMcpBridge?.();
+      webMcp.dispose();
+    },
+  };
 }
