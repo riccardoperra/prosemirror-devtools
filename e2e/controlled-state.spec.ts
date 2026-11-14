@@ -4,7 +4,7 @@ import { available, callTool, object } from "./inspection-tools";
 
 const cases = [
   { panel: "State", expected: ["6 chars", "14 node size", "9–9"] },
-  { panel: "Selection", expected: ["position 9"] },
+  { panel: "Selection", expected: ["pos 9"] },
 ] as const;
 
 for (const scenario of cases) {

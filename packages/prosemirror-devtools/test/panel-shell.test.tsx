@@ -225,14 +225,19 @@ describe("devtools panel shell", () => {
       expect(
         container.querySelector('.pm-history-list button[aria-pressed="true"]'),
       ).not.toBeNull();
-      const related = inspector?.querySelector<HTMLDetailsElement>(".pm-dispatch-related");
-      expect(related?.open).toBe(false);
-      related?.querySelector("summary")?.click();
-      expect(related?.open).toBe(true);
-      const documentLink = Array.from(related?.querySelectorAll("button") ?? []).find(
-        (button) => button.textContent === "Document after dispatch",
+      // The row and the header say what the dispatch did, not only that the document changed.
+      expect(
+        container.querySelector('.pm-history-list button[aria-pressed="true"]')?.textContent,
+      ).toContain('insert "x"');
+      expect(inspector?.querySelector(".pm-dispatch-header")?.textContent).toContain('insert "x"');
+      expect(inspector?.querySelector('[aria-label="Root transaction"]')?.textContent).toContain(
+        "replace",
       );
-      documentLink?.click();
+      // Timings belong to Performance; the Timeline links there instead of repeating them.
+      expect(inspector?.textContent).not.toContain("State apply");
+      Array.from(inspector?.querySelectorAll<HTMLButtonElement>(".pm-dispatch-header button") ?? [])
+        .find((button) => button.textContent === "Document")
+        ?.click();
       expect(activeViewTab(container)?.textContent).toBe("State");
       sectionTab(container, "Timeline").click();
       expect(activeViewTab(container)?.textContent).toBe("Transactions");

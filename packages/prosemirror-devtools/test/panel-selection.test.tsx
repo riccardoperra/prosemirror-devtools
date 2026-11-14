@@ -4,7 +4,7 @@ import { render } from "solid-js/web";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { attachProseMirrorDevtools, createProseMirrorDevtoolsStore } from "../src/core";
-import { inspectPosition } from "../src/panel/features/selection/selection-view";
+import { describePosition } from "../src/panel/features/selection/selection-view";
 import { ProseMirrorDevtoolsPanel } from "../src/panel/panel";
 import { createTestState, createTestView } from "./helpers";
 
@@ -25,30 +25,31 @@ describe("Selection panel", () => {
       null,
       schema.node("blockquote", null, schema.node("paragraph", null, schema.text("hello"))),
     );
-    expect(inspectPosition(doc.resolve(4))).toEqual({
+    const inside = describePosition(doc.resolve(4));
+    expect(inside).toMatchObject({
       pos: 4,
       depth: 2,
       parentOffset: 2,
       textOffset: 2,
-      ancestors: [
-        { depth: 0, type: "doc", index: 0, start: 0, end: 9, before: null, after: null, attrs: {} },
-        {
-          depth: 1,
-          type: "blockquote",
-          index: 0,
-          start: 1,
-          end: 8,
-          before: 0,
-          after: 9,
-          attrs: {},
-        },
-        { depth: 2, type: "paragraph", index: 0, start: 2, end: 7, before: 1, after: 8, attrs: {} },
-      ],
+      place: "inside",
     });
-    expect(inspectPosition(doc.resolve(doc.content.size)).ancestors).toHaveLength(1);
+    expect(inside.path.map(({ node, from, to }) => [node.type.name, from, to])).toEqual([
+      ["doc", 0, 9],
+      ["blockquote", 0, 9],
+      ["paragraph", 1, 8],
+    ]);
+    // Inside a text node both neighbours are cut at the position but link to the whole node.
+    expect(inside.nodeBefore).toMatchObject({ from: 2, to: 4, target: 2 });
+    expect(inside.nodeBefore?.node.text).toBe("he");
+    expect(inside.nodeAfter).toMatchObject({ from: 4, to: 7, target: 2 });
+    expect(inside.nodeAfter?.node.text).toBe("llo");
+    const end = describePosition(doc.resolve(doc.content.size));
+    expect(end.path).toHaveLength(1);
+    expect(end.place).toBe("end");
+    expect(end.nodeAfter).toBeNull();
   });
 
-  it("tracks backward, node and all selections and switches endpoints", () => {
+  it("shows backward, node, all and cursor selections with one card per endpoint", () => {
     const state = createTestState("hello");
     const view = createTestView(
       state.apply(state.tr.setSelection(TextSelection.create(state.doc, 5, 2))),
@@ -67,22 +68,29 @@ describe("Selection panel", () => {
       container,
     );
     try {
-      expect(container.textContent).toContain("backward");
-      expect(container.textContent).toContain("position 2");
-      const buttons = container.querySelectorAll<HTMLButtonElement>(
-        '[aria-label="Selection endpoint"] button',
+      const card = (name: string) =>
+        container.querySelector(`[aria-label="${name} position"]`)?.textContent ?? "";
+      const summary = () =>
+        container.querySelector('[aria-label="Selection summary"]')?.textContent ?? "";
+      expect(summary()).toContain("backward");
+      expect(card("Anchor")).toContain("pos 5");
+      expect(card("Head")).toContain("pos 2");
+      expect(container.querySelector('[aria-label="Selected content"]')?.textContent).toContain(
+        '"ell"',
       );
-      buttons[0]?.click();
-      expect(container.textContent).toContain("position 5");
-      expect(buttons[0]?.getAttribute("aria-pressed")).toBe("true");
 
       view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, 0)));
-      expect(container.textContent).toContain("position 0");
-      expect(container.textContent).toContain('"node"');
+      expect(card("Anchor")).toContain("pos 0");
+      expect(summary()).toContain("node");
+      expect(container.textContent).toContain('"type": "node"');
       view.dispatch(view.state.tr.setSelection(new AllSelection(view.state.doc)));
-      buttons[1]?.click();
-      expect(container.textContent).toContain("position 7");
-      expect(container.textContent).toContain('"all"');
+      expect(card("Head")).toContain("pos 7");
+      expect(container.textContent).toContain('"type": "all"');
+
+      view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 3)));
+      expect(card("Cursor")).toContain("pos 3");
+      expect(card("Anchor")).toBe("");
+      expect(container.querySelector('[aria-label="Selected content"]')).toBeNull();
     } finally {
       dispose();
       attachment.detach();
@@ -121,13 +129,11 @@ describe("Selection panel", () => {
       container,
     );
     try {
-      const storedMarks = () =>
-        Array.from(container.querySelectorAll(".pm-json-row")).find(
-          (row) => row.querySelector(".pm-json-key")?.textContent === "storedMarks",
-        );
-      expect(storedMarks()?.textContent).toContain("null");
+      const source = () =>
+        container.querySelector("[data-marks-source]")?.getAttribute("data-marks-source");
+      expect(source()).toBe("at cursor");
       view.dispatch(view.state.tr.setStoredMarks([]));
-      expect(storedMarks()?.textContent).toContain("Array(0)");
+      expect(source()).toBe("stored");
     } finally {
       dispose();
       attachment.detach();

@@ -285,6 +285,31 @@ The Boxes and DOM views draw the document, so they encode data that list rows do
 Text rules: protocol and data values appear verbatim (`available`, `expired`, `doc`). UI states
 use sentence case (`Returned`, `Recording`). Do not mix both in one badge.
 
+### Field list
+
+`pmFields` on a `<dl>`: one fact per line, a mono label column in `--pm-muted` and the value
+beside it. Use it for a handful of named values (a selection, a resolved position, a
+transaction) instead of a JSON tree or a one-row table. Values can mix text, badges and node
+chips. Keep raw JSON available behind a disclosure, not as the main view.
+
+### Step summary
+
+Transactions read as words before JSON: `insert "x" at 92`, `split paragraph at 3`,
+`add mark strong 66–78`, `cursor 92 → cursor 93`. `summarize-dispatch.ts` derives them from the
+recorded steps, replaying them on the document before the dispatch. `StepLine` renders the action
+(weight 650), the subject (mono) and the position (mono, `--pm-muted`) inline, so list rows can
+truncate them with an ellipsis.
+
+Document changes use the folded diff in `document-diff.ts`: unchanged siblings collapse into one
+`⋯ N unchanged` line, a changed node opens down to the fields that differ (`"text"`, `"attrs"`,
+`"marks"`), and added or removed nodes take one `+`/`−` line each. Changed siblings are aligned
+by similarity (a weighted longest common subsequence), so an inserted node is not paired with
+the next edited one, and a field change marks only the characters that differ. Show a diff, not the two full
+documents; the Document tab already shows either document through the Before/After toggle.
+
+Timeline answers "what happened and why"; Performance answers "what it cost". Timeline shows a
+dispatch's total duration only, and links to Performance for phases and plugin cost.
+
 ### Table
 
 `pmTable`: small text, header cells in section-title style, rows with bottom border, numbers

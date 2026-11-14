@@ -2272,6 +2272,202 @@
   .pm-number-input {
     inline-size: 90px;
   }
+  /* Label and value pairs: a fact per line, labels in a narrow column. */
+  .pm-fields {
+    margin: 0;
+    padding: 8px 10px;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 4px;
+    font:
+      500 11px/20px ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      monospace;
+  }
+  .pm-fields > dt {
+    color: var(--pm-muted);
+  }
+  .pm-fields > dd {
+    margin: 0;
+    min-inline-size: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+    color: var(--pm-text);
+  }
+  .pm-path {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+  }
+  .pm-path-separator {
+    color: var(--pm-faint);
+  }
+  .pm-inline-action {
+    min-block-size: 20px;
+    flex: none;
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius-sm);
+    padding: 0 6px;
+    color: var(--pm-text);
+    background: var(--pm-panel);
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .pm-inline-action:hover {
+    background: var(--pm-panel-2);
+  }
+  /* A step in words: action, then what it touches (mono), then where (muted). Inline so rows can
+     truncate it. */
+  .pm-step-line {
+    min-inline-size: 0;
+  }
+  .pm-step-action {
+    color: var(--pm-text);
+    font-weight: 650;
+  }
+  .pm-list-row:is([aria-selected="true"], [aria-pressed="true"]) .pm-step-action {
+    color: var(--pm-accent);
+  }
+  .pm-step-subject {
+    color: var(--pm-text);
+    font:
+      500 11px/1.4 ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      monospace;
+  }
+  .pm-step-at {
+    color: var(--pm-muted);
+    font:
+      500 11px/1.4 ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      monospace;
+  }
+  .pm-step-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 2px;
+    min-inline-size: 0;
+    flex: 1;
+  }
+  .pm-step-list > li {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-inline-size: 0;
+  }
+  .pm-step-index {
+    flex: none;
+    min-inline-size: 2ch;
+    color: var(--pm-faint);
+    text-align: end;
+  }
+  .pm-step-type {
+    margin-inline-start: auto;
+    flex: none;
+    color: var(--pm-faint);
+    font-size: 10px;
+  }
+  .pm-fields > dd .pm-step-line {
+    font-family: var(--prosemirror-devtools-font-family, inherit);
+  }
+  .pm-history-row > .pm-row-stack {
+    flex: 1 1 0;
+    min-inline-size: 0;
+  }
+  .pm-history-row > .pm-row-stack > .pm-row-title {
+    font-weight: 500;
+  }
+  .pm-dispatch-header > .pm-dispatch-identity {
+    flex: 1 1 auto;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .pm-dispatch-identity > .pm-row-detail {
+    grid-column: 2;
+  }
+  /* Folded JSON diff: one line per changed field or node, unchanged siblings folded. */
+  .pm-diff {
+    padding-block: 6px;
+    overflow-x: auto;
+    font:
+      500 11px/1.55 ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      monospace;
+  }
+  .pm-diff-line {
+    display: grid;
+    grid-template-columns: 1ch minmax(0, 1fr);
+    gap: 8px;
+    padding-inline: 10px;
+    color: var(--pm-muted);
+  }
+  .pm-diff-text {
+    min-inline-size: 0;
+    padding-inline-start: calc(var(--pm-diff-depth, 0) * 2ch);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .pm-diff-line[data-kind="add"] {
+    color: var(--pm-text);
+    background: var(--pm-green-soft);
+  }
+  .pm-diff-line[data-kind="del"] {
+    color: var(--pm-text);
+    background: var(--pm-red-soft);
+  }
+  .pm-diff-line[data-kind="add"] > .pm-diff-marker {
+    color: var(--pm-green);
+  }
+  .pm-diff-line[data-kind="del"] > .pm-diff-marker {
+    color: var(--pm-red);
+  }
+  .pm-diff-line[data-kind="fold"] {
+    color: var(--pm-faint);
+  }
+  .pm-diff-marker {
+    font-weight: 700;
+  }
+  /* The changed characters inside a field change. */
+  .pm-diff-change {
+    border-radius: var(--pm-radius-sm);
+    font-weight: 700;
+  }
+  .pm-diff-line[data-kind="add"] .pm-diff-change {
+    color: var(--pm-green);
+    background: color-mix(in srgb, var(--pm-green) 22%, transparent);
+  }
+  .pm-diff-line[data-kind="del"] .pm-diff-change {
+    color: var(--pm-red);
+    background: color-mix(in srgb, var(--pm-red) 22%, transparent);
+    text-decoration: line-through;
+  }
+  .pm-diff-note {
+    color: var(--pm-faint);
+  }
+  .pm-visually-hidden {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .pm-dispatch-title {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
   .pm-setup {
     padding: 16px;
   }

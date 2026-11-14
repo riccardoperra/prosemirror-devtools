@@ -8,6 +8,8 @@ import { useOptionalPanelContext } from "../../panel-provider";
 import { Badge } from "../../ui/badge";
 import { readDispatchEffects } from "../dispatch/read-dispatch-effects";
 import { TransactionBadges } from "../dispatch/transaction-badges";
+import { DispatchHeadlineText } from "./step-line";
+import { summarizeDispatch } from "./summarize-dispatch";
 
 const HISTORY_PAGE_SIZE = 200;
 
@@ -33,7 +35,8 @@ export function TransactionList(props: TransactionListProps): JSX.Element {
       style={{ "--pm-history-id-width": `${idColumnWidth()}ch` } as JSX.CSSProperties}
     >
       <div class={panelStyles.pmPaneHeader}>
-        <span class={panelStyles.pmPaneTitle}>Recent dispatches</span>
+        <span class={panelStyles.pmPaneTitle}>Dispatches</span>
+        <Badge>{props.records.length}</Badge>
         <span class={panelStyles.pmSpacer} />
         <button class={panelStyles.pmButton} onClick={props.onClear} type="button">
           Clear
@@ -42,6 +45,7 @@ export function TransactionList(props: TransactionListProps): JSX.Element {
       <ul class={panelStyles.pmList}>
         <For each={newestFirst()}>
           {(record) => {
+            const headline = createMemo(() => summarizeDispatch(record));
             const effects = createMemo(() =>
               readDispatchEffects(record, panel?.dispatchPresenters()).filter(
                 ({ effect }) => effect.listLabel,
@@ -51,27 +55,29 @@ export function TransactionList(props: TransactionListProps): JSX.Element {
               <li>
                 <button
                   aria-label={`Inspect dispatch #${record.id}`}
-                  aria-description={
-                    effects()
-                      .map(({ effect }) => `${effect.badge ?? ""} ${effect.listLabel}`)
-                      .join(". ") || undefined
-                  }
+                  aria-description={[
+                    headline().title,
+                    ...effects().map(({ effect }) => `${effect.badge ?? ""} ${effect.listLabel}`),
+                  ].join(". ")}
                   aria-pressed={props.selectedId === record.id}
                   class={cx(panelStyles.pmListRow, panelStyles.pmHistoryRow)}
                   onClick={() => props.onSelect(record.id)}
                   type="button"
                 >
                   <span class={panelStyles.pmTransactionTime}>#{record.id}</span>
-                  <span class={panelStyles.pmRowMain}>
-                    <time
-                      class={cx(panelStyles.pmRowTitle, panelStyles.pmHistoryTimestamp)}
-                      dateTime={new Date(record.timestamp).toISOString()}
-                      title={formatDateTime(record.timestamp)}
-                    >
-                      {formatTime(record.timestamp)}
-                    </time>
+                  <span class={panelStyles.pmRowStack}>
+                    <span class={panelStyles.pmRowTitle} title={headline().title}>
+                      <DispatchHeadlineText headline={headline()} />
+                    </span>
                     <span class={panelStyles.pmRowDetail}>
-                      {record.stepCount} steps · {formatMs(record.totalDuration)}
+                      <time
+                        class={panelStyles.pmHistoryTimestamp}
+                        dateTime={new Date(record.timestamp).toISOString()}
+                        title={formatDateTime(record.timestamp)}
+                      >
+                        {formatTime(record.timestamp)}
+                      </time>{" "}
+                      · {formatMs(record.totalDuration)}
                     </span>
                   </span>
                   <span class={panelStyles.pmHistoryBadges}>

@@ -92,8 +92,8 @@ describe("controlled model panel reads", () => {
           );
         } else if (panel === "selection") {
           expect(
-            fixture.host.querySelector('[aria-label="Selection endpoint"]')?.textContent,
-          ).toContain("Head 7");
+            fixture.host.querySelector('[aria-label="Cursor position"]')?.textContent,
+          ).toContain("pos 7");
         } else if (panel === "schema") {
           expect(
             fixture.host.querySelector<HTMLInputElement>(
