@@ -217,7 +217,7 @@ adapter to stay active in a production build.
 
 | Panel             | Contents                                                                                           |
 | ----------------- | -------------------------------------------------------------------------------------------------- |
-| State             | Document tree and positions, node JSON, selection, active marks, and document statistics           |
+| State             | Document tree, boxes, JSON, and annotated DOM views; node JSON, selection, marks, and statistics   |
 | Transactions      | Root/appended transactions, document restore, step diffs, changed ranges, and position mapping     |
 | Selection         | Anchor/head ancestry, offsets, boundaries, adjacent nodes, ranges, and marks                       |
 | Events & commands | Opt-in handler outcomes, nested calls, synchronous dispatch IDs, and named commands                |
@@ -231,6 +231,18 @@ Each panel host keeps its editor and inspection selection. Transactions and Perf
 selected dispatch. **Follow live** returns to the current state. Historical document and provider
 reads never substitute live data. The visible Transactions and Rendering names retain the public
 panel IDs `history` and `decorations`.
+
+The State panel offers four document views:
+
+- **Structure** is the node tree with the positions before and after each node.
+- **Boxes** draws block nodes as nested boxes and inline content as chips with their marks.
+- **JSON** is the document as `Node.toJSON()` returns it.
+- **DOM** is the editor's rendered DOM. Each element is labelled as a node, a mark, a widget, or
+  outside the document, and each label and text node shows its document range. For a state that
+  the editor does not render, the view shows the schema's HTML export without positions.
+
+Hover a row to outline its node in the live editor. To find a node from the editor instead, turn on
+the toolbar picker (⌖), point at the editor, and click. Press Escape to cancel.
 
 Open **Context** to see capture status and installed inspectors. Expand **Technical details** for
 semantic provider values, coverage, and availability reasons. **Copy diagnostic context** copies
