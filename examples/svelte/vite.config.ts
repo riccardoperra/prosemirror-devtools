@@ -1,6 +1,6 @@
 import { defineConfig, mergeConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import { showcaseConfig } from "../vite-showcase";
+import { showcaseConfig } from "../vite-showcase.ts";
 export default mergeConfig(
   defineConfig({
     plugins: [svelte()],

@@ -1,6 +1,6 @@
 import { defineConfig, mergeConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
-import { showcaseConfig } from "../vite-showcase";
+import { showcaseConfig } from "../vite-showcase.ts";
 export default mergeConfig(
   defineConfig({
     plugins: [vue()],

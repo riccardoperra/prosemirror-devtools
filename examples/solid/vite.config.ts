@@ -1,6 +1,6 @@
 import { defineConfig, mergeConfig } from "vite";
 import solid from "vite-plugin-solid";
-import { showcaseConfig } from "../vite-showcase";
+import { showcaseConfig } from "../vite-showcase.ts";
 export default mergeConfig(
   defineConfig({
     plugins: [solid()],

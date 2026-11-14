@@ -1,6 +1,6 @@
 import { defineConfig, mergeConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { showcaseConfig } from "../vite-showcase";
+import { showcaseConfig } from "../vite-showcase.ts";
 
 export default mergeConfig(
   defineConfig({

@@ -1,27 +1,34 @@
 #!/usr/bin/env node
-// Builds the GitHub Pages site: the landing page at the root and the invoice workbench under invoice/.
+// Builds the GitHub Pages site: the landing page at the root and each example under <name>/.
 import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+import { examples } from "./examples.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const output = `${root}pages-dist`;
 const siteBase = process.env.PAGES_SITE_BASE ?? "/prosemirror-devtools/";
 
-function run(args, env = {}) {
-  execFileSync("pnpm", args, { cwd: root, stdio: "inherit", env: { ...process.env, ...env } });
+function run(args) {
+  execFileSync("pnpm", args, {
+    cwd: root,
+    stdio: "inherit",
+    env: { ...process.env, VITE_SHOWCASE: "true" },
+  });
 }
 
 run(["build:package"]);
-run(["--filter", "@prosemirror-devtools/invoice-demo", "run", "build:pages"], {
-  PAGES_BASE: `${siteBase}invoice/`,
-});
+for (const example of examples) run(example.buildCommand(`${siteBase}${example.name}/`));
 
 rmSync(output, { recursive: true, force: true });
 cpSync(`${root}site`, output, { recursive: true });
-cpSync(`${root}examples/invoice/pages-dist`, `${output}/invoice`, { recursive: true });
-
-if (!existsSync(`${output}/index.html`) || !existsSync(`${output}/invoice/index.html`)) {
-  throw new Error("pages-dist is missing the landing page or the invoice workbench.");
+for (const example of examples) {
+  cpSync(`${root}${example.outDir}`, `${output}/${example.name}`, { recursive: true });
 }
+
+const missing = ["", ...examples.map(({ name }) => `${name}/`)].filter(
+  (path) => !existsSync(`${output}/${path}index.html`),
+);
+if (missing.length > 0) throw new Error(`pages-dist has no index.html in: /${missing.join(", /")}`);
 console.log(`Pages site assembled in ${output} for ${siteBase}`);
