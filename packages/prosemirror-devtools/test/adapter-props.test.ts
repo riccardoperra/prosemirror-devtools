@@ -110,6 +110,17 @@ describe("adapter panel props", () => {
     });
   });
 
+  it("forwards experimental features to the panel", () => {
+    const element = document.createElement("div");
+
+    expect(
+      resolveProseMirrorDevtoolsPanelProps(element, { experimental: ["node-picker"] })
+        ?.experimental,
+    ).toEqual(["node-picker"]);
+    expect(resolveProseMirrorDevtoolsPanelInit({ experimental: true }).experimental).toBe(true);
+    expect(resolveProseMirrorDevtoolsSolidProps({ experimental: true }).experimental).toBe(true);
+  });
+
   it("keeps Solid host props getter-backed", () => {
     let theme: "dark" | "light" = "dark";
     let devtoolsOpen = true;

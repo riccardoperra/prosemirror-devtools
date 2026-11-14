@@ -1060,6 +1060,17 @@
     color: var(--pm-accent);
     background: var(--pm-accent-soft);
   }
+  .pm-view-switch > button[data-experimental="true"]::after {
+    content: "exp";
+    margin-inline-start: 4px;
+    padding: 1px 3px;
+    border-radius: 3px;
+    color: var(--pm-yellow);
+    background: var(--pm-yellow-soft);
+    font-size: 7px;
+    font-weight: 750;
+    vertical-align: 1px;
+  }
   .pm-marker-section {
     border-block-end: 1px solid var(--pm-border);
   }

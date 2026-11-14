@@ -34,6 +34,9 @@ export function resolveProseMirrorDevtoolsSolidProps(
     get devtoolsOpen() {
       return hostProps?.devtoolsOpen ?? options.devtoolsOpen ?? true;
     },
+    get experimental() {
+      return options.experimental;
+    },
     get extensions() {
       return options.extensions;
     },

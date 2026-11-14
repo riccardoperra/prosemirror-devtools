@@ -1,6 +1,6 @@
 import { readInstanceState } from "../../store/instance-state";
 import { DOMSerializer } from "prosemirror-model";
-import { createMemo, createSignal, Show, type JSX } from "solid-js";
+import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 
 import { panelStyles } from "../../styles";
 
@@ -11,9 +11,23 @@ import { Badge } from "../../ui/badge";
 import { ResizableSplit } from "../../ui/resizable-split";
 import { DocumentTree, getDocumentNodeRange } from "./document-tree";
 import { useDocumentSelection } from "./use-document-selection";
-import { useOptionalPanelContext } from "../../panel-provider";
+import { useOptionalPanelContext, usePanelExperiments } from "../../panel-provider";
+import type { ExperimentalFeature } from "../../../core/panel-types";
 
 type DocumentView = "structure" | "json" | "html";
+
+type DocumentViewDefinition = Readonly<{
+  id: DocumentView;
+  label: string;
+  ariaLabel: string;
+  experiment?: ExperimentalFeature;
+}>;
+
+const DOCUMENT_VIEWS: readonly DocumentViewDefinition[] = [
+  { id: "html", label: "HTML", ariaLabel: "Show exported document HTML" },
+  { id: "structure", label: "Structure", ariaLabel: "Show document structure" },
+  { id: "json", label: "JSON", ariaLabel: "Show document JSON" },
+];
 
 export interface StateViewProps {
   instance: RegisteredProseMirrorInstance;
@@ -22,7 +36,14 @@ export interface StateViewProps {
 export function StateView(props: StateViewProps): JSX.Element {
   const state = createMemo(() => readInstanceState(props.instance));
   const inspection = createMemo(() => inspectState(state()));
-  const [documentView, setDocumentView] = createSignal<DocumentView>("structure");
+  const experiments = usePanelExperiments();
+  const documentViews = createMemo(() =>
+    DOCUMENT_VIEWS.filter(({ experiment }) => !experiment || experiments().has(experiment)),
+  );
+  const [requestedView, setDocumentView] = createSignal<DocumentView>("structure");
+  const documentView = createMemo<DocumentView>(() =>
+    documentViews().some(({ id }) => id === requestedView()) ? requestedView() : "structure",
+  );
   const { selected, select, selectNode, reveal } = useDocumentSelection(
     () => props.instance.view,
     state,
@@ -71,30 +92,20 @@ export function StateView(props: StateViewProps): JSX.Element {
           <span class={panelStyles.pmPaneTitle}>Document</span>
           <span class={panelStyles.pmSpacer} />
           <div aria-label="Document view" class={panelStyles.pmViewSwitch} role="group">
-            <button
-              aria-label="Show exported document HTML"
-              aria-pressed={documentView() === "html"}
-              onClick={() => setDocumentView("html")}
-              type="button"
-            >
-              HTML
-            </button>
-            <button
-              aria-label="Show document structure"
-              aria-pressed={documentView() === "structure"}
-              onClick={() => setDocumentView("structure")}
-              type="button"
-            >
-              Structure
-            </button>
-            <button
-              aria-label="Show document JSON"
-              aria-pressed={documentView() === "json"}
-              onClick={() => setDocumentView("json")}
-              type="button"
-            >
-              JSON
-            </button>
+            <For each={documentViews()}>
+              {(view) => (
+                <button
+                  aria-label={view.ariaLabel}
+                  aria-pressed={documentView() === view.id}
+                  data-experimental={view.experiment ? "true" : undefined}
+                  onClick={() => setDocumentView(view.id)}
+                  title={view.experiment ? "Experimental view. It may change." : undefined}
+                  type="button"
+                >
+                  {view.label}
+                </button>
+              )}
+            </For>
           </div>
           <Badge>{state().doc.childCount} roots</Badge>
         </div>

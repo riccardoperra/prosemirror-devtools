@@ -14,6 +14,11 @@ import {
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import type { EditorView } from "prosemirror-view";
 import type { DevtoolsDataAccess } from "../core/data-client";
+import {
+  resolveExperimentalFeatures,
+  type ExperimentalFeature,
+  type ExperimentalFeatures,
+} from "../core/panel-types";
 import { createProseMirrorInspectionClient } from "../inspection/client";
 import type {
   InspectionLimits,
@@ -104,6 +109,7 @@ type PanelContextValue = Readonly<{
   meta: PanelMeta;
   inspection: PanelInspectionContext;
   dispatchPresenters: Accessor<DispatchPresenters | undefined>;
+  experiments: Accessor<ReadonlySet<ExperimentalFeature>>;
 }>;
 
 const PanelContext = createContext<PanelContextValue>();
@@ -133,6 +139,7 @@ export interface PanelProviderProps {
   onActivePanelChange: ((panelId: string) => void) | undefined;
   panels: readonly ResolvedPanelDefinition[];
   dispatchPresenters?: DispatchPresenters;
+  experimental: ExperimentalFeatures | undefined;
   styleTarget: Document | undefined;
   children: JSX.Element;
 }
@@ -226,6 +233,11 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
     });
   });
 
+  const experiments = createMemo(() => resolveExperimentalFeatures(props.experimental), undefined, {
+    equals: (previous, next) =>
+      previous.size === next.size && [...next].every((feature) => previous.has(feature)),
+  });
+
   const cycleTheme = (): void => {
     setThemePreference((current) => {
       const value = current.source === props.theme ? current.value : props.theme;
@@ -308,6 +320,7 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
     meta,
     inspection,
     dispatchPresenters: () => props.dispatchPresenters,
+    experiments,
   };
 
   return <PanelContext.Provider value={context}>{props.children}</PanelContext.Provider>;
@@ -343,6 +356,13 @@ export function usePanelMeta(): PanelMeta {
 
 export function usePanelInspection(): PanelInspectionContext {
   return usePanelContext().inspection;
+}
+
+const NO_EXPERIMENTS: ReadonlySet<ExperimentalFeature> = new Set();
+
+/** Enabled experimental features. Empty outside a panel provider. */
+export function usePanelExperiments(): Accessor<ReadonlySet<ExperimentalFeature>> {
+  return useContext(PanelContext)?.experiments ?? (() => NO_EXPERIMENTS);
 }
 
 export function useOptionalPanelInspection(): PanelInspectionContext | undefined {
