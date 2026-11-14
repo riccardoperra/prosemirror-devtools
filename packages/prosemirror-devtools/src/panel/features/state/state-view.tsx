@@ -123,10 +123,7 @@ export function StateView(props: StateViewProps): JSX.Element {
                   HTML serializes document content through the schema. Root attributes remain in
                   JSON. NodeViews are not HTML serializers.
                 </p>
-                <pre
-                  aria-label="Exported document HTML"
-                  style={{ "white-space": "pre-wrap", "overflow-wrap": "anywhere" }}
-                >
+                <pre aria-label="Exported document HTML" class={panelStyles.pmPreWrap}>
                   {html()?.kind === "available"
                     ? html()?.value
                     : `HTML unavailable: ${html()?.reason ?? ""}`}

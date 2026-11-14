@@ -8,6 +8,7 @@ import { EventDetails, EventStatusBadge } from "./event-details";
 import { eventSource, useEvents, type EventStatus } from "./use-events";
 import type { DevtoolsDiagnosticEvent } from "../../../core/diagnostics";
 import { useOptionalPanelContext } from "../../panel-provider";
+import { EmptyState } from "../../ui/empty-state";
 
 const SETUP_EXAMPLE = `const session = createProseMirrorDevtoolsSession({
   id: "editor",
@@ -27,26 +28,16 @@ session.diagnostics
 
 function EventsSetup(): JSX.Element {
   return (
-    <div class={panelStyles.pmScroll} style={{ padding: "16px" }}>
+    <div class={cx(panelStyles.pmScroll, panelStyles.pmSetup)}>
       <h3>Enable event and command tracing</h3>
       <p>
         Opt into diagnostics and instrument plugins before creating the editor. Handler calls appear
         even when they do not dispatch a transaction.
       </p>
-      <pre
-        class={panelStyles.pmMono}
-        style={{ overflow: "auto", padding: "12px", background: "var(--pm-panel-2)" }}
-      >
-        {SETUP_EXAMPLE}
-      </pre>
+      <pre class={cx(panelStyles.pmMono, panelStyles.pmSetupCode)}>{SETUP_EXAMPLE}</pre>
       <h4>Name application commands</h4>
       <p>Wrap a command invocation to distinguish it from anonymous keymap callbacks.</p>
-      <pre
-        class={panelStyles.pmMono}
-        style={{ overflow: "auto", padding: "12px", background: "var(--pm-panel-2)" }}
-      >
-        {COMMAND_EXAMPLE}
-      </pre>
+      <pre class={cx(panelStyles.pmMono, panelStyles.pmSetupCode)}>{COMMAND_EXAMPLE}</pre>
       <p>Call session.dispose() when destroying the editor.</p>
       <p>
         Uninstrumented handlers are outside this trace. Clipboard content and DOM events are not
@@ -108,14 +99,7 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
               placeholder="Search handler, command, plugin…"
               value={events.query()}
             />
-            <div
-              style={{
-                display: "grid",
-                "grid-template-columns": "repeat(2, minmax(0, 1fr))",
-                gap: "7px",
-                width: "100%",
-              }}
-            >
+            <div class={panelStyles.pmFilterGrid}>
               <select
                 aria-label="Filter event source"
                 class={panelStyles.pmSearch}
@@ -166,13 +150,13 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
           <Show
             when={events.visible().length > 0}
             fallback={
-              <div class={panelStyles.pmPerformanceNote}>
+              <EmptyState>
                 {events.events().length > 0
                   ? "No calls match these filters."
                   : events.uninstrumented()
                     ? "No traced commands recorded. Handler calls are not captured in this session."
                     : "No calls recorded. Use the editor’s keys, paste, or a named command. No transaction is required."}
-              </div>
+              </EmptyState>
             }
           >
             <ul aria-label="Observed event and command calls" class={panelStyles.pmList}>
@@ -188,7 +172,7 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
                       type="button"
                     >
                       <span class={panelStyles.pmMono}>#{event.id}</span>
-                      <span class={panelStyles.pmRowMain} style={{ display: "grid", gap: "3px" }}>
+                      <span class={cx(panelStyles.pmRowMain, panelStyles.pmRowStack)}>
                         <span class={cx(panelStyles.pmRowTitle, panelStyles.pmMono)}>
                           {event.name}
                         </span>
@@ -197,7 +181,7 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
                           {event.parentId === null ? "" : ` · parent #${event.parentId}`}
                         </span>
                       </span>
-                      <span style={{ display: "grid", gap: "3px", "justify-items": "end" }}>
+                      <span class={panelStyles.pmRowAside}>
                         <EventStatusBadge event={event} />
                         <span class={panelStyles.pmRowDetail}>{formatMs(event.duration)}</span>
                       </span>
@@ -206,7 +190,7 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
                 )}
               </For>
             </ul>
-            <div class={panelStyles.pmPaneHeader} style={{ position: "static" }}>
+            <div class={cx(panelStyles.pmPaneHeader, panelStyles.pmPaneStatic)}>
               <button
                 class={panelStyles.pmButton}
                 disabled={events.page() >= events.pageCount() - 1}
@@ -233,9 +217,7 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
           <Show
             when={events.selected()}
             fallback={
-              <div class={panelStyles.pmEmpty}>
-                Select an observed call to inspect its result and dispatches.
-              </div>
+              <EmptyState>Select an observed call to inspect its result and dispatches.</EmptyState>
             }
           >
             {(event) => (

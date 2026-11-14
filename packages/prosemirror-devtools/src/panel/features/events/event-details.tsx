@@ -4,7 +4,7 @@ import type { DevtoolsDiagnosticEvent } from "../../../core/diagnostics";
 import type { TransactionRecord } from "../../../core/types";
 import { formatDateTime, formatMs } from "../../formatters";
 import { JsonTree } from "../../json-tree";
-import { panelStyles } from "../../styles";
+import { cx, panelStyles } from "../../styles";
 import { Badge } from "../../ui/badge";
 import { DispatchEffects } from "../dispatch/dispatch-effects";
 import { EVENT_PAGE_SIZE, eventSource, eventStatus } from "./use-events";
@@ -54,7 +54,7 @@ export function EventDetails(props: {
         <EventStatusBadge event={props.event} />
         <Badge>{formatMs(props.event.duration)}</Badge>
       </div>
-      <div style={{ padding: "10px", "overflow-wrap": "anywhere" }}>
+      <div class={cx(panelStyles.pmSectionBody, panelStyles.pmSectionBodyStart)}>
         <strong class={panelStyles.pmMono}>{props.event.name}</strong>
         <p>{eventSource(props.event)}</p>
         <Show when={props.onInspectPlugin && props.event.pluginKey}>
@@ -77,23 +77,14 @@ export function EventDetails(props: {
           <div class={panelStyles.pmDetailHeading}>
             <span class={panelStyles.pmSectionTitle}>Thrown error</span>
           </div>
-          <pre
-            style={{
-              margin: "0",
-              padding: "10px",
-              "white-space": "pre-wrap",
-              "overflow-wrap": "anywhere",
-            }}
-          >
-            {props.event.error}
-          </pre>
+          <pre class={panelStyles.pmCode}>{props.event.error}</pre>
         </div>
       </Show>
       <div class={panelStyles.pmDetailBlock}>
         <div class={panelStyles.pmDetailHeading}>
           <span class={panelStyles.pmSectionTitle}>Observed call chain</span>
         </div>
-        <div style={{ padding: "10px", display: "grid", gap: "8px" }}>
+        <div class={cx(panelStyles.pmSectionBody, panelStyles.pmSectionBodyLoose)}>
           <Show
             when={props.event.parentId !== null}
             fallback={<span>Top-level observed call.</span>}
@@ -104,8 +95,7 @@ export function EventDetails(props: {
             >
               {(event) => (
                 <button
-                  class={panelStyles.pmButton}
-                  style={{ "white-space": "normal", "overflow-wrap": "anywhere" }}
+                  class={cx(panelStyles.pmButton, panelStyles.pmWrapText)}
                   onClick={() => props.onSelect(event().id)}
                   type="button"
                 >
@@ -117,8 +107,7 @@ export function EventDetails(props: {
           <For each={visibleChildren()}>
             {(event) => (
               <button
-                class={panelStyles.pmButton}
-                style={{ "white-space": "normal", "overflow-wrap": "anywhere" }}
+                class={cx(panelStyles.pmButton, panelStyles.pmWrapText)}
                 onClick={() => props.onSelect(event.id)}
                 type="button"
               >
@@ -138,7 +127,7 @@ export function EventDetails(props: {
         <div class={panelStyles.pmDetailHeading}>
           <span class={panelStyles.pmSectionTitle}>Dispatches during this call</span>
         </div>
-        <div style={{ padding: "10px", display: "grid", gap: "6px" }}>
+        <div class={cx(panelStyles.pmSectionBody, panelStyles.pmSectionBodyLoose)}>
           <Show
             when={props.event.dispatches.length > 0}
             fallback={<span>No dispatch observed.</span>}

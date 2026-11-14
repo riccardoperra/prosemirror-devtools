@@ -103,7 +103,7 @@
 }
 .pm-inspection-context-heading > h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 650;
 }
 .pm-inspection-summary,
@@ -412,16 +412,6 @@
   }
   .pm-performance-view {
     background: var(--pm-bg);
-  }
-  .pm-empty {
-    block-size: 100%;
-    min-block-size: 0;
-    overflow: auto;
-    display: grid;
-    place-items: center;
-    color: var(--pm-muted);
-    text-align: center;
-    padding: 32px;
   }
   .pm-empty-mark {
     inline-size: 42px;
@@ -921,13 +911,29 @@
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
   }
+  /* Rows wrap instead of truncating: step and duration metadata keeps its full text and badges
+     move to their own line when the list is narrow. */
   .pm-history-row {
-    display: grid;
-    grid-template-columns: var(--pm-history-id-width, 4ch) minmax(0, 1fr) auto;
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+  .pm-history-row > .pm-transaction-time {
+    flex: none;
+    inline-size: var(--pm-history-id-width, 4ch);
   }
   .pm-history-row .pm-row-main {
-    display: grid;
-    grid-template-columns: 12.5ch minmax(0, 1fr);
+    flex: 1 1 0;
+    min-inline-size: auto;
+    flex-wrap: wrap;
+    column-gap: 6px;
+  }
+  .pm-history-row .pm-row-title {
+    flex: none;
+    min-inline-size: 12.5ch;
+  }
+  .pm-history-row .pm-row-detail {
+    flex: none;
+    overflow: visible;
   }
   .pm-transaction-time {
     inline-size: 100%;
@@ -942,12 +948,15 @@
   }
   .pm-history-badges {
     min-inline-size: 0;
+    margin-inline-start: auto;
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 4px;
   }
   .pm-history-effects {
-    grid-column: 2 / -1;
+    flex-basis: 100%;
+    padding-inline-start: calc(var(--pm-history-id-width, 4ch) + 7px);
     display: flex;
     flex-wrap: wrap;
     gap: 4px 8px;
@@ -1127,11 +1136,6 @@
     border: 1px solid var(--pm-border);
     border-radius: 6px;
     background: var(--pm-bg);
-  }
-  .pm-inspector-empty {
-    padding: 24px 12px;
-    color: var(--pm-muted);
-    text-align: center;
   }
   .pm-transaction-stack {
     display: grid;
@@ -1912,11 +1916,6 @@
     border-radius: inherit;
     background: var(--pm-accent);
   }
-  .pm-plugin-timing-empty {
-    padding: 18px 10px;
-    color: var(--pm-muted);
-    text-align: center;
-  }
   .pm-performance-note {
     margin: 0;
     padding: 8px 10px;
@@ -1924,6 +1923,7 @@
     color: var(--pm-muted);
     background: var(--pm-panel-2);
     font-size: 10px;
+    overflow-wrap: anywhere;
   }
   .pm-performance-note strong {
     color: var(--pm-text);
@@ -2006,6 +2006,123 @@
     border-radius: 8px;
     background: var(--pm-yellow-soft);
     color: var(--pm-yellow);
+  }
+  /* Empty and loading state (ui/empty-state.tsx). */
+  .pm-empty-state {
+    box-sizing: border-box;
+    flex: 1 0 auto;
+    min-block-size: 96px;
+    padding: 24px 16px;
+    display: grid;
+    place-items: center;
+    color: var(--pm-muted);
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .pm-empty-state:only-child {
+    block-size: 100%;
+  }
+  :is(.pm-pane, .pm-scroll):has(> .pm-empty-state) {
+    display: flex;
+    flex-direction: column;
+  }
+  .pm-empty-state-content {
+    max-inline-size: 48ch;
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+  }
+  .pm-empty-state-text,
+  .pm-empty-state-detail {
+    margin: 0;
+  }
+  .pm-empty-state-detail {
+    font-size: 11px;
+  }
+  .pm-empty-state-action {
+    margin-block-start: 4px;
+  }
+  /* Layout helpers that replace recurring inline styles. */
+  .pm-row-stack {
+    display: grid;
+    gap: 2px;
+  }
+  .pm-row-aside {
+    flex: none;
+    display: grid;
+    gap: 2px;
+    justify-items: end;
+  }
+  .pm-pane-header.pm-pane-static {
+    position: static;
+  }
+  .pm-filter-grid {
+    inline-size: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .pm-column-fill {
+    display: flex;
+    flex-direction: column;
+    block-size: 100%;
+    min-block-size: 0;
+  }
+  .pm-column-fill > .pm-split {
+    flex: 1;
+    min-block-size: 0;
+  }
+  .pm-pre-wrap {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .pm-wrap-text {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .pm-section-body.pm-section-body-loose {
+    gap: 8px;
+  }
+  .pm-section-body.pm-section-body-start {
+    justify-items: start;
+    overflow-wrap: anywhere;
+  }
+  .pm-section-body-start > p {
+    margin: 0;
+  }
+  .pm-number-input {
+    inline-size: 90px;
+  }
+  .pm-setup {
+    padding: 16px;
+  }
+  .pm-setup > :is(h2, h3) {
+    margin: 0 0 8px;
+    font-size: 13px;
+  }
+  .pm-setup > h4 {
+    margin: 16px 0 8px;
+    font-size: 12px;
+  }
+  .pm-setup > p {
+    margin: 0 0 8px;
+  }
+  .pm-setup-code {
+    margin: 0 0 12px;
+    padding: 12px;
+    overflow: auto;
+    border: 0;
+    color: var(--pm-text);
+    background: var(--pm-panel-2);
+  }
+  .pm-table-scroll {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pm-border-strong) transparent;
+  }
+  .pm-table-scroll > .pm-table th {
+    white-space: nowrap;
   }
   @container (max-width: 780px) {
     .pm-dispatch-workspace[data-layout="split"] {

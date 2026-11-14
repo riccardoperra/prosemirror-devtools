@@ -11,6 +11,7 @@ import { cx, ensurePanelStyles, panelStyles } from "./styles";
 import { Badge } from "./ui/badge";
 import { CopyDiagnosticContext } from "./ui/copy-diagnostic-context";
 import { InspectionReadout } from "./ui/inspection-readout";
+import { EmptyState } from "./ui/empty-state";
 
 export interface RecordingInspectorProps {
   recording: ProseMirrorRecording;
@@ -114,7 +115,7 @@ export function RecordingInspector(props: RecordingInspectorProps): JSX.Element 
           <Badge tone="yellow">Offline source</Badge>
           <span>{props.recording.editor.label}</span>
         </div>
-        <p class={panelStyles.pmPerformanceNote} style={{ "overflow-wrap": "anywhere" }}>
+        <p class={panelStyles.pmPerformanceNote}>
           Read-only source {client().source.id}. Recording {props.recording.id}. These observations
           do not attest to an action in the current browser.
         </p>
@@ -177,16 +178,16 @@ export function RecordingInspector(props: RecordingInspectorProps): JSX.Element 
           <Show
             when={result()}
             fallback={
-              <p role="status" class={panelStyles.pmPerformanceNote}>
+              <EmptyState role="status">
                 Choose a dispatch read point to inspect its details.
-              </p>
+              </EmptyState>
             }
           >
             {(value) => <InspectionReadout label={label()} result={value()} />}
           </Show>
           <details class={panelStyles.pmDisclosure} aria-label="Recording origin and omissions">
             <summary>Recording origin and omissions</summary>
-            <p class={panelStyles.pmPerformanceNote} style={{ "overflow-wrap": "anywhere" }}>
+            <p class={panelStyles.pmPerformanceNote}>
               Origin editor {props.recording.origin.target.editorId}, session{" "}
               {props.recording.origin.target.sessionId}, generation{" "}
               {props.recording.origin.target.generation}. Captured{" "}

@@ -2,10 +2,27 @@ import { children, createSignal, createUniqueId, onCleanup, onMount, type JSX } 
 
 import { cx, panelStyles } from "../styles";
 
-const MIN_PRIMARY = 180;
-const MIN_DETAIL = 240;
-const DIVIDER_SIZE = 10;
+export const MIN_PRIMARY = 180;
+export const MIN_DETAIL = 240;
+export const DIVIDER_SIZE = 10;
+/** Share of the container the list pane takes until the user resizes it. */
+export const DEFAULT_PRIMARY_RATIO = 0.4;
 const KEY_STEP = 24;
+
+/** Largest list width that still leaves the detail pane its minimum width. */
+export function maxPrimaryWidth(containerWidth: number): number {
+  return Math.max(MIN_PRIMARY, containerWidth - MIN_DETAIL - DIVIDER_SIZE);
+}
+
+/** Default list width: a proportion of the container, clamped by both pane minimums. */
+export function defaultPrimaryWidth(containerWidth: number): number {
+  return Math.round(
+    Math.max(
+      MIN_PRIMARY,
+      Math.min(maxPrimaryWidth(containerWidth), containerWidth * DEFAULT_PRIMARY_RATIO),
+    ),
+  );
+}
 
 interface SplitDrag {
   pointerId: number;
@@ -24,21 +41,25 @@ interface ResizableSplitProps {
 export function ResizableSplit(props: ResizableSplitProps): JSX.Element {
   const panes = children(() => props.children);
   const primaryId = `pm-split-primary-${createUniqueId()}`;
-  const [preferredWidth, setPreferredWidth] = createSignal(300);
-  const [maxWidth, setMaxWidth] = createSignal(300);
+  // Undefined until the user resizes: the list then follows DEFAULT_PRIMARY_RATIO of the container.
+  const [preferredWidth, setPreferredWidth] = createSignal<number>();
+  const [containerWidth, setContainerWidth] = createSignal(0);
   const [drag, setDrag] = createSignal<SplitDrag>();
   let container!: HTMLDivElement;
 
+  const maxWidth = () => maxPrimaryWidth(containerWidth());
   const clampWidth = (value: number) => Math.max(MIN_PRIMARY, Math.min(maxWidth(), value));
-  const currentWidth = () => clampWidth(preferredWidth());
+  const currentWidth = () => {
+    const preferred = preferredWidth();
+    return preferred === undefined ? defaultPrimaryWidth(containerWidth()) : clampWidth(preferred);
+  };
   const direction = () =>
     container.ownerDocument.defaultView?.getComputedStyle(container).direction === "rtl" ? -1 : 1;
 
   onMount(() => {
     const primary = container.firstElementChild;
     if (primary) primary.id = primaryId;
-    const measure = () =>
-      setMaxWidth(Math.max(MIN_PRIMARY, container.clientWidth - MIN_DETAIL - DIVIDER_SIZE));
+    const measure = () => setContainerWidth(container.clientWidth);
     measure();
     const Observer = container.ownerDocument.defaultView?.ResizeObserver;
     if (!Observer) return;
@@ -58,7 +79,10 @@ export function ResizableSplit(props: ResizableSplitProps): JSX.Element {
         "--pm-split-min": `${MIN_PRIMARY}px`,
         "--pm-split-detail-min": `${MIN_DETAIL}px`,
         "--pm-split-divider-size": `${DIVIDER_SIZE}px`,
-        "--pm-split-width": `${preferredWidth()}px`,
+        "--pm-split-width":
+          preferredWidth() === undefined
+            ? `${DEFAULT_PRIMARY_RATIO * 100}%`
+            : `${preferredWidth()}px`,
       }}
     >
       {panes.toArray()[0]}

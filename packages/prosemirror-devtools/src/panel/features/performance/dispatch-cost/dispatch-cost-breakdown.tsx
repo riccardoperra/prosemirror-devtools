@@ -9,6 +9,7 @@ import { PluginTimingTimeline } from "../timeline/plugin-timing-timeline";
 import { getPluginRankingVisibility, type DispatchCostView } from "./model";
 import { PluginCostRanking } from "./plugin-cost-ranking";
 import { DispatchCostSummary } from "./summary";
+import { EmptyState } from "../../../ui/empty-state";
 
 interface DispatchCoverageWarningProps {
   record: TransactionRecord;
@@ -88,11 +89,7 @@ export function DispatchCostBreakdown(props: DispatchCostBreakdownProps): JSX.El
       <Show when={view() === "ranking"} fallback={<PluginTimingTimeline record={props.record} />}>
         <Show
           when={groups().length > 0}
-          fallback={
-            <div class={panelStyles.pmPluginTimingEmpty}>
-              No instrumented plugin hooks in this dispatch.
-            </div>
-          }
+          fallback={<EmptyState>No instrumented plugin hooks in this dispatch.</EmptyState>}
         >
           <PluginCostRanking
             dispatchDuration={props.record.totalDuration}

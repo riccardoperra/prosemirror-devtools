@@ -2,6 +2,7 @@ import { For, Show, type JSX } from "solid-js";
 
 import type { compareSnapshots } from "../../../core/snapshots";
 import { panelStyles } from "../../styles";
+import { EmptyState } from "../../ui/empty-state";
 
 function differenceText(value: unknown): string {
   const text = JSON.stringify(value, null, 2);
@@ -16,11 +17,7 @@ export function SnapshotComparison(props: {
     <section aria-label={props.label}>
       <Show
         when={props.comparison.differences.length > 0}
-        fallback={
-          <p class={panelStyles.pmPerformanceNote}>
-            Document, root attributes, and selection are identical.
-          </p>
-        }
+        fallback={<EmptyState>Document, root attributes, and selection are identical.</EmptyState>}
       >
         <table class={panelStyles.pmTable} aria-label={props.label}>
           <thead>
@@ -38,12 +35,12 @@ export function SnapshotComparison(props: {
                     <code>{difference.path}</code> <span>{difference.kind}</span>
                   </th>
                   <td>
-                    <pre style={{ "white-space": "pre-wrap", "overflow-wrap": "anywhere" }}>
+                    <pre class={panelStyles.pmPreWrap}>
                       {difference.kind === "added" ? "Absent" : differenceText(difference.before)}
                     </pre>
                   </td>
                   <td>
-                    <pre style={{ "white-space": "pre-wrap", "overflow-wrap": "anywhere" }}>
+                    <pre class={panelStyles.pmPreWrap}>
                       {difference.kind === "removed" ? "Absent" : differenceText(difference.after)}
                     </pre>
                   </td>

@@ -9,6 +9,7 @@ import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
 import { ResizableSplit } from "../../ui/resizable-split";
 import { usePluginSelection } from "./use-plugin-selection";
+import { EmptyState } from "../../ui/empty-state";
 
 export interface PluginsViewProps {
   instance: RegisteredProseMirrorInstance;
@@ -56,10 +57,7 @@ export function PluginsView(props: PluginsViewProps): JSX.Element {
         </ul>
       </div>
       <div class={panelStyles.pmPane}>
-        <Show
-          when={selected()}
-          fallback={<div class={panelStyles.pmEmpty}>No matching plugins.</div>}
-        >
+        <Show when={selected()} fallback={<EmptyState>No matching plugins.</EmptyState>}>
           {(plugin) => (
             <>
               <div class={panelStyles.pmDetailHeading}>

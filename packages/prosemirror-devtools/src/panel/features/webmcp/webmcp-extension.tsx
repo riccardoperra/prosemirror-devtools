@@ -12,6 +12,7 @@ import { formatMs } from "../../formatters";
 import { cx, panelStyles } from "../../styles";
 import { Badge } from "../../ui/badge";
 import { ResizableSplit } from "../../ui/resizable-split";
+import { EmptyState } from "../../ui/empty-state";
 
 type Recorder = ReturnType<typeof createWebMcpRecorder>;
 type BadgeTone = "green" | "yellow" | "red" | "blue" | undefined;
@@ -163,9 +164,7 @@ function CallHistory(props: { recorder: Recorder; calls: ReadonlyMap<number, Web
         <Show
           when={props.calls.size > 0}
           fallback={
-            <p class={panelStyles.pmPerformanceNote}>
-              No calls recorded from native WebMCP or Chrome DevTools MCP.
-            </p>
+            <EmptyState>No calls recorded from native WebMCP or Chrome DevTools MCP.</EmptyState>
           }
         >
           <ul aria-label="WebMCP call history" class={panelStyles.pmList}>
@@ -183,7 +182,7 @@ function CallHistory(props: { recorder: Recorder; calls: ReadonlyMap<number, Web
                         type="button"
                       >
                         <span class={panelStyles.pmMono}>#{call().id}</span>
-                        <span class={panelStyles.pmRowMain} style={{ display: "grid", gap: "3px" }}>
+                        <span class={cx(panelStyles.pmRowMain, panelStyles.pmRowStack)}>
                           <span class={cx(panelStyles.pmRowTitle, panelStyles.pmMono)}>
                             {call().name}
                           </span>
@@ -195,7 +194,7 @@ function CallHistory(props: { recorder: Recorder; calls: ReadonlyMap<number, Web
                             {new Date(call().timestamp).toLocaleTimeString()}
                           </span>
                         </span>
-                        <span style={{ display: "grid", gap: "3px", "justify-items": "end" }}>
+                        <span class={panelStyles.pmRowAside}>
                           <OutcomeBadge call={call()} />
                           <Show when={callDuration(call())}>
                             {(duration) => (
@@ -216,9 +215,7 @@ function CallHistory(props: { recorder: Recorder; calls: ReadonlyMap<number, Web
         <Show
           when={selected()}
           fallback={
-            <div class={panelStyles.pmEmpty}>
-              Calls from an agent appear here with their input and result.
-            </div>
+            <EmptyState>Calls from an agent appear here with their input and result.</EmptyState>
           }
         >
           {(call) => <CallDetails call={call()} />}
@@ -324,7 +321,7 @@ function WebMcpView(props: { recorder: Recorder }): JSX.Element {
 
   return (
     <div class={panelStyles.pmWebMcpLayout}>
-      <div class={panelStyles.pmPaneHeader} style={{ position: "static" }}>
+      <div class={cx(panelStyles.pmPaneHeader, panelStyles.pmPaneStatic)}>
         <div class={panelStyles.pmViewSwitch} role="group" aria-label="WebMCP view">
           <button aria-pressed={view() === "calls"} onClick={() => setView("calls")} type="button">
             Call history ({calls().size})
