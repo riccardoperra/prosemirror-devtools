@@ -111,7 +111,7 @@ export function InspectionContextView(): JSX.Element {
         </section>
       </div>
       <details
-        class={panelStyles.pmDocumentDisclosure}
+        class={panelStyles.pmDisclosure}
         open={detailsOpen()}
         onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
       >

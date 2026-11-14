@@ -151,7 +151,7 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
           <JsonTree defaultExpandedDepth={1} value={inspection().ancestors} />
         </div>
         <details
-          class={panelStyles.pmDocumentDisclosure}
+          class={panelStyles.pmDisclosure}
           open={contextOpen()}
           onToggle={(event) => setContextOpen(event.currentTarget.open)}
         >

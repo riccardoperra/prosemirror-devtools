@@ -57,7 +57,9 @@ timings and badges.
 
 Rules:
 
-- **10px is the minimum.** Chart axis ticks may use 9px. No other text goes below 10px.
+- **10px is the minimum.** Text inside a chart (axis ticks, frame-budget label, timeline sequence
+  numbers) may use 9px. The decorative, `aria-hidden` brand mark is exempt. No other text goes
+  below 10px.
 - Weights are 500, 650 and 700. Do not introduce 750 or 800.
 - Section titles use the `pmSectionTitle` style: caption size, weight 700, uppercase, `0.06em`
   tracking, `--pm-muted`. Write the source text in sentence case; CSS uppercases it.
@@ -130,9 +132,11 @@ header.
 
 A titled block inside a detail pane or a sections layout.
 
+- Container: `pmSection` (`<section>` with an `aria-label`): `--pm-panel` background and a bottom
+  border.
 - Heading: `pmDetailHeading`, 32px minimum height, `--pm-panel-2` background, section title,
   then badges, then right-aligned actions. Square corners.
-- Body: `--pm-panel` background, 10px padding, bottom border.
+- Body: content directly inside the section, on the `--pm-panel` background.
 - Sections stack directly. No margin between them: the background must not show through as an
   empty strip.
 
@@ -140,7 +144,7 @@ A titled block inside a detail pane or a sections layout.
 
 Explanatory text that is not data. Caption size, `--pm-muted`.
 
-- Inside a section body, a note is plain muted text with no band.
+- Inside a section body, a note is plain muted text with no band: `pmSectionNote`.
 - A note that applies to a whole pane sits directly under the pane header as a single
   `--pm-panel-2` band.
 - Never stack two bands (heading, note, heading, note). Merge the note into the section body.
@@ -152,8 +156,10 @@ act on or understand before trusting the data (for example missing instrumentati
 
 ### Disclosure
 
-`<details>` with a body-size summary in `--pm-muted`, a 6px chevron, and the same 10px
-padding as section bodies. Never larger than body text.
+`pmDisclosure` on `<details>`: a body-size summary in `--pm-muted` on `--pm-panel`, a 6px
+chevron, 10px horizontal padding, a top border, and `--pm-panel-2` only on hover. Never larger
+than body text. Tab-specific classes may add layout for the disclosed content, not a different
+summary style.
 
 ### Empty state
 
@@ -231,10 +237,11 @@ booleans `--pm-accent`, null and summaries `--pm-faint`. Toggles and copy action
 
 ## Host isolation
 
-The panel resets every property it relies on for its own controls. Inside `.pm-devtools`:
+The panel resets every property it relies on for its own controls and containers. Inside
+`.pm-devtools`:
 
 ```css
-.pm-devtools :is(button, input, select, textarea) {
+.pm-devtools :where(button, input, select, textarea) {
   margin: 0;
   border-radius: 0;
   box-shadow: none;
@@ -242,9 +249,16 @@ The panel resets every property it relies on for its own controls. Inside `.pm-d
   letter-spacing: inherit;
   line-height: inherit;
 }
+.pm-devtools :where(section, article, aside, nav, header, footer, main) {
+  margin: 0;
+}
 ```
 
-Every component then sets its own radius, padding, border and background. Test the panel inside
+`:where()` keeps the specificity of a single class, so the reset beats host element selectors
+such as `button {}` while component classes, declared later, still win. Host rules that are more
+specific than one class (for example `.app button`) can still leak; components must set every
+property they depend on. Every component then sets its own radius, padding, border and
+background. Test the panel inside
 a host that styles `button`, `input` and `select` globally. The standalone demo does this
 (`packages/standalone-demo/src/style.css`), so any rounding or padding that appears there and not
 in this guide is a leak.
@@ -285,9 +299,9 @@ impact.
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Selected rows look like rounded chips with a left bar: `inset 2px` accent shadow plus a 5px radius leaked from the host. The document tree uses background only, so selection looks different between tabs. | `.pm-list-row[aria-pressed="true"]`, `.pm-doc-row[data-inspected="true"]`, `.pm-doc-row[data-editor-selection]` | Apply the [list row](#list-row) states. Replace the blue left bar for the editor selection with a marker in the row. **Fixed:** square rows, background only; the existing selection badge marks the editor selection. |
 | 2   | Host styles leak into panel buttons. Every button without its own radius (list rows, view switches, JSON toggles, carets, inline actions) inherits the host's `border-radius: 5px`.                         | Global button reset in `panel.module.css`                                                                       | Add the [host isolation](#host-isolation) reset. **Fixed.**                                                                                                                                                            |
-| 3   | Text below the minimum: 8.5px, 9px and 9.5px in 14 rules, including the view switch (9px) and chart summaries.                                                                                              | `panel.module.css`                                                                                              | Move to the 10px caption step; keep 9px only for chart ticks.                                                                                                                                                          |
-| 4   | Stacked grey bands in Plugins, Rendering and Schema: pane note, heading, note, disclosure, each on `--pm-panel-2`, with empty strips of background between sections.                                        | Inspection read-out sections                                                                                    | Use the [section](#section) and [note](#note) rules: one heading band, note inside the body, no gaps.                                                                                                                  |
-| 5   | Disclosure summaries ("Coverage and read point", "Technical details", "Related evidence") are larger or smaller than body text and vary between tabs.                                                       | Inspection read-out, Context, dispatch inspector                                                                | Apply the [disclosure](#disclosure) rule.                                                                                                                                                                              |
+| 3   | Text below the minimum: 8, 8.5, 9 and 9.5px in 26 rules (`font-size` and `font` shorthands), including the view switch (9px) and chart summaries.                                                           | `panel.module.css`                                                                                              | Move to the 10px caption step; keep 9px only for chart ticks. **Fixed:** 10px everywhere except the chart and brand exceptions.                                                                                        |
+| 4   | Stacked grey bands in Plugins, Rendering and Schema: pane note, heading, note, disclosure, each on `--pm-panel-2`, with empty strips of background between sections.                                        | Inspection read-out sections                                                                                    | Use the [section](#section) and [note](#note) rules: one heading band, note inside the body, no gaps. **Fixed:** `pmSection` and `pmSectionNote`; host `section` margins reset.                                        |
+| 5   | Disclosure summaries ("Coverage and read point", "Technical details", "Related evidence") are larger or smaller than body text and vary between tabs.                                                       | Inspection read-out, Context, dispatch inspector                                                                | Apply the [disclosure](#disclosure) rule. **Fixed:** one `pmDisclosure`, also used by Related evidence and Raw effect samples.                                                                                         |
 | 6   | Radius values 2, 3, 4, 5, 6, 7, 8, 9 and 13px are used without a scale.                                                                                                                                     | 34 rules in `panel.module.css`                                                                                  | Map each to the [radius scale](#radius).                                                                                                                                                                               |
 | 7   | Font weights 750 and 800 alongside 650 and 700.                                                                                                                                                             | Brand, section title, rank badges                                                                               | Use 650 or 700.                                                                                                                                                                                                        |
 | 8   | Unclassed buttons: the Performance navigation arrow renders at 15px; view switch buttons rely on the parent selector.                                                                                       | Performance chart navigation, view switches                                                                     | Give each button a panel class.                                                                                                                                                                                        |
