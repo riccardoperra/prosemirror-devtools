@@ -254,4 +254,36 @@ describe("native Tiptap 3 integration", () => {
     expect(callouts()).toEqual([expect.objectContaining({ destroyed: true, destroys: 1 })]);
     diagnostics.dispose();
   });
+
+  it("creates diagnostics from true and disposes them when the editor is destroyed", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const editor = createEditor(
+      { id: "tiptap-owned-diagnostics", store, diagnostics: true, performanceMarks: false },
+      "<aside>Note</aside><p>Body</p>",
+      [Callout],
+    );
+    const diagnostics = store.getInstance("tiptap-owned-diagnostics")?.diagnostics;
+    expect(diagnostics?.getSnapshot().nodeViews).toEqual([
+      expect.objectContaining({ nodeType: "callout", destroyed: false }),
+    ]);
+
+    editor.destroy();
+    expect(diagnostics?.getSnapshot().nodeViews).toEqual([]);
+  });
+
+  it("leaves a supplied diagnostics controller to its owner", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const diagnostics = createProseMirrorDevtoolsDiagnostics();
+    const editor = createEditor(
+      { id: "tiptap-supplied-diagnostics", store, diagnostics, performanceMarks: false },
+      "<aside>Note</aside><p>Body</p>",
+      [Callout],
+    );
+
+    editor.destroy();
+    expect(diagnostics.getSnapshot().nodeViews).toEqual([
+      expect.objectContaining({ nodeType: "callout" }),
+    ]);
+    diagnostics.dispose();
+  });
 });

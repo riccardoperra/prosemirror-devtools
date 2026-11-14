@@ -1,31 +1,21 @@
 import { createHistoryInspector } from "prosemirror-inspector/inspectors/history";
-import { createTiptapInspector } from "prosemirror-inspector/inspectors/tiptap";
 import {
   installProseMirrorChromeBridge,
   installProseMirrorWebMCPBridge,
 } from "prosemirror-inspector/agent";
-import {
-  createProseMirrorDevtoolsDiagnostics,
-  createProseMirrorInspectionClient,
-} from "prosemirror-inspector/core";
-import { Extension, Node } from "@tiptap/core";
+import { createProseMirrorInspectionClient } from "prosemirror-inspector/core";
+import { Node } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createProseMirrorDevtoolsStore } from "prosemirror-inspector/core";
 import { ProseMirrorDevtoolsPanel } from "prosemirror-inspector/react";
-import {
-  attachTiptapDevtools,
-  detachTiptapDevtools,
-  dispatchTiptapTransaction,
-  setupTiptapDevtools,
-  suspendTiptapDevtools,
-  resumeTiptapDevtools,
-} from "prosemirror-inspector/tiptap";
+import { resumeTiptapDevtools, suspendTiptapDevtools } from "prosemirror-inspector/tiptap";
 import "prosemirror-inspector/styles.css";
 import "./style.css";
 import { devtoolsEnabled } from "./env";
+import { createTiptapDevtools } from "./tiptap-devtools";
 
 const store = createProseMirrorDevtoolsStore();
 const disposeBridge = devtoolsEnabled
@@ -59,34 +49,14 @@ function NativeTiptap({ instrumentPlugins }: { instrumentPlugins: boolean }) {
     Callout,
     ...(devtoolsEnabled
       ? [
-          Extension.create({
-            name: "prosemirrorInspector",
-            priority: 10000,
-            addStorage: () => ({ diagnostics: createProseMirrorDevtoolsDiagnostics() }),
-            onBeforeCreate() {
-              setupTiptapDevtools(this.editor, {
-                id: "native-tiptap",
-                label: "Tiptap list fixture",
-                store,
-                instrumentPlugins,
-                performanceMarks: false,
-                diagnostics: this.storage.diagnostics,
-                inspectors: [
-                  createTiptapInspector({ editor: this.editor }),
-                  createHistoryInspector(),
-                ],
-              });
-            },
-            onCreate() {
-              attachTiptapDevtools(this.editor);
-            },
-            dispatchTransaction(props) {
-              dispatchTiptapTransaction(this.editor, props);
-            },
-            onDestroy() {
-              detachTiptapDevtools(this.editor);
-              this.storage.diagnostics.dispose();
-            },
+          createTiptapDevtools({
+            id: "native-tiptap",
+            label: "Tiptap list fixture",
+            store,
+            instrumentPlugins,
+            performanceMarks: false,
+            diagnostics: true,
+            inspectors: [createHistoryInspector()],
           }),
         ]
       : []),
