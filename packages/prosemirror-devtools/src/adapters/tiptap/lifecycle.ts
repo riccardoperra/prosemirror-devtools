@@ -1,8 +1,11 @@
 import type { Plugin, Transaction } from "prosemirror-state";
-import type { EditorView } from "prosemirror-view";
+import type { EditorProps, EditorView } from "prosemirror-view";
 
 import { createProseMirrorDispatchRecorder } from "../../core/attach";
-import { instrumentProseMirrorPlugins } from "../../core/instrument";
+import {
+  instrumentProseMirrorNodeViews,
+  instrumentProseMirrorPlugins,
+} from "../../core/instrument";
 import { createDevtoolsSessionId } from "../../core/session-id";
 import { prosemirrorDevtoolsStore } from "../../core/store/create-devtools-store";
 import type { AttachProseMirrorDevtoolsOptions } from "../../core/types";
@@ -14,7 +17,7 @@ export interface TiptapDevtoolsEditor {
 }
 
 export interface TiptapDevtoolsOptions extends Omit<AttachProseMirrorDevtoolsOptions, "view"> {
-  /** Instrument Tiptap's generated ProseMirror plugins. Defaults to true. */
+  /** Instrument Tiptap's generated ProseMirror plugins and extension node views. Defaults to true. */
   instrumentPlugins?: boolean;
   getPluginLabel?: (plugin: Plugin, index: number) => string;
 }
@@ -37,6 +40,8 @@ type TiptapIntegration = Readonly<{
   detach: () => void;
 }>;
 
+const tiptapNodeViewSource = { key: "tiptap:nodeViews", label: "Tiptap node views" };
+
 const integrations = new WeakMap<TiptapDevtoolsEditor, TiptapIntegration>();
 
 function findPropertyDescriptor(target: object, property: PropertyKey): PropertyDescriptor | null {
@@ -47,6 +52,67 @@ function findPropertyDescriptor(target: object, property: PropertyKey): Property
     current = Object.getPrototypeOf(current) as object | null;
   }
   return null;
+}
+
+/** Replaces an ExtensionManager getter with one that transforms its result. Returns a restore. */
+function interceptGetter(
+  manager: object,
+  property: "plugins" | "nodeViews",
+  transform: (value: unknown) => unknown,
+): (() => void) | null {
+  const ownDescriptor = Object.getOwnPropertyDescriptor(manager, property);
+  const sourceDescriptor = ownDescriptor ?? findPropertyDescriptor(manager, property);
+  if (typeof sourceDescriptor?.get !== "function") return null;
+  if (ownDescriptor?.configurable === false) {
+    throw new Error(
+      `[prosemirror-inspector] Tiptap extensionManager.${property} cannot be instrumented because its own descriptor is not configurable.`,
+    );
+  }
+
+  const originalGet = sourceDescriptor.get;
+  const instrumentedGet = function instrumentedTiptapGetter(this: object): unknown {
+    return transform(originalGet.call(this));
+  };
+  const replacementDescriptor: PropertyDescriptor = {
+    configurable: true,
+    enumerable: sourceDescriptor.enumerable ?? false,
+    get: instrumentedGet,
+    ...(sourceDescriptor.set ? { set: sourceDescriptor.set } : {}),
+  };
+
+  try {
+    Object.defineProperty(manager, property, replacementDescriptor);
+  } catch (error) {
+    throw new Error(
+      `[prosemirror-inspector] Could not instrument Tiptap's extensionManager.${property} getter.`,
+      { cause: error },
+    );
+  }
+
+  let restored = false;
+  return () => {
+    if (restored) return;
+    restored = true;
+    const currentDescriptor = Object.getOwnPropertyDescriptor(manager, property);
+    if (
+      currentDescriptor?.get !== instrumentedGet ||
+      currentDescriptor.set !== replacementDescriptor.set
+    ) {
+      return;
+    }
+    try {
+      if (ownDescriptor) {
+        Object.defineProperty(manager, property, ownDescriptor);
+      } else {
+        Reflect.deleteProperty(manager, property);
+      }
+    } catch (error) {
+      console.error(
+        `[prosemirror-inspector] Could not restore Tiptap's ${property} getter.`,
+        error,
+      );
+    }
+  };
 }
 
 function installPluginInstrumentation(
@@ -63,72 +129,50 @@ function installPluginInstrumentation(
     );
   }
 
-  const ownDescriptor = Object.getOwnPropertyDescriptor(manager, "plugins");
-  const sourceDescriptor = ownDescriptor ?? findPropertyDescriptor(manager, "plugins");
-  if (typeof sourceDescriptor?.get !== "function") {
-    throw new Error(
-      "[prosemirror-inspector] Tiptap extensionManager.plugins is not exposed as a getter. " +
-        "Set instrumentPlugins to false to attach without plugin-hook timings.",
-    );
-  }
-  if (ownDescriptor?.configurable === false) {
-    throw new Error(
-      "[prosemirror-inspector] Tiptap extensionManager.plugins cannot be instrumented because its own descriptor is not configurable.",
-    );
-  }
-
   const instrumentationOptions = {
     instanceId: options.id,
     sessionId,
     isActive,
     ...(options.store ? { store: options.store } : {}),
-    ...(options.getPluginLabel ? { getPluginLabel: options.getPluginLabel } : {}),
     ...(options.diagnostics ? { diagnostics: options.diagnostics } : {}),
   };
-  const originalGet = sourceDescriptor.get;
-  const instrumentedGet = function instrumentedTiptapPlugins(this: object): unknown {
-    const plugins = originalGet.call(this) as unknown;
+  const restorePlugins = interceptGetter(manager, "plugins", (plugins) => {
     if (!isActive() || !Array.isArray(plugins)) return plugins;
-
-    const instrumented = instrumentProseMirrorPlugins(plugins as Plugin[], instrumentationOptions);
+    const instrumented = instrumentProseMirrorPlugins(plugins as Plugin[], {
+      ...instrumentationOptions,
+      ...(options.getPluginLabel ? { getPluginLabel: options.getPluginLabel } : {}),
+    });
     onPluginsCreated();
     return instrumented;
-  };
-  const replacementDescriptor: PropertyDescriptor = {
-    configurable: true,
-    enumerable: sourceDescriptor.enumerable ?? false,
-    get: instrumentedGet,
-    ...(sourceDescriptor.set ? { set: sourceDescriptor.set } : {}),
-  };
-
-  try {
-    Object.defineProperty(manager, "plugins", replacementDescriptor);
-  } catch (error) {
+  });
+  if (!restorePlugins) {
     throw new Error(
-      "[prosemirror-inspector] Could not instrument Tiptap's extensionManager.plugins getter.",
-      { cause: error },
+      "[prosemirror-inspector] Tiptap extensionManager.plugins is not exposed as a getter. " +
+        "Set instrumentPlugins to false to attach without plugin-hook timings.",
     );
   }
-
-  let restored = false;
+  // Tiptap passes extension node views to the EditorView directly, not through a plugin.
+  // Each read of the getter builds fresh constructors, so wrapping its result never stacks.
+  let restoreNodeViews: (() => void) | null;
+  try {
+    restoreNodeViews = interceptGetter(manager, "nodeViews", (nodeViews) =>
+      isActive() && nodeViews && typeof nodeViews === "object"
+        ? instrumentProseMirrorNodeViews(
+            nodeViews as NonNullable<EditorProps["nodeViews"]>,
+            instrumentationOptions,
+            tiptapNodeViewSource,
+          )
+        : nodeViews,
+    );
+  } catch (error) {
+    restorePlugins();
+    throw error;
+  }
   return () => {
-    if (restored) return;
-    restored = true;
-    const currentDescriptor = Object.getOwnPropertyDescriptor(manager, "plugins");
-    if (
-      currentDescriptor?.get !== instrumentedGet ||
-      currentDescriptor.set !== replacementDescriptor.set
-    ) {
-      return;
-    }
     try {
-      if (ownDescriptor) {
-        Object.defineProperty(manager, "plugins", ownDescriptor);
-      } else {
-        Reflect.deleteProperty(manager, "plugins");
-      }
-    } catch (error) {
-      console.error("[prosemirror-inspector] Could not restore Tiptap's plugins getter.", error);
+      restoreNodeViews?.();
+    } finally {
+      restorePlugins();
     }
   };
 }
@@ -350,7 +394,7 @@ export function dispatchTiptapTransaction(
 }
 
 /**
- * Restores the plugin getter and unregisters the view. Call this from the
+ * Restores the plugin and node view getters and unregisters the view. Call this from the
  * application's Tiptap extension `onDestroy` hook. Repeated calls are safe.
  */
 export function detachTiptapDevtools(editor: TiptapDevtoolsEditor): void {
