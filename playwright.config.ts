@@ -6,6 +6,7 @@ const fixtures = [
   { name: "tiptap", developmentPort: 4181, productionPort: 4281 },
   { name: "react-prosemirror", developmentPort: 4182, productionPort: 4282 },
   { name: "collab", developmentPort: 4183, productionPort: 4283 },
+  { name: "invoice", developmentPort: 4184, productionPort: 4284 },
 ];
 
 export default defineConfig({

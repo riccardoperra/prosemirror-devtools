@@ -181,6 +181,7 @@ native environment:
 
 - [Standalone ProseMirror, list and undo](./examples/standalone)
 - [Native Tiptap](./examples/tiptap)
+- [Tiptap invoice workbench, node views, decorations and markers](./examples/invoice)
 - [Controlled React ProseMirror](./examples/react-prosemirror)
 - [React and TanStack](./examples/tanstack)
 - [Preact](./examples/preact)
