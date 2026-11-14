@@ -68,6 +68,14 @@ and composition events identify observed callback outcomes. A `false` result has
 explanation. Deferred asynchronous work does not inherit synchronous causal attribution.
 Clipboard contents, typed text, DOM targets, and event objects are excluded from event metadata.
 
+Handler events, decorations and NodeViews come only from plugins passed through
+`session.instrumentPlugins`. When diagnostics are enabled but no plugins were instrumented (for
+example an attach-only session), the `events`, `decorations` and `nodeViews` capabilities report
+`unobserved` with that reason, and so do their queries. An `events` read that contains traced
+commands stays `available` with a coverage note that handler calls are excluded. The panel shows
+the same limitation in Context and Events. An empty trace from an instrumented session keeps the
+generic reason: it does not prove that the event never happened.
+
 Rendering diagnostics describe the latest observed decorations and NodeView lifecycle. They do not
 rerun rendering callbacks. Historical reads return `unobserved` when that channel did not retain a
 snapshot. Stale positions cannot highlight the current document.

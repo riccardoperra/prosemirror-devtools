@@ -159,6 +159,62 @@ describe("serializable inspection client", () => {
     });
   });
 
+  it("explains missing handler evidence when diagnostics run without instrumented plugins", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const session = createProseMirrorDevtoolsSession({
+      id: "attach-only",
+      store,
+      diagnostics: true,
+      performanceMarks: false,
+    });
+    const view = createTestView(createTestState("hello"));
+    session.attach(view);
+    cleanups.push(
+      () => view.destroy(),
+      () => session.dispose(),
+    );
+    const client = createProseMirrorInspectionClient({ store });
+    const editor = client.listEditors()[0]!;
+    const evidence = (id: string) =>
+      editor.capabilities.find((capability) => capability.id === id)?.evidence;
+    for (const id of ["events", "decorations", "nodeViews"])
+      expect(evidence(id)).toMatchObject({
+        kind: "unobserved",
+        reason: expect.stringContaining("not instrumented"),
+      });
+    expect(evidence("transactions")).toMatchObject({ kind: "available" });
+
+    const target = editor.target;
+    view.dispatch(appendTextTransaction(view.state, "!"));
+    expect(client.query({ target, query: { kind: "events" } })).toMatchObject({
+      kind: "unobserved",
+      reason: expect.stringContaining("session.instrumentPlugins"),
+    });
+    expect(client.query({ target, query: { kind: "decorations" } })).toMatchObject({
+      kind: "unobserved",
+      reason: expect.stringContaining("not instrumented"),
+    });
+
+    session.diagnostics!.traceCommand("Bold", () => true);
+    expect(client.query({ target, query: { kind: "events" } })).toMatchObject({
+      kind: "available",
+      value: [{ name: "Bold" }],
+      coverage: { notes: [expect.stringContaining("traced commands only")] },
+    });
+  });
+
+  it("keeps the generic empty-trace reason when plugins are instrumented", () => {
+    const { client, target } = setup({ diagnostics: true });
+    const editor = client.listEditors()[0]!;
+    expect(
+      editor.capabilities.find((capability) => capability.id === "events")?.evidence,
+    ).toMatchObject({ kind: "available" });
+    expect(client.query({ target, query: { kind: "events" } })).toMatchObject({
+      kind: "unobserved",
+      reason: expect.stringContaining("An empty trace does not prove"),
+    });
+  });
+
   it("shares one traversal budget across all nodes in a document range", () => {
     const { view, client, target } = setup();
     const schema = view.state.schema;

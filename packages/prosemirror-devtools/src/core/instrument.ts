@@ -416,5 +416,7 @@ export function instrumentProseMirrorPlugins(
   plugins: readonly Plugin[],
   options: InstrumentPluginsOptions,
 ): Plugin[] {
-  return plugins.map((plugin, index) => wrapPlugin(plugin, index, options));
+  const wrapped = plugins.map((plugin, index) => wrapPlugin(plugin, index, options));
+  getDiagnosticsRecorder(options.diagnostics)?.registerInstrumentedPlugins(wrapped.length);
+  return wrapped;
 }
