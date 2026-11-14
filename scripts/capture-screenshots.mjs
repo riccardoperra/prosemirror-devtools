@@ -68,11 +68,10 @@ const invoiceExtras = [
   },
   {
     file: "invoice-collaboration",
-    query: `?room=screenshots-${Date.now()}&user=Ada`,
     async run(ada) {
       const [grace] = await Promise.all([
         ada.context().waitForEvent("page"),
-        ada.getByRole("button", { name: "Open as second user", exact: true }).click(),
+        ada.getByRole("button", { name: "+ Invite", exact: true }).click(),
       ]);
       await grace.setViewportSize(viewport);
       await grace.locator(".line-item").first().waitFor();
@@ -151,7 +150,7 @@ try {
 
     if (example.name !== "invoice") continue;
     for (const extra of invoiceExtras) {
-      const loaded = await load(browser, `${example.name}/${extra.query ?? ""}`);
+      const loaded = await load(browser, `${example.name}/`);
       try {
         const shown = (await extra.run(loaded.page, example)) ?? loaded.page;
         shots.push(await capture(shown, extra.file));
