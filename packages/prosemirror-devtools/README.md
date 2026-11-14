@@ -211,7 +211,8 @@ The normal framework entrypoints render no UI and skip registration outside deve
 Core APIs, the native root panel, and the Tiptap helpers are not automatically disabled, so guard
 those calls with your build tool's development flag. Import
 `prosemirror-inspector/<framework>/production` only when you intentionally want a framework
-adapter to stay active in a production build.
+adapter to stay active in a production build. `prosemirror-inspector/standalone/production` and
+`prosemirror-inspector/recordings-panel/production` do the same for the framework-neutral mounts.
 
 ## What the panel shows
 
@@ -667,31 +668,33 @@ describes export, import, limits, and teardown.
 
 ## Package exports
 
-| Export                                         | Purpose                                                                                          |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `prosemirror-inspector`                        | Core APIs plus the native Solid-rendered panel                                                   |
-| `prosemirror-inspector/core`                   | Sessions, stores, instrumentation, inspection, serialization, markers, extensions, and snapshots |
-| `prosemirror-inspector/performance`            | Framework-neutral timing, grouping, ranking, and summary helpers                                 |
-| `prosemirror-inspector/styles`                 | Typed names for the panel's public CSS custom properties                                         |
-| `prosemirror-inspector/styles.css`             | Compiled panel stylesheet for explicit CSS-only use                                              |
-| `prosemirror-inspector/react`                  | React panel, registration hook, TanStack plugin, and extension adapter                           |
-| `prosemirror-inspector/preact`                 | Preact panel, registration hook, and TanStack plugin                                             |
-| `prosemirror-inspector/solid`                  | Solid panel, registration helper, and TanStack plugin                                            |
-| `prosemirror-inspector/vue`                    | Vue panel, registration composable, and TanStack plugin                                          |
-| `prosemirror-inspector/svelte`                 | Svelte panel and TanStack plugin                                                                 |
-| `prosemirror-inspector/angular`                | Angular panel, injection helper, and TanStack plugin                                             |
-| `prosemirror-inspector/<framework>/production` | Explicit production-enabled version of a framework adapter                                       |
-| `prosemirror-inspector/standalone`             | Framework-neutral development mount, update, and cleanup                                         |
-| `prosemirror-inspector/react-prosemirror`      | Controlled native model recorder for React ProseMirror                                           |
-| `prosemirror-inspector/recordings`             | Bounded diagnostic export, validated import, and offline queries                                 |
-| `prosemirror-inspector/recordings-panel`       | Separate read-only recording component and development mount                                     |
-| `prosemirror-inspector/agent`                  | Read-only agent tools, semantic checks, native WebMCP, and Chrome discovery                      |
-| `prosemirror-inspector/inspectors/history`     | Official undo and redo history observations                                                      |
-| `prosemirror-inspector/inspectors/collab`      | Official collaboration version, pending steps, and original transaction metadata                 |
-| `prosemirror-inspector/inspectors/transport`   | Explicit application transport observations                                                      |
-| `prosemirror-inspector/inspectors/yjs`         | Y.Doc signals, provider projection, and collaborative undo                                       |
-| `prosemirror-inspector/inspectors/tiptap`      | Tiptap extension and storage observations                                                        |
-| `prosemirror-inspector/tiptap`                 | Tiptap 3 lifecycle and transaction-middleware helpers                                            |
+| Export                                              | Purpose                                                                                          |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `prosemirror-inspector`                             | Core APIs plus the native Solid-rendered panel                                                   |
+| `prosemirror-inspector/core`                        | Sessions, stores, instrumentation, inspection, serialization, markers, extensions, and snapshots |
+| `prosemirror-inspector/performance`                 | Framework-neutral timing, grouping, ranking, and summary helpers                                 |
+| `prosemirror-inspector/styles`                      | Typed names for the panel's public CSS custom properties                                         |
+| `prosemirror-inspector/styles.css`                  | Compiled panel stylesheet for explicit CSS-only use                                              |
+| `prosemirror-inspector/react`                       | React panel, registration hook, TanStack plugin, and extension adapter                           |
+| `prosemirror-inspector/preact`                      | Preact panel, registration hook, and TanStack plugin                                             |
+| `prosemirror-inspector/solid`                       | Solid panel, registration helper, and TanStack plugin                                            |
+| `prosemirror-inspector/vue`                         | Vue panel, registration composable, and TanStack plugin                                          |
+| `prosemirror-inspector/svelte`                      | Svelte panel and TanStack plugin                                                                 |
+| `prosemirror-inspector/angular`                     | Angular panel, injection helper, and TanStack plugin                                             |
+| `prosemirror-inspector/<framework>/production`      | Explicit production-enabled version of a framework adapter                                       |
+| `prosemirror-inspector/standalone`                  | Framework-neutral development mount, update, and cleanup                                         |
+| `prosemirror-inspector/standalone/production`       | The standalone mount, active in production builds too                                            |
+| `prosemirror-inspector/react-prosemirror`           | Controlled native model recorder for React ProseMirror                                           |
+| `prosemirror-inspector/recordings`                  | Bounded diagnostic export, validated import, and offline queries                                 |
+| `prosemirror-inspector/recordings-panel`            | Separate read-only recording component and development mount                                     |
+| `prosemirror-inspector/recordings-panel/production` | The recording viewer mount, active in production builds too                                      |
+| `prosemirror-inspector/agent`                       | Read-only agent tools, semantic checks, native WebMCP, and Chrome discovery                      |
+| `prosemirror-inspector/inspectors/history`          | Official undo and redo history observations                                                      |
+| `prosemirror-inspector/inspectors/collab`           | Official collaboration version, pending steps, and original transaction metadata                 |
+| `prosemirror-inspector/inspectors/transport`        | Explicit application transport observations                                                      |
+| `prosemirror-inspector/inspectors/yjs`              | Y.Doc signals, provider projection, and collaborative undo                                       |
+| `prosemirror-inspector/inspectors/tiptap`           | Tiptap extension and storage observations                                                        |
+| `prosemirror-inspector/tiptap`                      | Tiptap 3 lifecycle and transaction-middleware helpers                                            |
 
 ## License
 

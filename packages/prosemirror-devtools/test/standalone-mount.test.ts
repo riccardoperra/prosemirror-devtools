@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { mountProseMirrorDevtools } from "../src/standalone";
+import { mountProseMirrorDevtools as mountInProduction } from "../src/production/standalone";
 import { createProseMirrorDevtoolsStore } from "../src/core";
 import { activeViewTab, createTestView } from "./helpers";
 
@@ -52,5 +53,15 @@ describe("standalone mount", () => {
     panel.unmount();
     expect(container.children).toHaveLength(1);
     expect(container.firstElementChild).toBe(existing);
+  });
+
+  it("mounts in production through the production entry", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const container = document.createElement("div");
+    document.body.append(container);
+    const panel = mountInProduction(container, { store: createProseMirrorDevtoolsStore() });
+    expect(container.querySelector(".pm-devtools")).not.toBeNull();
+    panel.unmount();
+    expect(container.childElementCount).toBe(0);
   });
 });
