@@ -19,7 +19,7 @@ sections:
 - terms and notes with headings, lists, a blockquote, merge fields, and a comment;
 - a signatures block with signature atoms.
 
-Pagination is explicit. **Page break** splits the current page before the section that holds the
+Pagination is explicit. **Page break**, under **More** in the toolbar, splits the current page before the section that holds the
 caret, and **Move section to next page** moves that section. There is no automatic reflow, so a page
 can grow past its printed height.
 
@@ -35,7 +35,7 @@ normalization in an appended transaction, a slow plugin, a decoration flood, one
 against many dispatches, undoing a bulk edit, comments, the status that flips editability,
 NodeView lifecycles under load, page breaks, and the plugin state inspector.
 
-The load lab under the toolbar has the knobs: a 300 to 2,000 row stress invoice, a busy-wait delay
+The collapsible load lab under the scenarios has the knobs: a 300 to 2,000 row stress invoice, a busy-wait delay
 for the validation plugin, and a 5% reprice either in one transaction or as one dispatch per row
 (capped at 200 rows).
 

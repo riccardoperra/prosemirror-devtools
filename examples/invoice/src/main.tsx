@@ -25,25 +25,17 @@ const inspectorPlugin = import.meta.env.DEV
 
 function App() {
   return (
-    <main className="workbench">
-      <header className="app-header">
-        <h1>Invoice workbench</h1>
-        <p>
-          A structured Tiptap document with node views, decorations, plugin state, and custom
-          performance markers.{" "}
-          {import.meta.env.DEV
-            ? "Open TanStack Devtools (⌘⇧D) to inspect every dispatch."
-            : "Diagnostics are disabled in this production build."}
-        </p>
-      </header>
-      <InvoiceEditor />
+    <>
+      <main className="workbench">
+        <InvoiceEditor />
+      </main>
       {inspectorPlugin ? (
         <TanStackDevtools
           config={{ position: "bottom-right", openHotkey: ["CtrlOrMeta", "Shift", "D"] }}
           plugins={[inspectorPlugin]}
         />
       ) : null}
-    </main>
+    </>
   );
 }
 

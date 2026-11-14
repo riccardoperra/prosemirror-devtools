@@ -17,9 +17,18 @@ import {
 } from "../invoice/commands";
 import { readMeta, rowsInRange } from "../invoice/document";
 import { fieldKeys, fieldRegistry, type FieldKey } from "../invoice/fields";
-import { isLocked, transitions } from "../invoice/model";
+import { isLocked, transitions, type InvoiceStatus } from "../invoice/model";
+import { MoreMenu } from "./MoreMenu";
 
-const statusActions = { sent: "Send", paid: "Mark paid", void: "Void", draft: "Back to draft" };
+const statusActions: Record<InvoiceStatus, string> = {
+  sent: "Send",
+  paid: "Mark paid",
+  void: "Void",
+  draft: "Back to draft",
+};
+
+/** Moving forward is the toolbar's job; stepping back or voiding is rare and lives under More. */
+const secondaryStatuses: readonly InvoiceStatus[] = ["void", "draft"];
 
 export function Glyph({ children }: { children: string }) {
   return (
@@ -51,40 +60,40 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
       };
     },
   });
-  const { locked, selectedRows } = state;
+  const { locked, selectedRows, status } = state;
+  const rowsLabel = selectedRows > 1 ? "rows" : "row";
+  const forward = transitions[status].filter((next) => !secondaryStatuses.includes(next));
+  const backward = transitions[status].filter((next) => secondaryStatuses.includes(next));
   return (
     <div className="toolbar" role="toolbar" aria-label="Invoice actions">
       <div className="toolbar-group">
-        <button type="button" disabled={!state.canUndo} onClick={() => undo(editor)}>
-          <Glyph>↶</Glyph>Undo
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Undo"
+          title="Undo"
+          disabled={!state.canUndo}
+          onClick={() => undo(editor)}
+        >
+          <Glyph>↶</Glyph>
         </button>
-        <button type="button" disabled={!state.canRedo} onClick={() => redo(editor)}>
-          <Glyph>↷</Glyph>Redo
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Redo"
+          title="Redo"
+          disabled={!state.canRedo}
+          onClick={() => redo(editor)}
+        >
+          <Glyph>↷</Glyph>
         </button>
       </div>
       <div className="toolbar-group">
         <button type="button" disabled={locked} onClick={() => addLineItem(editor)}>
           <Glyph>+</Glyph>Add line item
         </button>
-        <button
-          type="button"
-          disabled={locked || selectedRows === 0}
-          onClick={() => duplicateSelectedRows(editor)}
-        >
-          <Glyph>⧉</Glyph>Duplicate row{selectedRows > 1 ? "s" : ""}
-        </button>
-        <button
-          type="button"
-          disabled={locked || selectedRows === 0}
-          onClick={() => deleteRows(editor)}
-        >
-          <Glyph>−</Glyph>Delete row{selectedRows > 1 ? "s" : ""}
-        </button>
-        <button type="button" onClick={() => selectAllLineItems(editor)}>
-          <Glyph>▤</Glyph>Select all rows
-        </button>
-        <button type="button" disabled={locked} onClick={() => applyDiscountToAll(editor, 10)}>
-          <Glyph>%</Glyph>10% off all rows
+        <button type="button" aria-pressed={findOpen} onClick={onToggleFind}>
+          <Glyph>⌕</Glyph>Find
         </button>
       </div>
       <div className="toolbar-group">
@@ -105,11 +114,14 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
         </button>
       </div>
       <div className="toolbar-group">
-        {transitions[state.status].map((next) => (
+        <span className="status-badge" data-status={status}>
+          {status}
+        </span>
+        {forward.map((next) => (
           <button
             key={next}
             type="button"
-            className={`status-action status-action-${next}`}
+            className="primary-action"
             onClick={() => setStatus(editor, next)}
           >
             {statusActions[next]}
@@ -117,15 +129,52 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
         ))}
       </div>
       <div className="toolbar-group">
-        <button type="button" disabled={locked} onClick={() => insertPageBreak(editor)}>
-          <Glyph>⤓</Glyph>Page break
-        </button>
-        <button type="button" disabled={locked} onClick={() => moveSectionToNextPage(editor)}>
-          <Glyph>↧</Glyph>Move section to next page
-        </button>
-        <button type="button" aria-pressed={findOpen} onClick={onToggleFind}>
-          <Glyph>⌕</Glyph>Find
-        </button>
+        <MoreMenu label="More">
+          {(close) => {
+            const item = (
+              label: string,
+              disabled: boolean,
+              action: () => unknown,
+              danger = false,
+            ) => (
+              <button
+                key={label}
+                type="button"
+                role="menuitem"
+                className={danger ? "is-danger" : undefined}
+                disabled={disabled}
+                onClick={() => {
+                  action();
+                  close();
+                }}
+              >
+                {label}
+              </button>
+            );
+            return (
+              <>
+                {item(`Duplicate ${rowsLabel}`, locked || selectedRows === 0, () =>
+                  duplicateSelectedRows(editor),
+                )}
+                {item("Select all rows", false, () => selectAllLineItems(editor))}
+                {item("10% off all rows", locked, () => applyDiscountToAll(editor, 10))}
+                <hr />
+                {item("Page break", locked, () => insertPageBreak(editor))}
+                {item("Move section to next page", locked, () => moveSectionToNextPage(editor))}
+                <hr />
+                {backward.map((next) =>
+                  item(statusActions[next], false, () => setStatus(editor, next), next === "void"),
+                )}
+                {item(
+                  `Delete ${rowsLabel}`,
+                  locked || selectedRows === 0,
+                  () => deleteRows(editor),
+                  true,
+                )}
+              </>
+            );
+          }}
+        </MoreMenu>
       </div>
     </div>
   );

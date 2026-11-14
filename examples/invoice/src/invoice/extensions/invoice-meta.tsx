@@ -24,7 +24,9 @@ function InvoiceMetaView({ node, editor }: ReactNodeViewProps) {
     <NodeViewWrapper className="invoice-meta" contentEditable={false}>
       <div className="invoice-title">
         <h1>Invoice</h1>
-        <span className={`status-badge status-${meta.status}`}>{meta.status}</span>
+        <span className="status-badge" data-status={meta.status}>
+          {meta.status}
+        </span>
       </div>
       <div className="meta-grid">
         <label>

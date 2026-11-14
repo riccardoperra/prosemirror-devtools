@@ -12,7 +12,6 @@ import { InvoiceViewContext } from "../invoice/view-context";
 import { CommentsSidebar } from "./CommentsSidebar";
 import { FindBar } from "./FindBar";
 import { InvoiceBubbleMenu } from "./InvoiceBubbleMenu";
-import { LoadLab } from "./LoadLab";
 import { ScenariosPanel } from "./ScenariosPanel";
 import { Toolbar } from "./Toolbar";
 
@@ -63,13 +62,18 @@ function InvoiceWorkspace({ editor }: { editor: Editor }) {
   };
   return (
     <InvoiceViewContext.Provider value={view}>
-      <Toolbar
-        editor={editor}
-        findOpen={findOpen}
-        onToggleFind={() => (findOpen ? closeFind() : setFindOpen(true))}
-      />
-      <LoadLab editor={editor} />
-      {findOpen ? <FindBar editor={editor} onClose={closeFind} /> : null}
+      <header className="topbar">
+        <h1>Invoice workbench</h1>
+        <Toolbar
+          editor={editor}
+          findOpen={findOpen}
+          onToggleFind={() => (findOpen ? closeFind() : setFindOpen(true))}
+        />
+        <p className="topbar-note">
+          {import.meta.env.DEV ? "⌘⇧D opens the inspector" : "Diagnostics are off in production"}
+        </p>
+        {findOpen ? <FindBar editor={editor} onClose={closeFind} /> : null}
+      </header>
       <div className="workspace">
         <ScenariosPanel editor={editor} />
         <article className="document">

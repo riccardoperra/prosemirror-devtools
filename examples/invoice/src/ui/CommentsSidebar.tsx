@@ -47,8 +47,8 @@ export function CommentsSidebar({ editor }: { editor: Editor }) {
     selector: ({ editor: current }) => collectComments(current.state.doc),
   });
   return (
-    <aside className="comments" aria-label="Comments">
-      <h2>Comments</h2>
+    <aside className="sidebar sidebar-end comments" aria-label="Comments">
+      <h2 className="sidebar-label">Comments</h2>
       {comments.length === 0 ? (
         <p className="comments-empty">Select text and use the bubble menu to comment.</p>
       ) : (
@@ -60,9 +60,9 @@ export function CommentsSidebar({ editor }: { editor: Editor }) {
                 className={comment.resolved ? "comment-card is-resolved" : "comment-card"}
                 onClick={() => selectRange(editor, comment.from, comment.to)}
               >
-                <span className="comment-author">
-                  {comment.author}
-                  {comment.resolved ? " · resolved" : ""}
+                <span className="comment-meta">
+                  <span className="comment-author">{comment.author}</span>
+                  {comment.resolved ? <span className="comment-resolved">Resolved</span> : null}
                 </span>
                 <q>{comment.quote}</q>
               </button>
