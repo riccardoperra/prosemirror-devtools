@@ -1,5 +1,7 @@
 import type { Editor } from "@tiptap/core";
 
+import { collabUrl, nextFreeUser } from "./collab/config";
+import type { CollabSession } from "./collab/session";
 import type { DevtoolsActions } from "./devtools/context";
 import {
   addComment,
@@ -62,8 +64,17 @@ export interface Scenario {
   readonly id: string;
   readonly title: string;
   readonly description: string;
-  /** Scenarios that need diagnostics get the devtools shell's actions, or null when it is off. */
-  run(editor: Editor, devtools: DevtoolsActions | null): boolean | Promise<boolean>;
+  /** Listed only in that mode. Without it, the scenario runs in both. */
+  readonly mode?: "solo" | "room";
+  /**
+   * Scenarios that need diagnostics get the devtools shell's actions, or null when it is off.
+   * Room scenarios get the collaboration session, which is null under `?solo`.
+   */
+  run(
+    editor: Editor,
+    devtools: DevtoolsActions | null,
+    collab: CollabSession | null,
+  ): boolean | Promise<boolean>;
   /** Where to look, best place first. */
   readonly inspect: readonly { readonly panel: InspectorPanel; readonly observe: string }[];
 }
@@ -339,7 +350,53 @@ export const scenarios: readonly Scenario[] = [
     ],
   },
   {
+    id: "second-user",
+    title: "Open a second user",
+    mode: "room",
+    description: "Opens this room in a new tab as the next free user.",
+    run: (_editor, _devtools, collab) => {
+      if (!collab) return false;
+      const taken = collab.getSnapshot().peers.map((peer) => peer.name);
+      const url = collabUrl(location.href, collab.config.room, nextFreeUser(taken).name);
+      return window.open(url, "_blank") !== null;
+    },
+    inspect: [
+      {
+        panel: "Invoice",
+        observe:
+          "Collaboration lists both users with their color, local or remote, and cursor position.",
+      },
+      {
+        panel: "Plugins",
+        observe:
+          "y-sync$, y-undo$ and yjs-cursor$ are installed. In Context › Technical details, the tiptap evidence maps them to collaboration and collaborationCaret.",
+      },
+    ],
+  },
+  {
+    id: "remote-edit",
+    title: "Watch a remote edit",
+    mode: "room",
+    description:
+      "A bot joins the room as a second Yjs client, appends “(edited remotely)” to the first row, and leaves.",
+    run: async (_editor, _devtools, collab) =>
+      collab ? (await import("./collab/remote-peer")).simulateRemoteEdit(collab) : false,
+    inspect: [
+      {
+        panel: "Transactions",
+        observe:
+          "The replace dispatch that adds the text reads “Remote · Yjs · Update applied”. Its detail shows the dispatch origin: the binding applied a Y.Doc update from another client. Your own edits carry no Yjs label in the list.",
+      },
+      {
+        panel: "Context",
+        observe:
+          "Under Technical details › Semantic inspector evidence › yjs, latestUpdate.local is false: the last Y.Doc update came from the bot. latestTransaction turns local again on the next dispatch, because y-sync opens a Yjs transaction for each one.",
+      },
+    ],
+  },
+  {
     id: "undo-history",
+    mode: "solo",
     title: "Undo history depth",
     description: "Applies a 10% discount, then undoes it.",
     run: (editor) => applyDiscountToAll(editor, 10) && undo(editor),

@@ -64,8 +64,8 @@ build without the showcase flag ships none of it. It wires:
   `installProseMirrorChromeBridge` and `installProseMirrorWebMCPBridge`. The "Agent reads the
   invoice" scenario dispatches the Chrome DevTools MCP discovery event and calls three tools, so the
   tab shows real calls without a connected agent;
-- `createHistoryInspector()`, which finds the `history()` plugin Tiptap installs after setup.
-  Transactions show undo and redo depths for each dispatch;
+- under `?solo`, `createHistoryInspector()`, which finds the `history()` plugin Tiptap installs
+  after setup. Transactions show undo and redo depths for each dispatch;
 - `performanceExtension: true`, so a Chrome Performance recording with **Show custom tracks**
   shows dispatches, phases, plugin hooks, and markers as tracks;
 - snapshots through `createSnapshot` and `persistSnapshots`: the snapshot scenario saves one before
@@ -76,22 +76,61 @@ build without the showcase flag ships none of it. It wires:
   `mountProseMirrorRecordingInspector` is inert outside development, and the Pages showcase is a
   production build.
 
-## Two tabs, two users
+## Collaboration
 
-Add `?room=<id>&user=<name>` to collaborate through Yjs, or pick **More › Collaborate in two
-tabs**. **Open as second user** opens the same room in a new tab under another name and color.
+Every tab joins the `invoice` room through Yjs. `src/collab/config.ts` parses the URL once into
+`{ mode: "solo" }` or `{ mode: "room", room, user }`:
+
+- `?room=<id>` picks another room, and `?user=<name>` picks the user;
+- without `user`, a tab reuses the name it kept in `sessionStorage`, so a reload stays the same
+  person. A fresh tab starts as the first person in the table;
+- once the room answers, a tab whose name an earlier tab already holds takes the first free name;
+- the tab then writes `room` and `user` back with `history.replaceState`, so the address is
+  shareable;
+- `?solo`, or **More › Work alone (no collaboration)**, opts out. It keeps prosemirror-history,
+  the history inspector, and the "Undo history depth" scenario. **More › Collaborate in two tabs**
+  goes back to the room.
+
+The sticky top bar shows everyone in the room as avatars with their initials on their color, your
+own with a ring. A tooltip gives the name and whether they are editing, selecting, or away, with the
+page. Clicking someone else's avatar maps their awareness cursor through y-prosemirror's relative
+positions, as CollaborationCaret does, and scrolls to it under the spotlight. A tab in the
+background has no live cursor, so the jump uses the last selection it published. **+ Invite**
+opens the room in a new tab as the next free user. The info mark says the sync stays in this
+browser.
+
+A closing tab removes its awareness state on `pagehide`, so its avatar leaves the other tabs at
+once. A tab that dies without `pagehide` drops out when y-protocols times its awareness out, after
+30 seconds. Avatars fade and scale in and out over 160 ms, and only fade under reduced motion.
 
 The transport is `src/collab/broadcast-provider.ts`, a BroadcastChannel provider. It only reaches
 tabs of the same browser and origin, which also holds on GitHub Pages. A joining tab sends its state
 vector and receives what it lacks, and awareness carries names, colors, carets, and selections.
-Only the first peer of an empty room seeds the fixture.
+
+Every tab seeds the fixture before it connects, under one fixed Yjs client id. Each seed produces
+the same Yjs items, so merging two seeds changes nothing: a tab alone is editable without waiting
+for the room, and two tabs opened together never duplicate the invoice.
 
 In a room, `@tiptap/extension-collaboration` replaces prosemirror-history, so undo, redo, and the
 "Undo a bulk edit" scenario use the Yjs undo manager. `@tiptap/extension-collaboration-caret`
 draws remote carets. The id normalizer derives a duplicate's new id from the document alone, so
-peers never overwrite each other's ids, and editability still follows the shared status. The
-inspector adds `createYjsInspector` and a `createTransportObserver` fed by the provider, and the
-Invoice tab adds a Collaboration section with peers, last sync, and bytes sent and received.
+peers never overwrite each other's ids, and editability still follows the shared status.
+
+The inspector adds `createYjsInspector` and a `createTransportObserver` fed by the provider.
+`createTiptapInspector` associates `collaboration` with `ySyncPluginKey` and `yUndoPluginKey`, and
+`collaborationCaret` with `yCursorPluginKey`, all from `@tiptap/y-tiptap`. The caret plugin is
+created in `addProseMirrorPlugins`, so `yjs-cursor$` is instrumented like the others. Its
+companion awareness listener plugin has an unexported key, so it shows in Plugins without an
+association. The Invoice tab's Collaboration section lists each user with their color, local or
+remote, and cursor position, next to the last sync and the bytes sent and received.
+
+Two scenarios cover the room. "Open a second user" opens a tab. "Watch a remote edit" starts a
+second Yjs client on its own BroadcastChannel in the same tab, which joins, appends to the first
+row, and leaves, so its edit arrives through the real transport.
+
+Each late `registerPlugin`, such as the bubble menu's, recreates every plugin view, and y-sync then
+re-renders the whole document, keeping the selection by position. Timeline shows these as full
+document replaces right after load.
 
 ## The Invoice tab
 

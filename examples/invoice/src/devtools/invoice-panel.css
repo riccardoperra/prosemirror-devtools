@@ -304,3 +304,9 @@
   height: 8px;
   border-radius: 999px;
 }
+
+.invoice-panel__peer-name {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}

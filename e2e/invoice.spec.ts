@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { available, callTool, editorTarget } from "./inspection-tools";
 
@@ -9,6 +9,8 @@ async function transactionCount(page: Parameters<typeof editorTarget>[0], target
   if (!Array.isArray(result.value)) throw new Error("Expected dispatch summaries.");
   return result.value;
 }
+
+const invoiceUrl = "http://127.0.0.1:4184/";
 
 function toCents(money: string | null): number {
   return Number((money ?? "").replace(/[^\d]/g, ""));
@@ -22,7 +24,8 @@ test("invoice totals follow edits, paid locks the editor, and the inspector show
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await page.goto("http://127.0.0.1:4184");
+  // Single-user mode: the dispatch counts below assume no collaboration traffic.
+  await page.goto(`${invoiceUrl}?solo`);
   const editor = page.getByRole("textbox", { name: "Invoice editor", exact: true });
   await expect(editor).toBeVisible();
   const amountDue = page.getByLabel("Amount due", { exact: true });
@@ -83,7 +86,7 @@ test("invoice totals follow edits, paid locks the editor, and the inspector show
 });
 
 test("an outline entry selects its heading and scrolls it under the top bar", async ({ page }) => {
-  await page.goto("http://127.0.0.1:4184");
+  await page.goto(invoiceUrl);
   await expect(page.getByRole("textbox", { name: "Invoice editor", exact: true })).toBeVisible();
   const target = await editorTarget(page);
   const outline = page.getByRole("navigation", { name: "Document outline" });
@@ -109,7 +112,7 @@ test("an outline entry selects its heading and scrolls it under the top bar", as
 });
 
 test("the agent scenario shows its tool calls in the WebMCP tab", async ({ page }) => {
-  await page.goto("http://127.0.0.1:4184");
+  await page.goto(invoiceUrl);
   await expect(page.getByRole("textbox", { name: "Invoice editor", exact: true })).toBeVisible();
   const scenario = page.locator(".scenario", { hasText: "Agent reads the invoice" });
   await scenario.locator("summary").click();
@@ -123,16 +126,16 @@ test("the agent scenario shows its tool calls in the WebMCP tab", async ({ page 
   await expect(page.getByText("passed", { exact: true }).first()).toBeVisible();
 });
 
-test("two tabs in one room share typing and the paid status", async ({ context }) => {
-  const room = `e2e-${Date.now()}`;
+test("two tabs in the default room share typing and the paid status", async ({ context }) => {
   const ada = await context.newPage();
-  await ada.goto(`http://127.0.0.1:4184/?room=${room}&user=Ada`);
+  await ada.goto(invoiceUrl);
+  await expect(ada).toHaveURL(/\?room=invoice&user=Ada$/);
   await expect(ada.locator(".row-description").first()).toContainText("Editor architecture review");
   const [grace] = await Promise.all([
     context.waitForEvent("page"),
-    ada.getByRole("button", { name: "Open as second user", exact: true }).click(),
+    ada.getByRole("button", { name: "+ Invite", exact: true }).click(),
   ]);
-  await expect(grace).toHaveURL(/user=Grace/);
+  await expect(grace).toHaveURL(/\?room=invoice&user=Grace$/);
   const graceEditor = grace.getByRole("textbox", { name: "Invoice editor", exact: true });
   await expect(grace.locator(".row-description").first()).toContainText(
     "Editor architecture review",
@@ -150,4 +153,47 @@ test("two tabs in one room share typing and the paid status", async ({ context }
   await ada.getByRole("button", { name: "Mark paid", exact: true }).click();
   await expect(graceEditor).toHaveAttribute("contenteditable", "false");
   await expect(grace.getByRole("button", { name: "Add line item", exact: true })).toBeDisabled();
+});
+
+function userOf(page: Page): string | null {
+  return new URL(page.url()).searchParams.get("user");
+}
+
+test("presence lists both tabs, jumps to the remote caret, and drops a closed tab", async ({
+  context,
+}) => {
+  // Opened together, both tabs seed the invoice and both start as Ada until the room renames one.
+  const pages = [await context.newPage(), await context.newPage()];
+  await Promise.all(pages.map((page) => page.goto(invoiceUrl)));
+  for (const page of pages) await expect(page.locator(".line-item")).toHaveCount(65);
+  await expect.poll(() => pages.map(userOf).sort()).toEqual(["Ada", "Grace"]);
+  const ada = pages.find((page) => userOf(page) === "Ada")!;
+  const grace = pages.find((page) => userOf(page) === "Grace")!;
+
+  for (const [page, self, other] of [
+    [ada, "Ada", "Grace"],
+    [grace, "Grace", "Ada"],
+  ] as const) {
+    const presence = page.getByRole("group", { name: "People in this room" });
+    await expect(presence.getByRole("button", { name: `You, ${self}`, exact: true })).toBeVisible();
+    await expect(
+      presence.getByRole("button", { name: `Jump to ${other}`, exact: true }),
+    ).toBeVisible();
+    await expect(presence.getByText("2 online", { exact: true })).toBeVisible();
+  }
+
+  await grace.bringToFront();
+  await grace.locator(".row-description").nth(50).click();
+  await grace.keyboard.type(" (Grace was here)");
+  await ada.bringToFront();
+  const remoteRow = ada.locator(".row-description", { hasText: "(Grace was here)" });
+  await expect(remoteRow).toHaveCount(1);
+  await expect(remoteRow).not.toBeInViewport();
+  await ada.getByRole("button", { name: "Jump to Grace", exact: true }).click();
+  await expect(ada.locator(".is-spotlit", { hasText: "(Grace was here)" })).toBeInViewport();
+  await expect(ada.locator(".collaboration-carets__label", { hasText: "Grace" })).toBeInViewport();
+
+  await grace.close();
+  await expect(ada.getByRole("button", { name: "Jump to Grace", exact: true })).toHaveCount(0);
+  await expect(ada.getByText("1 online", { exact: true })).toBeVisible();
 });

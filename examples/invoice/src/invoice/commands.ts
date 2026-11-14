@@ -396,10 +396,15 @@ export function revealSelection(
   const { state } = view;
   view.dispatch(setSpotlight(state.tr.setSelection(select(state.doc)), spotlight));
   view.focus();
+  scrollToSpotlight(view, spotlight);
+  return true;
+}
+
+function scrollToSpotlight(view: EditorView, spotlight: SpotlightRange): void {
   const element = view.dom.querySelector(
     spotlight.kind === "node" ? ".is-spotlit" : ".spotlight-text",
   );
-  if (!element) return true;
+  if (!element) return;
   // Smooth scrolling across a 2,000-row invoice takes seconds, so far jumps skip to one screen away.
   const distance = element.getBoundingClientRect().top;
   if (Math.abs(distance) > 2 * window.innerHeight) {
@@ -409,7 +414,16 @@ export function revealSelection(
     behavior: "smooth",
     block: spotlight.kind === "node" ? "start" : "center",
   });
-  return true;
+}
+
+/** Lights up and scrolls to someone else's caret or selection, leaving this tab's selection alone. */
+export function revealPeer(editor: Editor, spotlight: SpotlightRange): boolean {
+  return traceCommand(editor, "Jump to collaborator", () => {
+    const { view } = editor;
+    view.dispatch(setSpotlight(view.state.tr, spotlight));
+    scrollToSpotlight(view, spotlight);
+    return true;
+  });
 }
 
 export function revealOutlineEntry(editor: Editor, entry: OutlineEntry): boolean {

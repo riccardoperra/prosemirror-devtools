@@ -1,3 +1,4 @@
+import { getSchema } from "@tiptap/core";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -5,15 +6,29 @@ import { readCollabConfig } from "./collab/config";
 import { CollabContext } from "./collab/context";
 import { DevtoolsContext } from "./devtools/context";
 import { loadDevtoolsShell } from "./env";
+import { createInvoiceExtensions } from "./invoice/extensions";
+import { initialInvoice } from "./invoice/fixture";
 import { InvoiceEditor } from "./ui/InvoiceEditor";
 import "./style.css";
 
-const collabConfig = readCollabConfig(location.search);
-// Yjs loads only in a room. The devtools shell, its panel styles, and its fonts load only when
-// diagnostics are on.
-const collab = collabConfig
-  ? (await import("./collab/session")).createCollabSession(collabConfig)
-  : null;
+function tabStorage(): Storage | null {
+  try {
+    return sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+const collabConfig = readCollabConfig(location.search, tabStorage());
+// Yjs stays out of the `?solo` path. The devtools shell, its panel styles, and its fonts load only
+// when diagnostics are on.
+const collab =
+  collabConfig.mode === "room"
+    ? (await import("./collab/session")).createCollabSession(collabConfig, {
+        schema: getSchema(createInvoiceExtensions({ history: false })),
+        content: initialInvoice,
+      })
+    : null;
 const devtools = loadDevtoolsShell
   ? await (await loadDevtoolsShell()).createDevtoolsShell(collab)
   : null;
@@ -45,5 +60,10 @@ function dispose(): void {
   devtools?.dispose();
   collab?.dispose();
 }
+// Leaving removes this tab's awareness state, so its avatar disappears from the other tabs.
 window.addEventListener("pagehide", dispose, { once: true });
+// A page restored from the back/forward cache comes back with a closed session. Rejoin instead.
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) location.reload();
+});
 import.meta.hot?.dispose(dispose);
