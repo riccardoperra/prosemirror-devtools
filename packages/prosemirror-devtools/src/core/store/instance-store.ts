@@ -499,6 +499,9 @@ export function createInstanceStore({
       publishRecordedUpdate(entry, dispatch);
     },
     markChanged(entry) {
+      // ProseMirror runs one prop hook per plugin for a single DOM event. Publishing each timing
+      // re-rendered every subscriber once per plugin inside the editor's event handler.
+      scheduler.deferToMicrotask();
       entry.updatedAt = Date.now();
       publishRecordedUpdate(entry);
     },

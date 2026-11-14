@@ -385,7 +385,7 @@ describe("instrumentProseMirrorPlugins", () => {
     view.destroy();
   });
 
-  it("publishes an updated snapshot when a plugin hook runs outside dispatch", () => {
+  it("publishes an updated snapshot when a plugin hook runs outside dispatch", async () => {
     let clock = 100;
     vi.spyOn(performance, "now").mockImplementation(() => clock);
 
@@ -414,8 +414,10 @@ describe("instrumentProseMirrorPlugins", () => {
     } as KeyboardEvent);
 
     expect(handled).toBe(true);
-    expect(listener).toHaveBeenCalledOnce();
     expect(store.getSnapshot().version).toBe(previousVersion + 1);
+    expect(listener).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(listener).toHaveBeenCalledOnce();
     expect(store.getSnapshot().instances[0]?.pluginTimings).toEqual([
       expect.objectContaining({
         hook: "props.handleKeyDown",

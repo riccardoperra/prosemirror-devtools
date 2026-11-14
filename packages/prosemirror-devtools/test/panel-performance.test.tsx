@@ -14,7 +14,8 @@ import { appendTextTransaction, createTestState, createTestView } from "./helper
 
 async function flush(callback: () => void | Promise<void>): Promise<void> {
   await callback();
-  await Promise.resolve();
+  // The Performance view renders store updates once the browser is idle.
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 afterEach(() => {
@@ -150,6 +151,7 @@ describe("performance panel", () => {
 
       await flush(async () => {
         view.dispatch(appendTextTransaction(view.state, "b"));
+        expect(selection()?.textContent).toBe("1 / 1");
       });
       expect(selection()?.textContent).toBe("2 / 2");
       expect(chart()?.dataset.selectedId).toBe("2");
