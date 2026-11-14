@@ -53,7 +53,17 @@ export function DocumentDiffView(props: {
                       {line.kind === "add" ? "added " : "removed "}
                     </span>
                   </Show>
-                  {line.text}
+                  <Show when={line.highlight} fallback={line.text}>
+                    {(highlight) => (
+                      <>
+                        {line.text.slice(0, highlight()[0])}
+                        <span class={panelStyles.pmDiffChange}>
+                          {line.text.slice(highlight()[0], highlight()[1])}
+                        </span>
+                        {line.text.slice(highlight()[1])}
+                      </>
+                    )}
+                  </Show>
                   <Show when={line.note}>
                     {(note) => <span class={panelStyles.pmDiffNote}> {note()}</span>}
                   </Show>

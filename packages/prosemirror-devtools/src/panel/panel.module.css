@@ -2436,6 +2436,20 @@
   .pm-diff-marker {
     font-weight: 700;
   }
+  /* The changed characters inside a field change. */
+  .pm-diff-change {
+    border-radius: var(--pm-radius-sm);
+    font-weight: 700;
+  }
+  .pm-diff-line[data-kind="add"] .pm-diff-change {
+    color: var(--pm-green);
+    background: color-mix(in srgb, var(--pm-green) 22%, transparent);
+  }
+  .pm-diff-line[data-kind="del"] .pm-diff-change {
+    color: var(--pm-red);
+    background: color-mix(in srgb, var(--pm-red) 22%, transparent);
+    text-decoration: line-through;
+  }
   .pm-diff-note {
     color: var(--pm-faint);
   }

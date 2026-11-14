@@ -302,7 +302,9 @@ truncate them with an ellipsis.
 
 Document changes use the folded diff in `document-diff.ts`: unchanged siblings collapse into one
 `⋯ N unchanged` line, a changed node opens down to the fields that differ (`"text"`, `"attrs"`,
-`"marks"`), and added or removed nodes take one `+`/`−` line each. Show a diff, not the two full
+`"marks"`), and added or removed nodes take one `+`/`−` line each. Changed siblings are aligned
+by similarity (a weighted longest common subsequence), so an inserted node is not paired with
+the next edited one, and a field change marks only the characters that differ. Show a diff, not the two full
 documents; the Document tab already shows either document through the Before/After toggle.
 
 Timeline answers "what happened and why"; Performance answers "what it cost". Timeline shows a
