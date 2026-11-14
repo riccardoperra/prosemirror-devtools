@@ -64,8 +64,8 @@ build without the showcase flag ships none of it. It wires:
   `installProseMirrorChromeBridge` and `installProseMirrorWebMCPBridge`. The "Agent reads the
   invoice" scenario dispatches the Chrome DevTools MCP discovery event and calls three tools, so the
   tab shows real calls without a connected agent;
-- `createHistoryInspector` with the `history()` plugin Tiptap installed, found in the mounted state
-  by its runtime key. Transactions show undo and redo depths for each dispatch;
+- `createHistoryInspector()`, which finds the `history()` plugin Tiptap installs after setup.
+  Transactions show undo and redo depths for each dispatch;
 - `performanceExtension: true`, so a Chrome Performance recording with **Show custom tracks**
   shows dispatches, phases, plugin hooks, and markers as tracks;
 - snapshots through `createSnapshot` and `persistSnapshots`: the snapshot scenario saves one before
