@@ -1,6 +1,6 @@
 import { readInstanceState } from "../../store/instance-state";
 import { DOMSerializer } from "prosemirror-model";
-import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
+import { createMemo, createSignal, For, Match, Show, Switch, type JSX } from "solid-js";
 
 import { panelStyles } from "../../styles";
 
@@ -9,12 +9,13 @@ import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
 import { ResizableSplit } from "../../ui/resizable-split";
+import { DocumentBoxes } from "./document-boxes";
 import { DocumentTree, getDocumentNodeRange } from "./document-tree";
 import { useDocumentSelection } from "./use-document-selection";
 import { useOptionalPanelContext, usePanelExperiments } from "../../panel-provider";
 import type { ExperimentalFeature } from "../../../core/panel-types";
 
-type DocumentView = "structure" | "json" | "html";
+type DocumentView = "structure" | "json" | "html" | "boxes";
 
 type DocumentViewDefinition = Readonly<{
   id: DocumentView;
@@ -27,6 +28,12 @@ const DOCUMENT_VIEWS: readonly DocumentViewDefinition[] = [
   { id: "html", label: "HTML", ariaLabel: "Show exported document HTML" },
   { id: "structure", label: "Structure", ariaLabel: "Show document structure" },
   { id: "json", label: "JSON", ariaLabel: "Show document JSON" },
+  {
+    id: "boxes",
+    label: "Boxes",
+    ariaLabel: "Show document as nested boxes",
+    experiment: "document-boxes",
+  },
 ];
 
 export interface StateViewProps {
@@ -122,42 +129,51 @@ export function StateView(props: StateViewProps): JSX.Element {
             mapping was assumed.
           </p>
         </Show>
-        <Show
-          when={documentView() === "structure"}
-          fallback={
+        <Switch>
+          <Match when={documentView() === "structure"}>
+            <DocumentTree
+              depth={0}
+              node={state().doc}
+              onReveal={reveal}
+              onSelect={select}
+              onSelectNode={selectNode}
+              pos={0}
+              selectedPosition={selected().pos}
+              selectedRoot={selected().isRoot}
+              selection={selectionRange()}
+            />
+          </Match>
+          <Match when={documentView() === "boxes"}>
+            <DocumentBoxes
+              doc={state().doc}
+              onReveal={reveal}
+              onSelect={select}
+              selectedPosition={selected().pos}
+              selectedRoot={selected().isRoot}
+            />
+          </Match>
+          <Match when={documentView() === "html"}>
             <div class={panelStyles.pmDocumentJson}>
-              <Show
-                when={documentView() === "html"}
-                fallback={<JsonTree defaultExpandedDepth={3} value={inspection().doc} />}
+              <p class={panelStyles.pmPerformanceNote}>
+                HTML serializes document content through the schema. Root attributes remain in JSON.
+                NodeViews are not HTML serializers.
+              </p>
+              <pre
+                aria-label="Exported document HTML"
+                style={{ "white-space": "pre-wrap", "overflow-wrap": "anywhere" }}
               >
-                <p class={panelStyles.pmPerformanceNote}>
-                  HTML serializes document content through the schema. Root attributes remain in
-                  JSON. NodeViews are not HTML serializers.
-                </p>
-                <pre
-                  aria-label="Exported document HTML"
-                  style={{ "white-space": "pre-wrap", "overflow-wrap": "anywhere" }}
-                >
-                  {html()?.kind === "available"
-                    ? html()?.value
-                    : `HTML unavailable: ${html()?.reason ?? ""}`}
-                </pre>
-              </Show>
+                {html()?.kind === "available"
+                  ? html()?.value
+                  : `HTML unavailable: ${html()?.reason ?? ""}`}
+              </pre>
             </div>
-          }
-        >
-          <DocumentTree
-            depth={0}
-            node={state().doc}
-            onReveal={reveal}
-            onSelect={select}
-            onSelectNode={selectNode}
-            pos={0}
-            selectedPosition={selected().pos}
-            selectedRoot={selected().isRoot}
-            selection={selectionRange()}
-          />
-        </Show>
+          </Match>
+          <Match when={documentView() === "json"}>
+            <div class={panelStyles.pmDocumentJson}>
+              <JsonTree defaultExpandedDepth={3} value={inspection().doc} />
+            </div>
+          </Match>
+        </Switch>
       </div>
       <div class={panelStyles.pmPane}>
         <div class={panelStyles.pmDetailBlock}>

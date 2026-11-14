@@ -13,6 +13,11 @@ export type DocumentSelectionRange = Readonly<{
 
 type SelectionCoverage = "full" | "partial" | null;
 
+/** Quoted text, truncated so long text nodes keep one row. */
+export function previewText(text: string): string {
+  return JSON.stringify(text.length > 42 ? `${text.slice(0, 42)}…` : text);
+}
+
 export function getDocumentNodeRange(
   node: ProseMirrorNode,
   pos: number,
@@ -124,9 +129,7 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
         >
           <span class={panelStyles.pmNodeName}>{props.node.type.name}</span>
           <Show when={text()}>
-            <span class={panelStyles.pmNodeText}>
-              {JSON.stringify(text().length > 42 ? `${text().slice(0, 42)}…` : text())}
-            </span>
+            <span class={panelStyles.pmNodeText}>{previewText(text())}</span>
           </Show>
           <Show when={props.node.marks.length > 0}>
             <Badge>{props.node.marks.map((mark) => mark.type.name).join("+")}</Badge>
