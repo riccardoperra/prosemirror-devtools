@@ -142,3 +142,83 @@ export interface Invoice {
   readonly buyer: string;
   readonly items: readonly LineItem[];
 }
+
+export function reprice(item: LineItem, percent: number): Cents {
+  return cents(item.unitPrice * (1 + percent / 100));
+}
+
+export interface TimesheetEntry {
+  readonly project: string;
+  readonly date: string;
+  readonly person: string;
+  readonly hours: number;
+}
+
+export interface TimesheetGroup {
+  readonly project: string;
+  readonly hours: number;
+  readonly entries: readonly TimesheetEntry[];
+}
+
+export function groupTimesheet(entries: readonly TimesheetEntry[]): TimesheetGroup[] {
+  const groups = new Map<string, TimesheetEntry[]>();
+  for (const entry of entries) {
+    const group = groups.get(entry.project);
+    if (group) group.push(entry);
+    else groups.set(entry.project, [entry]);
+  }
+  return [...groups].map(([project, grouped]) => ({
+    project,
+    hours: grouped.reduce((sum, entry) => sum + entry.hours, 0),
+    entries: grouped,
+  }));
+}
+
+export interface InstallmentPlan {
+  readonly label: string;
+  readonly percent: number;
+  readonly dueAfterDays: number;
+}
+
+export interface Installment extends InstallmentPlan {
+  readonly amount: Cents;
+  readonly dueDate: string;
+}
+
+function addDays(isoDate: string, days: number): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return isoDate;
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+/** The last installment absorbs rounding so the schedule always sums to the gross total. */
+export function scheduleInstallments(
+  gross: Cents,
+  issueDate: string,
+  plan: readonly InstallmentPlan[],
+): Installment[] {
+  let allocated = 0;
+  return plan.map((step, index) => {
+    const amount =
+      index === plan.length - 1 ? cents(gross - allocated) : cents((gross * step.percent) / 100);
+    allocated += amount;
+    return { ...step, amount, dueDate: addDays(issueDate, step.dueAfterDays) };
+  });
+}
+
+export const pageKinds = {
+  cover: { title: "Invoice" },
+  lineItems: { title: "Line items" },
+  timesheet: { title: "Appendix A · Timesheet" },
+  schedule: { title: "Payment schedule" },
+  terms: { title: "Terms and notes" },
+  signatures: { title: "Signatures" },
+  continued: { title: "Continued" },
+} as const;
+
+export type PageKind = keyof typeof pageKinds;
+
+export function isPageKind(value: string): value is PageKind {
+  return Object.hasOwn(pageKinds, value);
+}
