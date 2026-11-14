@@ -72,3 +72,11 @@ label {
 section {
   margin: 20px 0;
 }
+
+.callout {
+  display: block;
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #4f46e5;
+  background: #eef2ff;
+}

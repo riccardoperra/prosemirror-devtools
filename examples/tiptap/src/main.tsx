@@ -4,8 +4,11 @@ import {
   installProseMirrorChromeBridge,
   installProseMirrorWebMCPBridge,
 } from "prosemirror-inspector/agent";
-import { createProseMirrorInspectionClient } from "prosemirror-inspector/core";
-import { Extension } from "@tiptap/core";
+import {
+  createProseMirrorDevtoolsDiagnostics,
+  createProseMirrorInspectionClient,
+} from "prosemirror-inspector/core";
+import { Extension, Node } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { StrictMode, useEffect, useState } from "react";
@@ -30,16 +33,35 @@ const disposeBridge = import.meta.env.DEV
 const disposeWebMCP = import.meta.env.DEV
   ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
   : null;
-const fixture = "<ul><li><p>Alpha</p></li></ul>";
+const fixture = "<ul><li><p>Alpha</p></li></ul><aside>Callout rendered by a node view</aside>";
+
+const Callout = Node.create({
+  name: "callout",
+  group: "block",
+  content: "inline*",
+  parseHTML: () => [{ tag: "aside" }],
+  renderHTML: () => ["aside", { class: "callout" }, 0],
+  addNodeView:
+    () =>
+    ({ node }) => {
+      const dom = document.createElement("aside");
+      dom.className = "callout";
+      const contentDOM = document.createElement("span");
+      dom.append(contentDOM);
+      return { dom, contentDOM, update: (next) => next.type === node.type };
+    },
+});
 
 function NativeTiptap({ instrumentPlugins }: { instrumentPlugins: boolean }) {
   const [extensions] = useState(() => [
     StarterKit.configure({ trailingNode: false }),
+    Callout,
     ...(import.meta.env.DEV
       ? [
           Extension.create({
             name: "prosemirrorInspector",
             priority: 10000,
+            addStorage: () => ({ diagnostics: createProseMirrorDevtoolsDiagnostics() }),
             onBeforeCreate() {
               setupTiptapDevtools(this.editor, {
                 id: "native-tiptap",
@@ -47,6 +69,7 @@ function NativeTiptap({ instrumentPlugins }: { instrumentPlugins: boolean }) {
                 store,
                 instrumentPlugins,
                 performanceMarks: false,
+                diagnostics: this.storage.diagnostics,
                 inspectors: [
                   createTiptapInspector({ editor: this.editor }),
                   createHistoryInspector(),
@@ -61,6 +84,7 @@ function NativeTiptap({ instrumentPlugins }: { instrumentPlugins: boolean }) {
             },
             onDestroy() {
               detachTiptapDevtools(this.editor);
+              this.storage.diagnostics.dispose();
             },
           }),
         ]
