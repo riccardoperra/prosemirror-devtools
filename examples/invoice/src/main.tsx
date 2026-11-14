@@ -25,7 +25,7 @@ const inspectorPlugin = import.meta.env.DEV
 
 function App() {
   return (
-    <main>
+    <main className="workbench">
       <header className="app-header">
         <h1>Invoice workbench</h1>
         <p>
