@@ -14,7 +14,7 @@ function toCents(money: string | null): number {
   return Number((money ?? "").replace(/[^\d]/g, ""));
 }
 
-test("invoice totals follow edits, the slow plugin scenario dispatches, and paid locks the editor", async ({
+test("invoice totals follow edits, paid locks the editor, and the inspector shows full rows and the Invoice tab", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -56,6 +56,27 @@ test("invoice totals follow edits, the slow plugin scenario dispatches, and paid
   await expect(page.getByLabel("Quantity", { exact: true }).first()).toBeDisabled();
 
   await page.getByRole("button", { name: "Open TanStack Devtools", exact: true }).click();
-  await expect(page.getByRole("button", { name: /^Inspect dispatch #/ }).first()).toBeVisible();
+  const latestDispatch = page.getByRole("button", { name: /^Inspect dispatch #/ }).first();
+  await expect(latestDispatch).toBeVisible();
+  // App styles once leaked into the inspector and clipped each row to its first line.
+  const rowTime = latestDispatch.locator("time");
+  await expect(rowTime).toBeVisible();
+  const [row, time] = await Promise.all([latestDispatch.boundingBox(), rowTime.boundingBox()]);
+  expect(time!.y + time!.height).toBeLessThanOrEqual(row!.y + row!.height);
+
+  const quote = "Travel expenses are billed at cost.";
+  await page.getByRole("tab", { name: "Invoice", exact: true }).click();
+  const comments = page.getByRole("region", { name: "Comments", exact: true });
+  const fixtureComment = comments.getByRole("button", { name: "Select comment by Giulia" });
+  await expect(fixtureComment).toContainText(quote);
+  await fixtureComment.click();
+  await expect
+    .poll(async () => {
+      const selection = available(
+        await callTool(page, "prosemirror_inspect", { target, query: { kind: "selection" } }),
+      ).value as { from: number; to: number };
+      return selection.to - selection.from;
+    })
+    .toBe(quote.length);
   expect(errors).toEqual([]);
 });
