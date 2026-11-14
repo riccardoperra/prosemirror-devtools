@@ -35,7 +35,9 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
     },
     input,
   );
-  const panels = createMemo(() => resolvePanelRegistry(props.extensions));
+  const panels = createMemo(() =>
+    resolvePanelRegistry(props.extensions).flatMap(({ panels }) => panels),
+  );
   const dispatchPresenters = createMemo(() => resolveDispatchPresenters(props.extensions));
 
   return (

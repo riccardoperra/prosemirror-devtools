@@ -4,7 +4,6 @@ import type { ProseMirrorDevtoolsTab } from "./panel.types";
 export type BuiltinPanelDefinition = Readonly<{
   id: ProseMirrorDevtoolsTab;
   title: string;
-  order: number;
   requiresInstance: true;
   badge: "transactions" | null;
   kind: "builtin";
@@ -13,7 +12,6 @@ export type BuiltinPanelDefinition = Readonly<{
 export type ExternalPanelDefinition = Readonly<{
   id: string;
   title: string;
-  order: number;
   requiresInstance: boolean;
   badge: null;
   kind: "extension";
@@ -27,7 +25,6 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "state",
     title: "State",
-    order: 0,
     requiresInstance: true,
     badge: null,
     kind: "builtin",
@@ -35,7 +32,6 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "selection",
     title: "Selection",
-    order: 5,
     requiresInstance: true,
     badge: null,
     kind: "builtin",
@@ -43,7 +39,6 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "history",
     title: "Transactions",
-    order: 10,
     requiresInstance: true,
     badge: "transactions",
     kind: "builtin",
@@ -51,7 +46,6 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "events",
     title: "Events",
-    order: 15,
     requiresInstance: true,
     badge: null,
     kind: "builtin",
@@ -59,7 +53,6 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "decorations",
     title: "Rendering",
-    order: 35,
     requiresInstance: true,
     badge: null,
     kind: "builtin",
@@ -67,7 +60,6 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "performance",
     title: "Performance",
-    order: 20,
     requiresInstance: true,
     badge: "transactions",
     kind: "builtin",
@@ -75,7 +67,6 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "plugins",
     title: "Plugins",
-    order: 30,
     requiresInstance: true,
     badge: null,
     kind: "builtin",
@@ -83,7 +74,6 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "schema",
     title: "Schema",
-    order: 40,
     requiresInstance: true,
     badge: null,
     kind: "builtin",
@@ -91,7 +81,6 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "snapshots",
     title: "Snapshots",
-    order: 50,
     requiresInstance: true,
     badge: null,
     kind: "builtin",
@@ -99,19 +88,59 @@ export const BUILTIN_PANELS: readonly BuiltinPanelDefinition[] = [
   {
     id: "inspection-context",
     title: "Context",
-    order: 110,
     requiresInstance: true,
     badge: null,
     kind: "builtin",
   },
 ];
 
+export type BuiltinPanelGroupDefinition = Readonly<{
+  id: "document" | "timeline" | "snapshots" | "performance" | "plugins" | "context";
+  title: string;
+  order: number;
+  panels: readonly [ProseMirrorDevtoolsTab, ...ProseMirrorDevtoolsTab[]];
+}>;
+
+export const BUILTIN_PANEL_GROUPS: readonly BuiltinPanelGroupDefinition[] = [
+  { id: "document", title: "Document", order: 0, panels: ["state", "selection", "schema"] },
+  { id: "timeline", title: "Timeline", order: 10, panels: ["history", "events"] },
+  { id: "snapshots", title: "Snapshots", order: 15, panels: ["snapshots"] },
+  { id: "performance", title: "Performance", order: 20, panels: ["performance"] },
+  { id: "plugins", title: "Plugins", order: 30, panels: ["plugins", "decorations"] },
+  { id: "context", title: "Context", order: 110, panels: ["inspection-context"] },
+];
+
+export type ResolvedPanelGroup = Readonly<{
+  id: string;
+  title: string;
+  order: number;
+  panels: readonly [ResolvedPanelDefinition, ...ResolvedPanelDefinition[]];
+}>;
+
+function builtinPanel(id: ProseMirrorDevtoolsTab): BuiltinPanelDefinition {
+  const panel = BUILTIN_PANELS.find((candidate) => candidate.id === id);
+  if (!panel) throw new Error(`Unknown built-in panel "${id}".`);
+  return panel;
+}
+
+function builtinGroup({
+  id,
+  title,
+  order,
+  panels,
+}: BuiltinPanelGroupDefinition): ResolvedPanelGroup {
+  const [first, ...rest] = panels;
+  return { id, title, order, panels: [builtinPanel(first), ...rest.map(builtinPanel)] };
+}
+
+const RESOLVED_BUILTIN_GROUPS = BUILTIN_PANEL_GROUPS.map(builtinGroup);
+
 export function resolvePanelRegistry(
   extensions: readonly DevtoolsExtension[],
-): readonly ResolvedPanelDefinition[] {
+): readonly ResolvedPanelGroup[] {
   const seenExtensionIds = new Set<string>();
   const seenPanelIds = new Set<string>(BUILTIN_PANELS.map(({ id }) => id));
-  const panels: ResolvedPanelDefinition[] = [...BUILTIN_PANELS];
+  const groups: ResolvedPanelGroup[] = [...RESOLVED_BUILTIN_GROUPS];
 
   for (const extension of extensions) {
     if (!extension.id.trim()) throw new Error("A devtools extension id cannot be empty.");
@@ -128,20 +157,28 @@ export function resolvePanelRegistry(
         throw new Error(`Duplicate devtools panel id "${panel.id}".`);
       }
       seenPanelIds.add(panel.id);
-      panels.push({
-        id: panel.id,
+      const order = panel.order !== undefined && Number.isFinite(panel.order) ? panel.order : 100;
+      groups.push({
+        // Prefixed so an extension panel id can never collide with a built-in group id.
+        id: `extension:${panel.id}`,
         title: panel.title,
-        order: panel.order !== undefined && Number.isFinite(panel.order) ? panel.order : 100,
-        requiresInstance: panel.requiresInstance ?? true,
-        badge: null,
-        kind: "extension",
-        extensionId: extension.id,
-        panel,
+        order,
+        panels: [
+          {
+            id: panel.id,
+            title: panel.title,
+            requiresInstance: panel.requiresInstance ?? true,
+            badge: null,
+            kind: "extension",
+            extensionId: extension.id,
+            panel,
+          },
+        ],
       });
     }
   }
 
-  return panels.sort(
+  return groups.sort(
     (left, right) => left.order - right.order || left.title.localeCompare(right.title),
   );
 }
