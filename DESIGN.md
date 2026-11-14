@@ -96,21 +96,49 @@ cards in a grid (Snapshots, Context) and for popovers.
 
 ```
 ┌ brand · instance select ··························· theme ┐  header
-│ State  Selection  Transactions 12  …  Context             │  tabs
+│ Document  Timeline 12  Snapshots  Performance 12  …       │  section tabs
+├────────────────────────────────────────────────────────────┤
+│ State  Selection  Schema                                   │  view tabs (only for a section with 2+ views)
 ├────────────────────────────────────────────────────────────┤
 │ [Dispatch #11 · after] [Before | After] [Follow live]      │  inspection toolbar (optional)
 ├────────────────────────────────────────────────────────────┤
-│ tab content                                               │
+│ view content                                              │
 └────────────────────────────────────────────────────────────┘
 ```
 
-- Tabs: body size, weight 650, `--pm-muted`; the selected tab is `--pm-text` with a 2px accent
-  underline. Counts follow the label in caption mono `--pm-faint`.
-- The inspection toolbar is shared. Tabs do not add their own toolbar row above it.
+- Section tabs: `pmTabs` and `pmTab`. Body size, weight 650, `--pm-muted`, 35px minimum height;
+  the selected tab is `--pm-text` with a 2px accent underline. Counts follow the label in caption
+  mono `--pm-faint`, and only on section tabs.
+- View tabs: the same classes plus `pmSubTabs` on the list and `pmSubTab` on each tab. A top
+  border, 30px minimum height and weight 500; rest, hover and selected states match the section
+  tabs. The row appears only when the active section has more than one view. Do not add a third
+  row or another tab style; a view that needs its own modes uses a [view switch](#view-switch).
+- Selecting a section opens the view last used in it during the session, otherwise its first view.
+  The active section always follows the active view.
+- The inspection toolbar is shared. Views do not add their own toolbar row above it.
+
+### Sections
+
+Navigation, `defaultPanel`, `activePanel` and `onActivePanelChange` use view (panel) IDs. Sections
+are a navigation layer defined in `BUILTIN_PANEL_GROUPS` in `panel-registry.ts`. Every built-in
+view belongs to exactly one section, and view titles stay as listed.
+
+| Section     | Views                           |
+| ----------- | ------------------------------- |
+| Document    | State, Selection, Schema        |
+| Timeline    | Transactions, Events            |
+| Snapshots   | Snapshots                       |
+| Performance | Performance                     |
+| Plugins     | Plugins, Rendering              |
+| Context     | Context                         |
+| Extensions  | One section per extension panel |
+
+Extension sections sort among the built-in sections by the panel's `order`. Add a new built-in
+view to the section whose question it answers before you add a section.
 
 ### Tab content patterns
 
-Every tab uses one of three layouts:
+Every view uses one of three layouts:
 
 1. **List and detail.** A resizable list on the left, the selected item on the right. Use
    `ResizableSplit`. Used by State, Selection, Transactions, Events, WebMCP.
@@ -267,6 +295,9 @@ in this guide is a leak.
 
 - Every interactive element is a native button, input, select or `<summary>`.
 - Icon-only buttons have `aria-label`. Toggle rows and switches expose `aria-pressed`.
+- Section tabs form a tablist labelled "Inspector sections"; view tabs form a tablist labelled
+  "<Section> views". Arrow keys, Home and End move within each list. The tab panel is labelled by
+  the active view tab; a single-view section tab is that view's tab.
 - Text contrast against its background is at least 4.5:1, including in the dark theme.
   `--pm-faint` is for non-essential text only.
 - Focus is always visible with the accent outline; never remove it without a replacement.
@@ -280,7 +311,7 @@ in this guide is a leak.
 
 ## Checklist for a new or changed panel
 
-- [ ] Uses one of the three tab layouts.
+- [ ] Belongs to one section; uses one of the three tab layouts.
 - [ ] Every list uses the list row and its selected style.
 - [ ] Every button has a panel class; no bare `<button>`.
 - [ ] No text below 10px outside chart ticks; weights are 500, 650 or 700.
