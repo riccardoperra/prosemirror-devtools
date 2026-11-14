@@ -216,8 +216,9 @@ WebMCP calls.
 
 The Boxes and DOM views draw the document, so they encode data that list rows do not.
 
-- A box or chip has a 1px `--pm-border` border and the 4px radius. A 3px start border carries the
-  node type color, the same hue in Boxes and in the DOM view's node badges.
+- A box or chip has a 1px `--pm-border` border and the 4px radius. A start border carries the
+  node type color: 3px on a box, 2px on a chip. Boxes and the DOM view's node badges use the same
+  hue.
 - Marks are amber (`--pm-yellow` on `--pm-yellow-soft`) in both views. Widgets are green. Elements
   outside the document are muted with a dashed border.
 - The inspected box or chip uses an `--pm-accent` border on `--pm-accent-soft`. Rows inside the
