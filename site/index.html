@@ -6,7 +6,7 @@
     <title>ProseMirror Inspector</title>
     <meta
       name="description"
-      content="A development panel for inspecting and profiling ProseMirror editors, with a live invoice workbench to try it."
+      content="A development panel for inspecting and profiling ProseMirror editors, with live examples for every supported framework."
     />
     <style>
       :root {
@@ -60,7 +60,7 @@
       }
 
       main {
-        max-width: 720px;
+        max-width: 880px;
         margin: 0 auto;
         padding: 96px 24px 72px;
       }
@@ -143,41 +143,76 @@
 
       .examples {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
         margin: 0;
         padding: 0;
         list-style: none;
       }
 
-      .examples a {
-        display: block;
-        padding: 12px 14px;
-        border-radius: 8px;
+      .card {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: 10px;
         background: var(--surface);
         box-shadow:
           inset 0 0 0 1px var(--hairline),
           var(--shadow-card);
-        color: var(--text);
-        text-decoration: none;
-        transition: box-shadow 120ms ease;
       }
 
-      .examples a:hover {
-        box-shadow:
-          inset 0 0 0 1px var(--accent),
-          var(--shadow-card);
+      .card.featured {
+        grid-column: 1 / -1;
       }
 
-      .examples strong {
+      .card img {
         display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1440 / 900;
+        border-bottom: 1px solid var(--hairline);
+        background: var(--canvas);
+      }
+
+      .card-body {
+        display: grid;
+        gap: 4px;
+        padding: 12px 14px 14px;
+      }
+
+      .card h3 {
+        margin: 0;
         font-size: 14px;
         font-weight: 600;
       }
 
-      .examples span {
+      .card .framework {
+        color: var(--text-faint);
+        font-size: 12px;
+      }
+
+      .card p {
+        margin: 0;
         color: var(--text-muted);
         font-size: 13px;
+      }
+
+      .card .links {
+        display: flex;
+        gap: 14px;
+        margin-top: 6px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .card .links a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      .card .links a:hover {
+        color: var(--accent-hover);
+        text-decoration: underline;
       }
 
       footer {
@@ -220,86 +255,10 @@
       </section>
 
       <section aria-labelledby="examples">
-        <h2 id="examples">Other examples, on GitHub</h2>
+        <h2 id="examples">Every example, live</h2>
+        <!-- scripts/build-pages.mjs renders one card per row of scripts/examples.mjs here. -->
         <ul class="examples">
-          <li>
-            <a
-              href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/tanstack"
-            >
-              <strong>TanStack React</strong>
-              <span>The React adapter in TanStack Devtools</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/standalone"
-            >
-              <strong>Standalone</strong>
-              <span>Framework-neutral mount and recordings</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/tiptap"
-            >
-              <strong>Tiptap</strong>
-              <span>Tiptap 3 lifecycle and middleware</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/react-prosemirror"
-            >
-              <strong>React ProseMirror</strong>
-              <span>A controlled editor model</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/kitchen-sink"
-            >
-              <strong>Kitchen sink</strong>
-              <span>prosemirror-collab and Yjs side by side</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/preact"
-            >
-              <strong>Preact</strong>
-              <span>TanStack Preact Devtools</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/solid"
-            >
-              <strong>Solid</strong>
-              <span>TanStack Solid Devtools</span>
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/vue">
-              <strong>Vue</strong>
-              <span>TanStack Vue Devtools</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/svelte"
-            >
-              <strong>Svelte</strong>
-              <span>TanStack Svelte Devtools</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/angular"
-            >
-              <strong>Angular</strong>
-              <span>TanStack Angular Devtools</span>
-            </a>
-          </li>
+          <!-- examples -->
         </ul>
       </section>
 
