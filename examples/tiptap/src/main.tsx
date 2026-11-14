@@ -55,6 +55,7 @@ function NativeTiptap({ instrumentPlugins }: { instrumentPlugins: boolean }) {
             store,
             instrumentPlugins,
             performanceMarks: false,
+            diagnostics: true,
             inspectors: [createHistoryInspector()],
           }),
         ]

@@ -298,6 +298,10 @@ const editor = new Editor({
 });
 ```
 
+Pass `diagnostics: true` to fill the **Events & commands** and **Rendering** panels. The
+integration creates the controller and disposes it when the editor is destroyed. A controller you
+pass yourself stays yours to dispose.
+
 The [Tiptap example](https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/tiptap/src/tiptap-devtools.ts)
 imports the same file, so the browser tests cover it.
 

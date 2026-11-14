@@ -3,6 +3,11 @@ import type { EditorProps, EditorView } from "prosemirror-view";
 
 import { createProseMirrorDispatchRecorder } from "../../core/attach";
 import {
+  createProseMirrorDevtoolsDiagnostics,
+  type DevtoolsDiagnosticsController,
+  type DevtoolsDiagnosticsOptions,
+} from "../../core/diagnostics";
+import {
   instrumentProseMirrorNodeViews,
   instrumentProseMirrorPlugins,
 } from "../../core/instrument";
@@ -16,7 +21,15 @@ export interface TiptapDevtoolsEditor {
   readonly view: EditorView;
 }
 
-export interface TiptapDevtoolsOptions extends Omit<AttachProseMirrorDevtoolsOptions, "view"> {
+export interface TiptapDevtoolsOptions extends Omit<
+  AttachProseMirrorDevtoolsOptions,
+  "view" | "diagnostics"
+> {
+  /**
+   * `true` or diagnostics options create a controller that `detachTiptapDevtools` disposes.
+   * A supplied controller stays owned by the caller.
+   */
+  diagnostics?: boolean | DevtoolsDiagnosticsOptions | DevtoolsDiagnosticsController;
   /** Instrument Tiptap's generated ProseMirror plugins and extension node views. Defaults to true. */
   instrumentPlugins?: boolean;
   getPluginLabel?: (plugin: Plugin, index: number) => string;
@@ -29,6 +42,7 @@ export interface TiptapDispatchTransactionProps {
 }
 
 type DispatchRecorder = ReturnType<typeof createProseMirrorDispatchRecorder>;
+
 
 type TiptapIntegration = Readonly<{
   options: TiptapDevtoolsOptions;
@@ -118,6 +132,7 @@ function interceptGetter(
 function installPluginInstrumentation(
   editor: TiptapDevtoolsEditor,
   options: TiptapDevtoolsOptions,
+  diagnostics: DevtoolsDiagnosticsController | undefined,
   sessionId: string,
   isActive: () => boolean,
   onPluginsCreated: () => void,
@@ -134,7 +149,7 @@ function installPluginInstrumentation(
     sessionId,
     isActive,
     ...(options.store ? { store: options.store } : {}),
-    ...(options.diagnostics ? { diagnostics: options.diagnostics } : {}),
+    ...(diagnostics ? { diagnostics } : {}),
   };
   const restorePlugins = interceptGetter(manager, "plugins", (plugins) => {
     if (!isActive() || !Array.isArray(plugins)) return plugins;
@@ -196,10 +211,25 @@ function readyView(editor: TiptapDevtoolsEditor): EditorView | null {
   }
 }
 
+function isDiagnosticsController(
+  value: TiptapDevtoolsOptions["diagnostics"],
+): value is DevtoolsDiagnosticsController {
+  return typeof value === "object" && "getSnapshot" in value;
+}
+
 function createTiptapIntegration(
   editor: TiptapDevtoolsEditor,
   options: TiptapDevtoolsOptions,
 ): TiptapIntegration {
+  // Options are read in place: an application may define fields such as `inspectors` as getters.
+  const requested = options.diagnostics;
+  let ownedDiagnostics: DevtoolsDiagnosticsController | undefined;
+  let diagnostics: DevtoolsDiagnosticsController | undefined;
+  if (isDiagnosticsController(requested)) diagnostics = requested;
+  else if (requested) {
+    ownedDiagnostics = createProseMirrorDevtoolsDiagnostics(requested === true ? {} : requested);
+    diagnostics = ownedDiagnostics;
+  }
   const sessionId = options.sessionId ?? createDevtoolsSessionId("tiptap");
   let phase: "active" | "suspended" | "disposed" = "active";
   let recorder: DispatchRecorder | null = null;
@@ -235,7 +265,7 @@ function createTiptapIntegration(
         id: options.id,
         view,
         sessionId,
-        ...(options.diagnostics ? { diagnostics: options.diagnostics } : {}),
+        ...(diagnostics ? { diagnostics } : {}),
         ...(options.inspectors === undefined ? {} : { inspectors: options.inspectors }),
         ...(options.getState === undefined ? {} : { getState: options.getState }),
         ...(options.captureProfile === undefined ? {} : { captureProfile: options.captureProfile }),
@@ -283,6 +313,7 @@ function createTiptapIntegration(
         restorePluginGetter = installPluginInstrumentation(
           editor,
           options,
+          diagnostics,
           sessionId,
           () => phase === "active",
           registerWhenReady,
@@ -322,7 +353,11 @@ function createTiptapIntegration(
         try {
           (options.store ?? prosemirrorDevtoolsStore).closeSession(options.id, sessionId);
         } finally {
-          restorePluginGetter();
+          try {
+            restorePluginGetter();
+          } finally {
+            ownedDiagnostics?.dispose();
+          }
         }
       }
     },
