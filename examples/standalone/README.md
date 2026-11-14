@@ -6,4 +6,4 @@ Click **Focus editor**, then press Enter. The single list item `Alpha` splits in
 
 The capture selector recreates the fixture with either instrumentation before EditorState creation or dispatch attachment alone. The latter does not capture existing plugin hooks or input handler provenance. Both use one session and the public `prosemirror-inspector/standalone` mount.
 
-The fixture guards sessions and the panel with `import.meta.env.DEV`. The production build keeps the editor and disables diagnostics. Disposal removes the editor subscription, view, session, panel, and toolbar listeners.
+The fixture guards sessions and the panel with `devtoolsEnabled` from `src/env.ts`: development, or a showcase build with `VITE_SHOWCASE=true`. An ordinary production build keeps the editor and disables diagnostics. Disposal removes the editor subscription, view, session, panel, and toolbar listeners.

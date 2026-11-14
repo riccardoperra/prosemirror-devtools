@@ -8,6 +8,6 @@ Tiptap owns the dispatcher. Its native `dispatchTransaction` middleware calls th
 
 Use **Reset fixture** or the instrumentation selector to recreate the editor. The dispatch-only option leaves plugin hooks outside coverage. Plugins installed later with `registerPlugin` stay functional but are not instrumented by the initial extension-manager getter.
 
-The fixture guards extension registration and the panel with `import.meta.env.DEV`. No generic attach helper is combined with native middleware.
+The fixture guards extension registration and the panel with `devtoolsEnabled` from `src/env.ts`: development, or a showcase build with `VITE_SHOWCASE=true`. No generic attach helper is combined with native middleware.
 
 The real editor also registers the Tiptap extension inspector. Read-only queries expose active extensions, inherited priorities, bounded options, and current `editor.storage` samples. Storage changes between query or dispatch samples are unobserved. No plugin association is inferred for StarterKit extensions.
