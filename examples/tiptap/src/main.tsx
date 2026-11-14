@@ -1,3 +1,4 @@
+import { createHistoryInspector } from "prosemirror-inspector/inspectors/history";
 import { createTiptapInspector } from "prosemirror-inspector/inspectors/tiptap";
 import {
   installProseMirrorChromeBridge,
@@ -46,7 +47,10 @@ function NativeTiptap({ instrumentPlugins }: { instrumentPlugins: boolean }) {
                 store,
                 instrumentPlugins,
                 performanceMarks: false,
-                inspectors: [createTiptapInspector({ editor: this.editor })],
+                inspectors: [
+                  createTiptapInspector({ editor: this.editor }),
+                  createHistoryInspector(),
+                ],
               });
             },
             onCreate() {

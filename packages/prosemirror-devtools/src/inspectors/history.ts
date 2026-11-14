@@ -1,5 +1,5 @@
-import { isHistoryTransaction, redoDepth, undoDepth } from "prosemirror-history";
-import type { EditorState, Plugin, Transaction } from "prosemirror-state";
+import { history, isHistoryTransaction, redoDepth, undoDepth } from "prosemirror-history";
+import type { EditorState, Plugin, PluginKey, Transaction } from "prosemirror-state";
 
 import type { InspectionEvidence, ProseMirrorInspector } from "../inspection/types";
 
@@ -24,9 +24,17 @@ export type HistoryInspection =
     };
 
 export interface HistoryInspectorOptions {
-  /** The actual history() plugin installed in this editor, including an instrumented copy. */
-  readonly plugin: Plugin;
+  /**
+   * The history() plugin installed in this editor, including an instrumented copy. When omitted,
+   * the inspector finds the installed history plugin in each state it reads.
+   */
+  readonly plugin?: Plugin;
 }
+
+// prosemirror-history does not export its PluginKey, but every history() plugin carries it in its
+// public spec. It is the key undoDepth and redoDepth read, so a state where it resolves is a state
+// those functions describe.
+const historyKey = history().spec.key as PluginKey;
 
 function depths(state: EditorState): HistoryDepths {
   return { undoDepth: undoDepth(state), redoDepth: redoDepth(state) };
@@ -44,10 +52,14 @@ function metadata(transaction: Transaction): HistoryTransactionMetadata {
 /** Uses public history APIs. It does not inspect or retain private undo branches. */
 export function createHistoryInspector({
   plugin,
-}: HistoryInspectorOptions): ProseMirrorInspector<HistoryInspection> {
+}: HistoryInspectorOptions = {}): ProseMirrorInspector<HistoryInspection> {
+  const installed = plugin ?? historyKey;
   const unavailable: InspectionEvidence<never> = {
     kind: "unsupported",
-    reason: "The supplied prosemirror-history plugin is not installed in this state.",
+    reason:
+      plugin === undefined
+        ? "No prosemirror-history plugin is installed in this state."
+        : "The supplied prosemirror-history plugin is not installed in this state.",
   };
   return {
     descriptor: {
@@ -58,15 +70,18 @@ export function createHistoryInspector({
         "Public undo and redo depths, history transaction classification, and observed addToHistory metadata. Dispatches and undo events are distinct.",
       prerequisites: [
         "prosemirror-history",
-        "An explicit history() plugin instance installed in the editor",
+        "A history() plugin installed in the editor, such as Tiptap's UndoRedo extension",
       ],
     },
     read({ state }) {
-      if (plugin.getState(state) === undefined) return unavailable;
+      if (installed.getState(state) === undefined) return unavailable;
       return { kind: "available", value: { kind: "state", depths: depths(state) } };
     },
     capture({ beforeState, stateAfter, transaction, appliedTransactions }) {
-      if (plugin.getState(beforeState) === undefined || plugin.getState(stateAfter) === undefined)
+      if (
+        installed.getState(beforeState) === undefined ||
+        installed.getState(stateAfter) === undefined
+      )
         return unavailable;
       return {
         kind: "available",

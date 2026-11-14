@@ -1,7 +1,15 @@
+import { Editor, Extension } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
 import { history, redo, undo } from "prosemirror-history";
 import { EditorState } from "prosemirror-state";
 import { afterEach, describe, expect, it } from "vitest";
 
+import {
+  attachTiptapDevtools,
+  detachTiptapDevtools,
+  dispatchTiptapTransaction,
+  setupTiptapDevtools,
+} from "../src/adapters/tiptap";
 import { createProseMirrorDevtoolsSession, createProseMirrorDevtoolsStore } from "../src/core";
 import { createHistoryInspector } from "../src/inspectors/history";
 import { createTestView, testSchema } from "./helpers";
@@ -99,6 +107,104 @@ describe("official history inspector", () => {
     } finally {
       session.dispose();
       view.destroy();
+    }
+  });
+
+  it("finds the history plugin when none is supplied", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const session = createProseMirrorDevtoolsSession({
+      id: "found",
+      store,
+      inspectors: [createHistoryInspector()],
+      performanceMarks: false,
+    });
+    const view = createTestView(EditorState.create({ schema: testSchema, plugins: [history()] }));
+    session.attach(view);
+    try {
+      view.dispatch(view.state.tr.insertText("x"));
+      expect(
+        store.getInstance("found")?.transactions[0]?.inspection?.projections[0]?.evidence,
+      ).toMatchObject({ kind: "available", value: { after: { undoDepth: 1, redoDepth: 0 } } });
+    } finally {
+      session.dispose();
+      view.destroy();
+    }
+  });
+
+  it("reports a missing history plugin when none is supplied or installed", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const session = createProseMirrorDevtoolsSession({
+      id: "absent",
+      store,
+      inspectors: [createHistoryInspector()],
+      performanceMarks: false,
+    });
+    const view = createTestView();
+    session.attach(view);
+    try {
+      view.dispatch(view.state.tr.insertText("x"));
+      expect(
+        store.getInstance("absent")?.transactions[0]?.inspection?.projections[0]?.evidence.kind,
+      ).toBe("unsupported");
+    } finally {
+      session.dispose();
+      view.destroy();
+    }
+  });
+
+  it("observes StarterKit undo and redo in a Tiptap editor set up before history exists", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const element = document.createElement("div");
+    document.body.append(element);
+    const editor = new Editor({
+      element,
+      content: "<p>Hello</p>",
+      extensions: [
+        Extension.create({
+          name: "inspector",
+          priority: 10_000,
+          onBeforeCreate() {
+            setupTiptapDevtools(this.editor, {
+              id: "tiptap-history",
+              store,
+              inspectors: [createHistoryInspector()],
+              performanceMarks: false,
+            });
+          },
+          onCreate() {
+            attachTiptapDevtools(this.editor);
+          },
+          dispatchTransaction(props) {
+            dispatchTiptapTransaction(this.editor, props);
+          },
+          onDestroy() {
+            detachTiptapDevtools(this.editor);
+          },
+        }),
+        StarterKit,
+      ],
+    });
+    const historyEvidence = () =>
+      store.getInstance("tiptap-history")?.transactions.at(-1)?.inspection?.projections[0]
+        ?.evidence;
+    try {
+      editor.commands.insertContent("x");
+      expect(historyEvidence()).toMatchObject({
+        kind: "available",
+        value: { after: { undoDepth: 1, redoDepth: 0 }, root: { historyTransaction: false } },
+      });
+      expect(editor.commands.undo()).toBe(true);
+      expect(historyEvidence()).toMatchObject({
+        kind: "available",
+        value: { after: { undoDepth: 0, redoDepth: 1 }, root: { historyTransaction: true } },
+      });
+      expect(editor.commands.redo()).toBe(true);
+      expect(historyEvidence()).toMatchObject({
+        kind: "available",
+        value: { after: { undoDepth: 1, redoDepth: 0 }, root: { historyTransaction: true } },
+      });
+    } finally {
+      editor.destroy();
     }
   });
 });

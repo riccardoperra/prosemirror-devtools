@@ -310,6 +310,18 @@ Keep Tiptap's `enableExtensionDispatchTransaction` option enabled (the default),
 attach the same view through the generic core API. Either change would bypass or duplicate
 recording.
 
+StarterKit's UndoRedo extension installs `history()` after `onBeforeCreate`. Add
+`createHistoryInspector()` without a plugin to see its undo and redo depths:
+
+```ts
+import { createHistoryInspector } from "prosemirror-inspector/inspectors/history";
+
+setupTiptapDevtools(this.editor, {
+  id: "main-editor",
+  inspectors: [createHistoryInspector()],
+});
+```
+
 Plugin instrumentation is enabled by default for this integration. Pass `instrumentPlugins: false`
 when you need only transaction history and dispatch phases. Dynamically registered plugins are not
 instrumented automatically.
@@ -612,9 +624,11 @@ a polyfill or require a Chrome DevTools MCP server. Native WebMCP remains experi
 
 ## Semantic inspectors
 
-Use `createHistoryInspector({ plugin })` from `prosemirror-inspector/inspectors/history` with the
-installed `history()` plugin. Pass the provider through the session's `inspectors` option.
-It captures public undo and redo depths and observed history metadata.
+Use `createHistoryInspector()` from `prosemirror-inspector/inspectors/history` and pass it through
+the session's `inspectors` option. It finds the installed `history()` plugin in each state it reads,
+so it also works when the plugin is installed after the session is created. Pass `{ plugin }` to
+inspect one specific `history()` instance. It captures public undo and redo depths and observed
+history metadata, and reports `unsupported` when no history plugin is installed.
 
 Use `createPluginStateInspector` from the core entry for bounded application-defined plugin state.
 Historical queries read its captured projection. Use `createTiptapInspector` from

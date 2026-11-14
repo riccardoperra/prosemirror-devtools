@@ -5,11 +5,11 @@ includes them. The product roadmap records proposed scope. The execution ledger 
 
 ## Editor integrations
 
-| Editor system     | Versions used by native fixtures                                                                | Capture path                                                                          | Verification                                                                              |
-| ----------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| ProseMirror       | model 1.25.12, state 1.4.4, transform 1.12.2, view 1.42.3                                       | Session before plugins, then attach. Attach-only is also supported.                   | Real EditorView capture, input, history, and lifecycle tests. Standalone browser fixture. |
-| Tiptap            | core, react, starter-kit, pm, and collaboration 3.31.4                                          | Dedicated middleware and editor lifecycle. Optional generated-plugin instrumentation. | Real Editor and React Strict Mode regressions. Native browser fixture.                    |
-| React ProseMirror | `@handlewithcare/react-prosemirror` 3.2.11, React and React DOM 19.2.8, react-reconciler 0.33.0 | `useEditorEffect`, application-owned controlled state, and the dedicated recorder.    | Real controlled-model, live-panel, and remount regressions. Native browser fixture.       |
+| Editor system     | Versions used by native fixtures                                                                | Capture path                                                                          | Verification                                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| ProseMirror       | model 1.25.12, state 1.4.4, transform 1.12.2, view 1.42.3                                       | Session before plugins, then attach. Attach-only is also supported.                   | Real EditorView capture, input, history, and lifecycle tests. Standalone browser fixture.       |
+| Tiptap            | core, react, starter-kit, pm, and collaboration 3.31.4                                          | Dedicated middleware and editor lifecycle. Optional generated-plugin instrumentation. | Real Editor and React Strict Mode regressions. StarterKit undo history. Native browser fixture. |
+| React ProseMirror | `@handlewithcare/react-prosemirror` 3.2.11, React and React DOM 19.2.8, react-reconciler 0.33.0 | `useEditorEffect`, application-owned controlled state, and the dedicated recorder.    | Real controlled-model, live-panel, and remount regressions. Native browser fixture.             |
 
 React ProseMirror 3.2.11 requires ProseMirror view 1.42.3. The workspace pins a single compatible
 ProseMirror runtime. Consumers must satisfy their editor's peer requirements and avoid duplicate

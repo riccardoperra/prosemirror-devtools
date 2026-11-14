@@ -295,6 +295,35 @@ for (const fixture of [
   });
 }
 
+test("V2 Tiptap history inspector reads StarterKit undo and redo depths", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("http://127.0.0.1:4181");
+  const target = await editorTarget(page);
+  const depths = async () =>
+    available(
+      await callTool(page, "prosemirror_inspect", {
+        target,
+        query: { kind: "contribution", id: "prosemirror-history" },
+      }),
+    ).value;
+  expect(await depths()).toMatchObject({ depths: { undoDepth: 0, redoDepth: 0 } });
+  await page.getByRole("button", { name: "Focus editor", exact: true }).click();
+  const editor = page.getByRole("textbox", { name: "Tiptap editor", exact: true });
+  await editor.press(process.platform === "darwin" ? "Meta+ArrowRight" : "End");
+  await editor.press("Enter");
+  await expect(editor.locator("li")).toHaveCount(2);
+  expect(await depths()).toMatchObject({ depths: { undoDepth: 1, redoDepth: 0 } });
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(editor.locator("li")).toHaveCount(1);
+  expect(await depths()).toMatchObject({ depths: { undoDepth: 0, redoDepth: 1 } });
+  await page.getByRole("tab", { name: "Context", exact: true }).click();
+  await expect(page.getByLabel("Installed inspectors", { exact: true })).toContainText(
+    "Undo history",
+  );
+  expect(errors).toEqual([]);
+});
+
 for (const fixture of [
   { name: "standalone", port: 4280, editor: "Standalone editor" },
   { name: "Tiptap", port: 4281, editor: "Tiptap editor" },
