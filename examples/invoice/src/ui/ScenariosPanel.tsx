@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/core";
 import { useState } from "react";
 
+import { useDevtools } from "../devtools/context";
 import { panelSections, scenarios } from "../scenarios";
 import { LoadLab } from "./LoadLab";
 import { OutlinePanel } from "./OutlinePanel";
@@ -9,6 +10,7 @@ type Outcome = "applied" | "no-op";
 
 export function ScenariosPanel({ editor }: { editor: Editor }) {
   const [outcomes, setOutcomes] = useState<Readonly<Record<string, Outcome>>>({});
+  const devtools = useDevtools();
   return (
     <aside className="sidebar sidebar-start" aria-label="Outline, scenarios and load lab">
       <OutlinePanel editor={editor} />
@@ -38,8 +40,10 @@ export function ScenariosPanel({ editor }: { editor: Editor }) {
                     <button
                       type="button"
                       aria-label={`Run ${scenario.title}`}
-                      onClick={() => {
-                        const outcome = scenario.run(editor) ? "applied" : "no-op";
+                      onClick={async () => {
+                        const outcome = (await scenario.run(editor, devtools))
+                          ? "applied"
+                          : "no-op";
                         setOutcomes((current) => ({ ...current, [scenario.id]: outcome }));
                       }}
                     >

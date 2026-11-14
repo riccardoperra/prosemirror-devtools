@@ -11,6 +11,7 @@ export default defineConfig({
       "prosemirror-state",
       "prosemirror-view",
       "prosemirror-transform",
+      "solid-js",
     ],
   },
   server: { port: 4184, strictPort: true },

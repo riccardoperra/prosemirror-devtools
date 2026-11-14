@@ -55,6 +55,27 @@ normalization run inside `measureProseMirrorDevtools`, and markers report row, d
 delay counts. `createTiptapInspector` declares the plugin associations, and
 `createPluginStateInspector` projects the validation state.
 
+## Every inspector capability
+
+The devtools shell in `src/devtools/shell.tsx` loads through a dynamic import, so a production
+build without the showcase flag ships none of it. It wires:
+
+- the **WebMCP** tab from `createProseMirrorWebMcpInspector`, passed to both
+  `installProseMirrorChromeBridge` and `installProseMirrorWebMCPBridge`. The "Agent reads the
+  invoice" scenario dispatches the Chrome DevTools MCP discovery event and calls three tools, so the
+  tab shows real calls without a connected agent;
+- `createHistoryInspector` with the `history()` plugin Tiptap installed, found in the mounted state
+  by its runtime key. Transactions show undo and redo depths for each dispatch;
+- `performanceExtension: true`, so a Chrome Performance recording with **Show custom tracks**
+  shows dispatches, phases, plugin hooks, and markers as tracks;
+- snapshots through `createSnapshot` and `persistSnapshots`: the snapshot scenario saves one before
+  a bulk reprice, and the Snapshots tab can preview and restore it;
+- recordings: **More › Export recording** downloads `exportProseMirrorRecording` output, and **More ›
+  Open recording** parses a file and shows it in a read-only viewer. The viewer renders the
+  `RecordingInspector` component from `/recordings-panel` in a dialog.
+  `mountProseMirrorRecordingInspector` is inert outside development, and the Pages showcase is a
+  production build.
+
 ## The Invoice tab
 
 The inspector gets an **Invoice** tab from `src/devtools/InvoicePanel.tsx`, a React panel extension.

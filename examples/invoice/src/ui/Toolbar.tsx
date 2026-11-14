@@ -1,6 +1,6 @@
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   addLineItem,
@@ -15,6 +15,7 @@ import {
   setStatus,
   undo,
 } from "../invoice/commands";
+import { useDevtools } from "../devtools/context";
 import { readMeta, rowsInRange } from "../invoice/document";
 import { fieldKeys, fieldRegistry, type FieldKey } from "../invoice/fields";
 import { isLocked, transitions, type InvoiceStatus } from "../invoice/model";
@@ -46,6 +47,8 @@ interface ToolbarProps {
 
 export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
   const [field, setField] = useState<FieldKey>("customer.name");
+  const devtools = useDevtools();
+  const recordingFile = useRef<HTMLInputElement>(null);
   const state = useEditorState({
     editor,
     selector: ({ editor: current }) => {
@@ -171,10 +174,31 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
                   () => deleteRows(editor),
                   true,
                 )}
+                {devtools ? (
+                  <>
+                    <hr />
+                    {item("Export recording", false, () => devtools.exportRecording())}
+                    {item("Open recording…", false, () => recordingFile.current?.click())}
+                  </>
+                ) : null}
               </>
             );
           }}
         </MoreMenu>
+        {devtools ? (
+          <input
+            ref={recordingFile}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            aria-label="Recording file"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void devtools.openRecording(file);
+            }}
+          />
+        ) : null}
       </div>
     </div>
   );

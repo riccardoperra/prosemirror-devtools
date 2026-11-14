@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { DevtoolsContext } from "./devtools/context";
 import { InvoiceEditor } from "./ui/InvoiceEditor";
 import "./style.css";
 
@@ -10,9 +11,11 @@ const devtools = import.meta.env.DEV ? await import("./devtools/shell") : null;
 function App() {
   return (
     <>
-      <main className="workbench">
-        <InvoiceEditor devtools={devtools?.InvoiceDevtools ?? null} />
-      </main>
+      <DevtoolsContext.Provider value={devtools?.devtoolsActions ?? null}>
+        <main className="workbench">
+          <InvoiceEditor devtools={devtools?.InvoiceDevtools ?? null} />
+        </main>
+      </DevtoolsContext.Provider>
       {devtools ? <devtools.DevtoolsShell /> : null}
     </>
   );

@@ -21,7 +21,8 @@
     "prosemirror-state": "catalog:",
     "prosemirror-view": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "solid-js": "catalog:"
   },
   "devDependencies": {
     "@types/react": "catalog:",

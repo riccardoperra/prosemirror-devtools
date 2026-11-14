@@ -1,5 +1,6 @@
 import type { Editor } from "@tiptap/core";
 
+import type { DevtoolsActions } from "./devtools/context";
 import {
   addComment,
   addLineItem,
@@ -24,7 +25,7 @@ import {
 } from "./invoice/commands";
 import { findSection, nodeNames, pages, readMeta } from "./invoice/document";
 
-/** Visible names of the inspector panels, as the tabs label them. */
+/** Visible names of the inspector panels, as the tabs label them, plus two viewers outside it. */
 export type InspectorPanel =
   | "State"
   | "Selection"
@@ -33,8 +34,12 @@ export type InspectorPanel =
   | "Performance"
   | "Plugins"
   | "Rendering"
+  | "Snapshots"
   | "Context"
-  | "Invoice";
+  | "Invoice"
+  | "WebMCP"
+  | "Recording viewer"
+  | "Chrome Performance panel";
 
 /** The inspector groups panels under top-level section tabs. */
 export const panelSections: Record<InspectorPanel, string> = {
@@ -45,15 +50,20 @@ export const panelSections: Record<InspectorPanel, string> = {
   Performance: "Performance",
   Plugins: "Plugins",
   Rendering: "Plugins",
+  Snapshots: "Snapshots",
   Context: "Context",
   Invoice: "Invoice",
+  WebMCP: "WebMCP",
+  "Recording viewer": "Recording viewer",
+  "Chrome Performance panel": "Chrome Performance panel",
 };
 
 export interface Scenario {
   readonly id: string;
   readonly title: string;
   readonly description: string;
-  run(editor: Editor): boolean;
+  /** Scenarios that need diagnostics get the devtools shell's actions, or null when it is off. */
+  run(editor: Editor, devtools: DevtoolsActions | null): boolean | Promise<boolean>;
   /** Where to look, best place first. */
   readonly inspect: readonly { readonly panel: InspectorPanel; readonly observe: string }[];
 }
@@ -311,6 +321,82 @@ export const scenarios: readonly Scenario[] = [
         panel: "Context",
         observe:
           "Under Technical details, the invoice-validation projection counts one more invalid row.",
+      },
+    ],
+  },
+  {
+    id: "agent-reads",
+    title: "Agent reads the invoice",
+    description:
+      "Discovers the inspection tools like Chrome DevTools MCP, lists editors, reads the selection, and checks it.",
+    run: async (_editor, devtools) => (devtools ? devtools.askAgent() : false),
+    inspect: [
+      {
+        panel: "WebMCP",
+        observe:
+          "Three Chrome DevTools MCP calls: prosemirror_editors, prosemirror_inspect, and a passed prosemirror_check.",
+      },
+    ],
+  },
+  {
+    id: "undo-history",
+    title: "Undo history depth",
+    description: "Applies a 10% discount, then undoes it.",
+    run: (editor) => applyDiscountToAll(editor, 10) && undo(editor),
+    inspect: [
+      {
+        panel: "Transactions",
+        observe:
+          "The undo dispatch's Undo history detail: undo depth drops by one and redo depth rises by one.",
+      },
+      {
+        panel: "Context",
+        observe: "Undo history is listed among the installed inspectors.",
+      },
+    ],
+  },
+  {
+    id: "snapshot-restore",
+    title: "Snapshot before a bulk edit",
+    description: "Saves a snapshot named Before reprice, then raises every unit price by 5%.",
+    run: (editor, devtools) => {
+      if (!devtools) return false;
+      devtools.takeSnapshot(editor, "Before reprice");
+      return repriceInOneTransaction(editor, 5);
+    },
+    inspect: [
+      {
+        panel: "Snapshots",
+        observe:
+          "Before reprice is listed. Restore previews the difference, then puts the old prices back in one transaction.",
+      },
+    ],
+  },
+  {
+    id: "recording",
+    title: "Share a recording",
+    description:
+      "Exports the latest 25 dispatches as a bounded recording and opens it in the read-only viewer. Run an editing scenario first.",
+    run: (_editor, devtools) => (devtools ? devtools.previewRecording() : false),
+    inspect: [
+      {
+        panel: "Recording viewer",
+        observe:
+          "The document, selection, and dispatches read offline from the file. More › Export recording downloads one, and More › Open recording loads it back.",
+      },
+    ],
+  },
+  {
+    id: "performance-tracks",
+    title: "Chrome Performance tracks",
+    description:
+      "Record in Chrome's Performance panel with Show custom tracks on, then run Reprice row by row.",
+    run: (editor) => repriceRowByRow(editor, 5),
+    inspect: [
+      {
+        panel: "Chrome Performance panel",
+        observe:
+          "ProseMirror tracks beside the main thread: each dispatch, its phases, plugin hooks, and the Bulk reprice marker.",
       },
     ],
   },
