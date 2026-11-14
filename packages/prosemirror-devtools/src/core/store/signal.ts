@@ -27,12 +27,12 @@ export interface StoreSignal<T> {
 }
 
 /**
- * Coordinates synchronous, nested notification batches.
+ * Coordinates nested notification batches.
  *
- * This is deliberately not an asynchronous scheduler: it creates no timer, task, or microtask.
  * Values are updated as soon as they are written, while callbacks are collected until the
  * outermost batch closes. That gives every subscriber one coherent post-operation snapshot without
- * imposing a rendering policy on consumers.
+ * imposing a rendering policy on consumers. Only {@link SignalScheduler.deferToMicrotask} creates a
+ * microtask; every other batch closes synchronously.
  */
 export interface SignalScheduler {
   /** Runs a self-contained mutation and publishes its notifications atomically. */
@@ -43,6 +43,11 @@ export interface SignalScheduler {
   end(): void;
   /** Publishes now or queues the callback once by identity while a batch is open. */
   schedule(publish: () => void): void;
+  /**
+   * Holds delivery of unbatched writes until the current microtask checkpoint, or until an explicit
+   * batch closes first. Writes stay readable immediately. Repeated calls share one checkpoint.
+   */
+  deferToMicrotask(): void;
 }
 
 /**
@@ -57,6 +62,7 @@ export function createSignalScheduler(): SignalScheduler {
   const pending = new Set<() => void>();
   let depth = 0;
   let publishing = false;
+  let deferred = false;
 
   const publish = (): void => {
     if (depth > 0 || publishing) return;
@@ -95,7 +101,15 @@ export function createSignalScheduler(): SignalScheduler {
     },
     schedule(effect) {
       pending.add(effect);
-      publish();
+      if (!deferred) publish();
+    },
+    deferToMicrotask() {
+      if (deferred) return;
+      deferred = true;
+      queueMicrotask(() => {
+        deferred = false;
+        publish();
+      });
     },
   };
   return scheduler;

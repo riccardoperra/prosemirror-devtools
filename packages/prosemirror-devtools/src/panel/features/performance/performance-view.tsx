@@ -3,6 +3,7 @@ import { createMemo, Show, type JSX } from "solid-js";
 import { cx, panelStyles } from "../../styles";
 
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
+import { createIdleValue } from "../../hooks/create-idle-value";
 import { useSelectedTransaction } from "../../hooks/use-selected-transaction";
 import { PluginPerformanceTable } from "./cumulative/plugin-performance-table";
 import { PerformanceDispatchInspector } from "./performance-dispatch-inspector";
@@ -17,9 +18,17 @@ export interface PerformanceViewProps {
 
 export function PerformanceView(props: PerformanceViewProps): JSX.Element {
   const records = createMemo(() => props.instance.transactions);
-  const { record: selected, selectedId, select } = useSelectedTransaction(records);
-  const initialization = createMemo(() => buildInitializationTimelineEntry(props.instance));
-  const hasPerformanceData = createMemo(() => records().length > 0 || initialization() !== null);
+  const selection = useSelectedTransaction(records);
+  const view = createIdleValue(() => ({
+    instance: props.instance,
+    records: records(),
+    selected: selection.record(),
+    selectedId: selection.selectedId(),
+  }));
+  const initialization = createMemo(() => buildInitializationTimelineEntry(view().instance));
+  const hasPerformanceData = createMemo(
+    () => view().records.length > 0 || initialization() !== null,
+  );
 
   return (
     <Show
@@ -29,17 +38,19 @@ export function PerformanceView(props: PerformanceViewProps): JSX.Element {
       <div class={cx(panelStyles.pmScroll, panelStyles.pmPerformanceView)}>
         <DispatchTimeline
           detailThresholdMs={props.detailThresholdMs}
-          dispatchCount={props.instance.dispatchCount}
+          dispatchCount={view().instance.dispatchCount}
           frameBudgetMs={props.frameBudgetMs}
           initialization={initialization()}
-          onSelect={select}
-          records={records()}
-          selectedId={selectedId()}
+          onSelect={selection.select}
+          records={view().records}
+          selectedId={view().selectedId}
         />
-        <Show when={selected()}>
-          {(record) => <PerformanceDispatchInspector instance={props.instance} record={record()} />}
+        <Show when={view().selected}>
+          {(record) => (
+            <PerformanceDispatchInspector instance={view().instance} record={record()} />
+          )}
         </Show>
-        <PluginPerformanceTable summaries={props.instance.pluginTimings} />
+        <PluginPerformanceTable summaries={view().instance.pluginTimings} />
         <div class={panelStyles.pmPerformanceNote}>
           <strong>Full sync</strong> merges the time covered by one plugin&apos;s observed hooks in
           the selected dispatch, so its nested spans count once. Hook chips and plugin rows are

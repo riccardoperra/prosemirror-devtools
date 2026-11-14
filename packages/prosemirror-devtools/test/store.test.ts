@@ -226,6 +226,27 @@ describe("createProseMirrorDevtoolsStore", () => {
     ]);
   });
 
+  it("publishes plugin hook timings outside a dispatch once per microtask", async () => {
+    const store = createProseMirrorDevtoolsStore();
+    store.register({ id: "editor", view: viewForState() });
+    const instance = vi.fn();
+    const snapshot = vi.fn();
+    store.subscribeInstance("editor", instance);
+    store.subscribe(snapshot);
+
+    for (const pluginKey of ["first$", "second$", "third$"]) {
+      store.measurePluginHook("editor", pluginKey, pluginKey, "props.handleKeyDown", () => false);
+    }
+
+    expect(store.getInstance("editor")?.pluginTimings).toHaveLength(3);
+    expect(instance).not.toHaveBeenCalled();
+    expect(snapshot).not.toHaveBeenCalled();
+
+    await Promise.resolve();
+    expect(instance).toHaveBeenCalledOnce();
+    expect(snapshot).toHaveBeenCalledOnce();
+  });
+
   it("notifies only the subscriptions affected by a store update", () => {
     const store = createProseMirrorDevtoolsStore();
     let firstState = createTestState();
