@@ -11,11 +11,12 @@ import { Badge } from "../../ui/badge";
 import { ResizableSplit } from "../../ui/resizable-split";
 import { DocumentBoxes } from "./document-boxes";
 import { DocumentTree, getDocumentNodeRange } from "./document-tree";
+import { RenderedDomView } from "./rendered-dom-view";
 import { useDocumentSelection } from "./use-document-selection";
 import { useOptionalPanelContext, usePanelExperiments } from "../../panel-provider";
 import type { ExperimentalFeature } from "../../../core/panel-types";
 
-type DocumentView = "structure" | "json" | "html" | "boxes";
+type DocumentView = "structure" | "json" | "html" | "boxes" | "dom";
 
 type DocumentViewDefinition = Readonly<{
   id: DocumentView;
@@ -33,6 +34,12 @@ const DOCUMENT_VIEWS: readonly DocumentViewDefinition[] = [
     label: "Boxes",
     ariaLabel: "Show document as nested boxes",
     experiment: "document-boxes",
+  },
+  {
+    id: "dom",
+    label: "DOM",
+    ariaLabel: "Show rendered editor DOM",
+    experiment: "rendered-dom",
   },
 ];
 
@@ -55,6 +62,11 @@ export function StateView(props: StateViewProps): JSX.Element {
     () => props.instance.view,
     state,
   );
+  const selectAt = (pos: number, isRoot: boolean): void => {
+    const doc = state().doc;
+    const node = isRoot ? doc : doc.nodeAt(pos);
+    if (node) select(node, isRoot ? 0 : pos);
+  };
   const selectedRange = createMemo(() => {
     const current = selected();
     return getDocumentNodeRange(current.node, current.pos, current.isRoot);
@@ -150,6 +162,15 @@ export function StateView(props: StateViewProps): JSX.Element {
               onSelect={select}
               selectedPosition={selected().pos}
               selectedRoot={selected().isRoot}
+            />
+          </Match>
+          <Match when={documentView() === "dom"}>
+            <RenderedDomView
+              onSelect={selectAt}
+              selectedPosition={selected().pos}
+              selectedRoot={selected().isRoot}
+              state={state()}
+              view={props.instance.view}
             />
           </Match>
           <Match when={documentView() === "html"}>

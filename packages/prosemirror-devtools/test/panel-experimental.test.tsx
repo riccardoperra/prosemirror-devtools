@@ -9,6 +9,7 @@ import {
   createProseMirrorDevtoolsStore,
   type ExperimentalFeatures,
 } from "../src/core";
+import { readRenderedDom, type RenderedDomEntry } from "../src/panel/features/state/rendered-dom";
 import { ProseMirrorDevtoolsPanel } from "../src/panel/panel";
 
 const schema = new Schema({
@@ -91,7 +92,7 @@ describe("experimental document views", () => {
 
   it("adds the experimental views when enabled", () => {
     const panel = mountPanel(true);
-    expect(panel.documentViewLabels()).toEqual(["HTML", "Structure", "JSON", "Boxes"]);
+    expect(panel.documentViewLabels()).toEqual(["HTML", "Structure", "JSON", "Boxes", "DOM"]);
   });
 
   it("enables only the listed experiments", () => {
@@ -162,5 +163,76 @@ describe("experimental document views", () => {
     expect(emphasis.getAttribute("data-inspected")).toBe("true");
     expect(panel.container.textContent).toContain("open 26");
     expect(panel.container.textContent).toContain("close 34");
+  });
+});
+
+function outline(entry: RenderedDomEntry): unknown {
+  return entry.kind === "text"
+    ? `${JSON.stringify(entry.text)} @${entry.pos}`
+    : {
+        tag: entry.tag,
+        node: entry.node ? `${entry.node.name} ${entry.node.from}–${entry.node.to}` : null,
+        children: entry.children.map(outline),
+      };
+}
+
+describe("rendered DOM", () => {
+  it("maps elements to the nodes they render and text to positions", () => {
+    const { view } = mountPanel();
+    const { root, truncated } = readRenderedDom(view);
+
+    expect(truncated).toBe(false);
+    expect(outline(root)).toEqual({
+      tag: "div",
+      node: "doc 0–40",
+      children: [
+        {
+          tag: "p",
+          node: "paragraph 0–35",
+          children: [
+            '"This is " @1',
+            {
+              tag: "strong",
+              node: null,
+              children: [
+                '"strong text with " @9',
+                { tag: "em", node: null, children: ['"emphasis" @26'] },
+              ],
+            },
+          ],
+        },
+        {
+          tag: "p",
+          node: "paragraph 35–40",
+          children: ['"a" @36', { tag: "br", node: "hard_break 37–38", children: [] }, '"b" @38'],
+        },
+      ],
+    });
+  });
+
+  it("stops at the node limit and says so", () => {
+    const { view } = mountPanel();
+    const { root, truncated } = readRenderedDom(view, 2);
+
+    expect(truncated).toBe(true);
+    const count = (entry: RenderedDomEntry): number =>
+      entry.kind === "text" ? 1 : 1 + entry.children.reduce((sum, child) => sum + count(child), 0);
+    expect(count(root) - 1).toBe(2);
+  });
+
+  it("selects the node an element renders and follows edits", () => {
+    const panel = mountPanel(["rendered-dom"]);
+    panel.showView("Show rendered editor DOM");
+
+    const paragraphRow = () =>
+      panel.container.querySelectorAll<HTMLElement>(
+        '[data-dom-kind="element"][data-node-type="paragraph"]',
+      )[1]!;
+    paragraphRow().querySelector<HTMLButtonElement>(".pm-doc-row-main")!.click();
+    expect(paragraphRow().getAttribute("data-inspected")).toBe("true");
+    expect(panel.container.textContent).toContain("open 35");
+
+    panel.view.dispatch(panel.view.state.tr.insertText("!", 39));
+    expect(panel.container.textContent).toContain('"b!"');
   });
 });
