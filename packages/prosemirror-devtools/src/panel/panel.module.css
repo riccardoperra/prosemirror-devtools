@@ -620,20 +620,11 @@
   .pm-doc-row-main:focus-visible {
     outline-offset: -2px;
   }
-  .pm-web-mcp-summary {
-    cursor: pointer;
-  }
-  .pm-web-mcp-summary::before {
-    content: "";
-    inline-size: 6px;
-    block-size: 6px;
-    flex: none;
-    border-inline-end: 1px solid currentColor;
-    border-block-end: 1px solid currentColor;
-    transform: rotate(-45deg);
-  }
-  details[open] > .pm-web-mcp-summary::before {
-    transform: rotate(45deg);
+  .pm-web-mcp-layout {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    block-size: 100%;
+    min-block-size: 0;
   }
   .pm-row-main {
     min-inline-size: 0;
@@ -851,6 +842,33 @@
   .pm-section {
     background: var(--pm-panel);
     border-block-end: 1px solid var(--pm-border);
+  }
+  .pm-section-body {
+    display: grid;
+    gap: 4px;
+    padding: 8px 10px;
+  }
+  .pm-section-body + .pm-section-body {
+    border-block-start: 1px solid var(--pm-border);
+  }
+  .pm-code {
+    margin: 0;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 0;
+    color: var(--pm-text);
+    background: var(--pm-panel);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font:
+      500 11px/1.45 ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      monospace;
+  }
+  .pm-call-reason {
+    margin: 4px 0 0;
+    color: var(--pm-text);
   }
   .pm-section-note {
     margin: 0;

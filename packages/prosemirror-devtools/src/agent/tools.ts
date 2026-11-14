@@ -451,6 +451,10 @@ export function installProseMirrorChromeBridge(
     readonly target?: EventTarget;
     readonly inspector?: {
       traceChromeToolCall<T>(name: string, input: unknown, execute: () => T): T;
+      exposeChromeTools?(tools: readonly { name: string; description: string }[]): {
+        markDiscovered(): void;
+        remove(): void;
+      };
     };
   } = {},
 ): () => void {
@@ -468,9 +472,17 @@ export function installProseMirrorChromeBridge(
         })),
       }
     : catalogue;
+  const exposure = inspector?.exposeChromeTools?.(
+    catalogue.tools.map(({ name, description }) => ({ name, description })),
+  );
   const discover = (event: Event): void => {
-    if ("respondWith" in event && typeof event.respondWith === "function") event.respondWith(group);
+    if (!("respondWith" in event) || typeof event.respondWith !== "function") return;
+    event.respondWith(group);
+    exposure?.markDiscovered();
   };
   host.addEventListener("devtoolstooldiscovery", discover);
-  return () => host.removeEventListener("devtoolstooldiscovery", discover);
+  return () => {
+    host.removeEventListener("devtoolstooldiscovery", discover);
+    exposure?.remove();
+  };
 }
