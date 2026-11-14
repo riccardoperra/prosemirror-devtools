@@ -9,11 +9,19 @@ import { Badge } from "../../ui/badge";
 import { DispatchEffects } from "../dispatch/dispatch-effects";
 import { EVENT_PAGE_SIZE, eventSource, eventStatus } from "./use-events";
 
+/** Badge labels are UI states, so they use sentence case. See DESIGN.md, "Badge". */
+const eventStatusLabels = {
+  handled: "Handled",
+  unhandled: "Unhandled",
+  unknown: "No result",
+  error: "Error",
+} as const;
+
 export function EventStatusBadge(props: { event: DevtoolsDiagnosticEvent }): JSX.Element {
   const status = () => eventStatus(props.event);
   return (
     <Badge tone={status() === "error" ? "red" : status() === "handled" ? "green" : undefined}>
-      {status() === "unknown" ? "no result" : status()}
+      {eventStatusLabels[status()]}
     </Badge>
   );
 }

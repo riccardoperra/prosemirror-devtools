@@ -23,10 +23,10 @@ export function InspectionReadout(props: { result: InspectionResult; label: stri
           {props.result.kind}
         </Badge>
         <Badge tone={props.result.coverage.complete ? undefined : "yellow"}>
-          {props.result.coverage.complete ? "complete coverage" : "partial coverage"}
+          {props.result.coverage.complete ? "Complete coverage" : "Partial coverage"}
         </Badge>
         <Show when={props.result.coverage.truncated}>
-          <Badge tone="yellow">truncated</Badge>
+          <Badge tone="yellow">Truncated</Badge>
         </Show>
       </div>
       <Show

@@ -1,7 +1,8 @@
 import { readInstanceState } from "../../store/instance-state";
-import { createMemo, createSignal, For, Match, Show, Switch, type JSX } from "solid-js";
+import { createMemo, createSignal, Match, Show, Switch, type JSX } from "solid-js";
 
 import { panelStyles } from "../../styles";
+import { ViewSwitch } from "../../ui/view-switch";
 
 import { inspectState } from "../../../core/serialize";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
@@ -74,20 +75,16 @@ export function StateView(props: StateViewProps): JSX.Element {
         <div class={panelStyles.pmPaneHeader}>
           <span class={panelStyles.pmPaneTitle}>Document</span>
           <span class={panelStyles.pmSpacer} />
-          <div aria-label="Document view" class={panelStyles.pmViewSwitch} role="group">
-            <For each={DOCUMENT_VIEWS}>
-              {(view) => (
-                <button
-                  aria-label={view.ariaLabel}
-                  aria-pressed={documentView() === view.id}
-                  onClick={() => setDocumentView(view.id)}
-                  type="button"
-                >
-                  {view.label}
-                </button>
-              )}
-            </For>
-          </div>
+          <ViewSwitch
+            label="Document view"
+            onChange={setDocumentView}
+            options={DOCUMENT_VIEWS.map((view) => ({
+              value: view.id,
+              label: view.label,
+              ariaLabel: view.ariaLabel,
+            }))}
+            value={documentView()}
+          />
           <Badge>{state().doc.childCount} roots</Badge>
         </div>
         <div class={panelStyles.pmInspectorStats}>

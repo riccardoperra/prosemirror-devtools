@@ -161,7 +161,7 @@ describe("host inspection context", () => {
         "No dispatch observed",
       );
       expect(host.querySelector('[aria-label="Event and command details"]')?.textContent).toContain(
-        "unhandled",
+        "Unhandled",
       );
       session.diagnostics?.traceCommand("Insert", () => {
         view.dispatch(view.state.tr.insertText("a"));

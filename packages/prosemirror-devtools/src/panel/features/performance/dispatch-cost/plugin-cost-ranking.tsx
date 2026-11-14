@@ -29,6 +29,7 @@ export function PluginCostRanking(props: PluginCostRankingProps): JSX.Element {
           <button
             aria-controls={chartId}
             aria-expanded={props.showAllFastPlugins}
+            class={panelStyles.pmFastPluginToggle}
             onClick={props.onToggleFastPlugins}
             type="button"
           >
