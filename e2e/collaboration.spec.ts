@@ -109,6 +109,24 @@ test("V3 Yjs collaboration keeps the other peer's edit when undoing local work",
   await page.getByRole("button", { name: "Deliver queued updates", exact: true }).click();
   await expect(editors.A).toHaveText(/^Shared Yjs document\.(AB|BA)$/);
   await expect(editors.B).toHaveText(await editors.A.innerText());
+  await page
+    .getByRole("combobox", { name: "Active ProseMirror instance", exact: true })
+    .selectOption("yjs-B");
+  const remoteRow = page
+    .getByRole("button", { name: /^Inspect dispatch #\d+$/ })
+    .filter({ hasText: "Remote · Yjs" })
+    .first();
+  await expect(remoteRow).toContainText("Update applied");
+  await remoteRow.click();
+  await expect(
+    page.getByRole("tabpanel").getByRole("region", { name: "Captured dispatch effects" }),
+  ).toContainText("The binding applied a Y.Doc update from another client or a provider.");
+  const remoteScreenshot = testInfo.outputPath("yjs-remote-dispatch.png");
+  await page.screenshot({ path: remoteScreenshot, fullPage: true });
+  await testInfo.attach("Remote Yjs dispatch in the Timeline", {
+    path: remoteScreenshot,
+    contentType: "image/png",
+  });
   const discovered = object(await callTool(page, "prosemirror_editors"));
   if (!Array.isArray(discovered.editors)) throw new Error("Missing Yjs editors.");
   const first = discovered.editors.find(
@@ -136,6 +154,12 @@ test("V3 Yjs collaboration keeps the other peer's edit when undoing local work",
   await page.getByRole("button", { name: "Deliver queued updates", exact: true }).click();
   await expect(editors.A).toHaveText("Shared Yjs document.B");
   await expect(editors.B).toHaveText("Shared Yjs document.B");
+  await page
+    .getByRole("combobox", { name: "Active ProseMirror instance", exact: true })
+    .selectOption("yjs-A");
+  const undoRow = page.getByRole("button", { name: /^Inspect dispatch #\d+$/ }).first();
+  await expect(undoRow).toContainText("Undo · Yjs");
+  await expect(undoRow).toContainText("Undo or redo applied");
   const undone = available(
     await callTool(page, "prosemirror_inspect", {
       target,

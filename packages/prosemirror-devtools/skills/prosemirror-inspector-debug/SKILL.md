@@ -28,6 +28,8 @@ history's undo and redo events. Do not inspect private history branches as a sup
 For collaboration, identify the provider before interpreting version, pending changes or undo.
 Official collab and Yjs are different systems. Connection and transport acknowledgement require
 explicit provider or application evidence. Time proximity alone does not identify a remote origin.
+When a Yjs capture has an available `dispatchOrigin`, its root kind says whether the binding
+applied a remote update. When it is `unobserved`, the application did not pass `syncPluginKey`.
 
 For rendering, inspect decorations and NodeView observations, then inspect the actual browser.
 Synchronous hook duration does not measure browser paint or every asynchronous framework commit.

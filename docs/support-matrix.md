@@ -21,12 +21,13 @@ outside synchronous model timing.
 
 ## Collaborative providers
 
-| System          | Native dependencies                      | Verification and limits                                                                                                                                                            |
-| --------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Official collab | prosemirror-collab 1.3.1                 | Two actual EditorViews converge after concurrent edits and rebase. Paused remote receipt advances live state and leaves a capture gap. Transport signals are application-observed. |
-| Yjs and Tiptap  | Yjs 13.6.33, Tiptap collaboration 3.31.4 | Two real Tiptap Collaboration bindings synchronize. Local collaborative undo preserves the peer's edit. The binding's own UndoManager supplies depths.                             |
+| System          | Native dependencies                      | Verification and limits                                                                                                                                                                                                                 |
+| --------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Official collab | prosemirror-collab 1.3.1                 | Two actual EditorViews converge after concurrent edits and rebase. Paused remote receipt advances live state and leaves a capture gap. Transport signals are application-observed.                                                      |
+| Yjs and Tiptap  | Yjs 13.6.33, Tiptap collaboration 3.31.4 | Two real Tiptap Collaboration bindings synchronize. Local collaborative undo preserves the peer's edit. The binding's own UndoManager supplies depths. With the sync plugin key, the receiving editor's dispatch is captured as remote. |
 
 The official collab and Yjs providers remain distinct. Neither provider guesses network causality.
+The Yjs dispatch origin comes from the binding's own metadata. It does not name the peer or provider.
 External signals have independent freshness and are sampled at query or dispatch boundaries.
 
 ## Panel hosts

@@ -650,7 +650,22 @@ release includes them.
 
 For official collaboration, use `createCollabInspector` from `prosemirror-inspector/inspectors/collab`.
 Pass the installed `collab()` plugin. For Yjs, use `createYjsInspector` from
-`prosemirror-inspector/inspectors/yjs` with the actual Y.Doc and binding UndoManager.
+`prosemirror-inspector/inspectors/yjs` with the actual Y.Doc and binding UndoManager. Pass the
+binding's `ySyncPluginKey` to label each dispatch by origin. The Timeline then marks a dispatch
+the binding applied from a remote update as `Remote · Yjs`. The package does not import the binding,
+so the application supplies the key it installed:
+
+```ts
+import { ySyncPluginKey, yUndoPluginKey } from "@tiptap/y-tiptap"; // or "y-prosemirror"
+import { createYjsInspector } from "prosemirror-inspector/inspectors/yjs";
+
+const yjs = createYjsInspector({
+  document: ydoc,
+  syncPluginKey: ySyncPluginKey,
+  getUndoManager: () => yUndoPluginKey.getState(editor.state)?.undoManager,
+});
+```
+
 `createTransportObserver` from `prosemirror-inspector/inspectors/transport` accepts explicit
 application network signals. The session captures historical semantic projections.
 
