@@ -1,6 +1,7 @@
 import { createSignal, Show, type JSX } from "solid-js";
 
 import { panelStyles } from "../../styles";
+import { ViewSwitch } from "../../ui/view-switch";
 
 import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../core/types";
 import { DispatchInspector } from "../dispatch/dispatch-inspector";
@@ -23,22 +24,15 @@ export function HistoryDispatchInspector(props: HistoryDispatchInspectorProps): 
       <DispatchInspector.Header />
       <DispatchInspector.Metrics />
       <div class={panelStyles.pmPaneHeader}>
-        <div class={panelStyles.pmViewSwitch} role="group" aria-label="Transaction inspection mode">
-          <button
-            type="button"
-            aria-pressed={mode() === "details"}
-            onClick={() => setMode("details")}
-          >
-            Transaction details
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode() === "changes"}
-            onClick={() => setMode("changes")}
-          >
-            Changes & mapping
-          </button>
-        </div>
+        <ViewSwitch
+          label="Transaction inspection mode"
+          onChange={setMode}
+          options={[
+            { value: "details", label: "Transaction details" },
+            { value: "changes", label: "Changes & mapping" },
+          ]}
+          value={mode()}
+        />
       </div>
       <DispatchEffects record={props.record} showRaw />
       <Show when={mode() === "details"} fallback={<ChangesView record={props.record} />}>

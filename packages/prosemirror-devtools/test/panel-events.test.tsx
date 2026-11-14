@@ -106,8 +106,8 @@ describe("Events and commands panel", () => {
       expect(fixture.store.getInstance("events-editor")?.transactions).toHaveLength(0);
       expect(fixture.rows()).toHaveLength(2);
       expect(fixture.rows().map((row) => row.dataset.eventId)).toEqual(["1", "2"]);
-      expect(fixture.rows()[0]?.textContent).toContain("unhandled");
-      expect(fixture.rows()[1]?.textContent).toContain("handled");
+      expect(fixture.rows()[0]?.textContent).toContain("Unhandled");
+      expect(fixture.rows()[1]?.textContent).toContain("Handled");
       expect(fixture.host.textContent).toContain("uninstrumented");
 
       const pluginKey = fixture.session.diagnostics!.getSnapshot().events[0]!.pluginKey!;

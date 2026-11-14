@@ -1,7 +1,8 @@
-import { For, Show, type JSX } from "solid-js";
+import { Show, type JSX } from "solid-js";
 
 import { usePanelInspection } from "../panel-provider";
 import { panelStyles } from "../styles";
+import { ViewSwitch } from "../ui/view-switch";
 import { Badge } from "../ui/badge";
 
 export function InspectionToolbar(): JSX.Element {
@@ -21,26 +22,22 @@ export function InspectionToolbar(): JSX.Element {
           <Show when={!inspection.transaction()}>
             <span role="status">This dispatch is unavailable in the current editor session.</span>
           </Show>
-          <div class={panelStyles.pmViewSwitch} role="group" aria-label="Historical dispatch phase">
-            <For each={["before", "after"] as const}>
-              {(phase) => (
-                <button
-                  type="button"
-                  aria-pressed={moment().phase === phase}
-                  disabled={!inspection.transaction()}
-                  onClick={() =>
-                    inspection.selectTransaction({
-                      instanceId: moment().target?.editorId ?? inspection.instance()?.id ?? "",
-                      id: moment().id,
-                      phase,
-                    })
-                  }
-                >
-                  {phase === "before" ? "Before dispatch" : "After dispatch"}
-                </button>
-              )}
-            </For>
-          </div>
+          <ViewSwitch
+            disabled={!inspection.transaction()}
+            label="Historical dispatch phase"
+            onChange={(phase) =>
+              inspection.selectTransaction({
+                instanceId: moment().target?.editorId ?? inspection.instance()?.id ?? "",
+                id: moment().id,
+                phase,
+              })
+            }
+            options={[
+              { value: "before", label: "Before dispatch" },
+              { value: "after", label: "After dispatch" },
+            ]}
+            value={moment().phase}
+          />
           <button type="button" class={panelStyles.pmButton} onClick={inspection.followLive}>
             Follow live
           </button>

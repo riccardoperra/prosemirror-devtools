@@ -5,6 +5,7 @@ import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
 import { panelStyles } from "../../styles";
+import { ViewSwitch } from "../../ui/view-switch";
 import { Badge } from "../../ui/badge";
 import { ResizableSplit } from "../../ui/resizable-split";
 import { useOptionalPanelContext } from "../../panel-provider";
@@ -84,19 +85,15 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
         <div class={panelStyles.pmPaneHeader}>
           <span class={panelStyles.pmPaneTitle}>Resolved position</span>
           <span class={panelStyles.pmSpacer} />
-          <div aria-label="Selection endpoint" class={panelStyles.pmViewSwitch} role="group">
-            <For each={["anchor", "head"] as const}>
-              {(value) => (
-                <button
-                  aria-pressed={endpoint() === value}
-                  onClick={() => setEndpoint(value)}
-                  type="button"
-                >
-                  {value === "anchor" ? "Anchor" : "Head"} {selection()[value]}
-                </button>
-              )}
-            </For>
-          </div>
+          <ViewSwitch
+            label="Selection endpoint"
+            onChange={setEndpoint}
+            options={[
+              { value: "anchor", label: `Anchor ${selection().anchor}` },
+              { value: "head", label: `Head ${selection().head}` },
+            ]}
+            value={endpoint()}
+          />
         </div>
         <div class={panelStyles.pmInspectorStats}>
           <Badge tone="blue">position {inspection().pos}</Badge>

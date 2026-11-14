@@ -10,6 +10,7 @@ import {
 } from "../../../core/webmcp";
 import { formatMs } from "../../formatters";
 import { cx, panelStyles } from "../../styles";
+import { ViewSwitch } from "../../ui/view-switch";
 import { Badge } from "../../ui/badge";
 import { ResizableSplit } from "../../ui/resizable-split";
 import { EmptyState } from "../../ui/empty-state";
@@ -322,14 +323,15 @@ function WebMcpView(props: { recorder: Recorder }): JSX.Element {
   return (
     <div class={panelStyles.pmWebMcpLayout}>
       <div class={cx(panelStyles.pmPaneHeader, panelStyles.pmPaneStatic)}>
-        <div class={panelStyles.pmViewSwitch} role="group" aria-label="WebMCP view">
-          <button aria-pressed={view() === "calls"} onClick={() => setView("calls")} type="button">
-            Call history ({calls().size})
-          </button>
-          <button aria-pressed={view() === "tools"} onClick={() => setView("tools")} type="button">
-            Available tools ({toolCount()})
-          </button>
-        </div>
+        <ViewSwitch
+          label="WebMCP view"
+          onChange={setView}
+          options={[
+            { value: "calls", label: `Call history (${calls().size})` },
+            { value: "tools", label: `Available tools (${toolCount()})` },
+          ]}
+          value={view()}
+        />
       </div>
       <Show when={view() === "calls"} fallback={<AvailableTools recorder={recorder} />}>
         <CallHistory calls={calls()} recorder={recorder} />
