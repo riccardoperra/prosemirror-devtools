@@ -47,7 +47,6 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
           onActivePanelChange={props.onActivePanelChange}
           panels={panels()}
           dispatchPresenters={dispatchPresenters()}
-          experimental={props.experimental}
           store={store}
           styleTarget={props.styleTarget}
           theme={props.theme}

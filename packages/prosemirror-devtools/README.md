@@ -523,24 +523,6 @@ While recording in Chrome, enable **Capture settings → Show custom tracks**. P
 instead of `true` to choose the track grouping or filter very short plugin hooks. This integration
 uses Chrome's Performance extensibility API and is ignored in unsupported browsers.
 
-## Experimental views
-
-The `experimental` option turns on views that are still taking shape. They are off by default and
-may change or be removed in any release. Pass `true` to enable all of them, or list the ones you
-want:
-
-```tsx
-<ProseMirrorDevtoolsPanel experimental={["document-boxes", "node-picker"]} />
-```
-
-- `document-boxes` adds **Boxes** to the State document switch. Block nodes appear as nested boxes
-  and inline content as a flat row of chips with their marks and ranges.
-- `rendered-dom` adds **DOM** to the same switch. It shows the editor's live DOM, with each element
-  labeled by the node and range it renders.
-- `node-picker` adds a toolbar toggle. While it is on, point at the editor to outline the node under
-  the pointer, click to inspect it in the State panel, or press Escape to cancel. Hovering a row in
-  the document views also outlines its node in the editor.
-
 ## Snapshots
 
 The built-in Snapshots panel stores serialized document and selection JSON in `localStorage`,

@@ -12,7 +12,6 @@ const panelProps: string[] = [
   "defaultPanel",
   "defaultTab",
   "devtoolsOpen",
-  "experimental",
   "extensions",
   "onActivePanelChange",
   "performanceDetailThresholdMs",

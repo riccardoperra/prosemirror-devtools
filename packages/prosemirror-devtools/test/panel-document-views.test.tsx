@@ -4,11 +4,7 @@ import { EditorView } from "prosemirror-view";
 import { render } from "solid-js/web";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  attachProseMirrorDevtools,
-  createProseMirrorDevtoolsStore,
-  type ExperimentalFeatures,
-} from "../src/core";
+import { attachProseMirrorDevtools, createProseMirrorDevtoolsStore } from "../src/core";
 import { startNodePicker } from "../src/panel/features/inspector/node-picker";
 import { readRenderedDom, type RenderedDomEntry } from "../src/panel/features/state/rendered-dom";
 import { ProseMirrorDevtoolsPanel } from "../src/panel/panel";
@@ -40,7 +36,7 @@ function nestedMarksDoc() {
   ]);
 }
 
-function mountPanel(experimental: ExperimentalFeatures = false, doc = nestedMarksDoc()) {
+function mountPanel(doc = nestedMarksDoc()) {
   const mount = document.createElement("div");
   document.body.append(mount);
   const view = new EditorView(mount, {
@@ -56,9 +52,7 @@ function mountPanel(experimental: ExperimentalFeatures = false, doc = nestedMark
   const container = document.createElement("div");
   document.body.append(container);
   const dispose = render(
-    () => (
-      <ProseMirrorDevtoolsPanel defaultPanel="state" experimental={experimental} store={store} />
-    ),
+    () => <ProseMirrorDevtoolsPanel defaultPanel="state" store={store} />,
     container,
   );
   const documentViewLabels = () =>
@@ -85,24 +79,14 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-describe("experimental document views", () => {
-  it("keeps only the stable views when the flag is off", () => {
+describe("document views", () => {
+  it("offers every document view without any option", () => {
     const panel = mountPanel();
-    expect(panel.documentViewLabels()).toEqual(["HTML", "Structure", "JSON"]);
-  });
-
-  it("adds the experimental views when enabled", () => {
-    const panel = mountPanel(true);
     expect(panel.documentViewLabels()).toEqual(["HTML", "Structure", "JSON", "Boxes", "DOM"]);
   });
 
-  it("enables only the listed experiments", () => {
-    const panel = mountPanel([]);
-    expect(panel.documentViewLabels()).toEqual(["HTML", "Structure", "JSON"]);
-  });
-
   it("renders inline content as a flat row of chips carrying their marks", () => {
-    const panel = mountPanel(["document-boxes"]);
+    const panel = mountPanel();
     panel.showView("Show document as nested boxes");
 
     const paragraph = panel.container.querySelector('.pm-doc-box[data-node-type="paragraph"]')!;
@@ -131,7 +115,6 @@ describe("experimental document views", () => {
 
   it("opens collapsed boxes that hold the inspected node", () => {
     const panel = mountPanel(
-      true,
       schema.node("doc", null, [
         schema.node("blockquote", null, [
           schema.node("blockquote", null, [schema.node("paragraph", null, [schema.text("deep")])]),
@@ -155,7 +138,7 @@ describe("experimental document views", () => {
   });
 
   it("inspects the node of a clicked chip", () => {
-    const panel = mountPanel(true);
+    const panel = mountPanel();
     panel.showView("Show document as nested boxes");
 
     const emphasis = panel.container.querySelectorAll<HTMLElement>(".pm-doc-box-chip")[2]!;
@@ -222,7 +205,7 @@ describe("rendered DOM", () => {
   });
 
   it("selects the node an element renders and follows edits", () => {
-    const panel = mountPanel(["rendered-dom"]);
+    const panel = mountPanel();
     panel.showView("Show rendered editor DOM");
 
     const paragraphRow = () =>
@@ -308,7 +291,7 @@ describe("node picker", () => {
   });
 
   it("is a toolbar toggle that inspects the picked node", () => {
-    const panel = mountPanel(["node-picker"]);
+    const panel = mountPanel();
     const toggle = panel.container.querySelector<HTMLButtonElement>(
       '[aria-label="Pick a node in the editor"]',
     )!;
@@ -320,10 +303,5 @@ describe("node picker", () => {
     expect(toggle.getAttribute("aria-pressed")).toBe("false");
     expect(panel.container.textContent).toContain("open 35");
     expect(panel.container.textContent).toContain("close 40");
-  });
-
-  it("hides the toolbar toggle when the experiment is off", () => {
-    const panel = mountPanel(["document-boxes"]);
-    expect(panel.container.querySelector('[aria-label="Pick a node in the editor"]')).toBeNull();
   });
 });

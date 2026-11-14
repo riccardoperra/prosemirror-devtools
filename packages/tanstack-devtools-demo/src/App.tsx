@@ -7,7 +7,6 @@ import { ProseMirrorEditor } from "./ProseMirrorEditor";
 
 const prosemirrorPlugin = createProseMirrorDevtoolsPlugin({
   defaultPanel: "playground-integration",
-  experimental: true,
   extensions: [playgroundDevtoolsExtension],
   store: prosemirrorDevtoolsStore,
 });

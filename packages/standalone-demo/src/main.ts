@@ -161,7 +161,6 @@ const panel = import.meta.env.DEV
   ? mountProseMirrorDevtools(inspectorContainer, {
       store,
       defaultPanel: "history",
-      experimental: true,
       theme: "light",
       extensions: webMcp ? [webMcp.extension] : [],
     })

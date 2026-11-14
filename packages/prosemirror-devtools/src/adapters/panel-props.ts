@@ -27,7 +27,6 @@ function assignDefinedPanelInit(
   if (source.performanceDetailThresholdMs !== undefined) {
     target.performanceDetailThresholdMs = source.performanceDetailThresholdMs;
   }
-  if (source.experimental !== undefined) target.experimental = source.experimental;
 }
 
 function assignDefinedPanelProps(
@@ -84,7 +83,6 @@ export function equalProseMirrorDevtoolsAdapterPanelProps(
     previous.extensions === next.extensions &&
     previous.performanceFrameBudgetMs === next.performanceFrameBudgetMs &&
     previous.performanceDetailThresholdMs === next.performanceDetailThresholdMs &&
-    previous.experimental === next.experimental &&
     previous.theme === next.theme &&
     previous.devtoolsOpen === next.devtoolsOpen
   );
@@ -117,7 +115,6 @@ export function resolveProseMirrorDevtoolsPanelProps(
   if (resolved.performanceDetailThresholdMs !== undefined) {
     result.performanceDetailThresholdMs = resolved.performanceDetailThresholdMs;
   }
-  if (resolved.experimental !== undefined) result.experimental = resolved.experimental;
 
   return result;
 }

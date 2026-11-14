@@ -14,8 +14,7 @@ import { DocumentTree, getDocumentNodeRange } from "./document-tree";
 import { RenderedDomView } from "./rendered-dom-view";
 import { useDocumentSelection } from "./use-document-selection";
 import { useNodeHoverOutline } from "../inspector/use-node-hover-outline";
-import { useOptionalPanelContext, usePanelExperiments } from "../../panel-provider";
-import type { ExperimentalFeature } from "../../../core/panel-types";
+import { useOptionalPanelContext } from "../../panel-provider";
 
 type DocumentView = "structure" | "json" | "html" | "boxes" | "dom";
 
@@ -23,25 +22,14 @@ type DocumentViewDefinition = Readonly<{
   id: DocumentView;
   label: string;
   ariaLabel: string;
-  experiment?: ExperimentalFeature;
 }>;
 
 const DOCUMENT_VIEWS: readonly DocumentViewDefinition[] = [
   { id: "html", label: "HTML", ariaLabel: "Show exported document HTML" },
   { id: "structure", label: "Structure", ariaLabel: "Show document structure" },
   { id: "json", label: "JSON", ariaLabel: "Show document JSON" },
-  {
-    id: "boxes",
-    label: "Boxes",
-    ariaLabel: "Show document as nested boxes",
-    experiment: "document-boxes",
-  },
-  {
-    id: "dom",
-    label: "DOM",
-    ariaLabel: "Show rendered editor DOM",
-    experiment: "rendered-dom",
-  },
+  { id: "boxes", label: "Boxes", ariaLabel: "Show document as nested boxes" },
+  { id: "dom", label: "DOM", ariaLabel: "Show rendered editor DOM" },
 ];
 
 export interface StateViewProps {
@@ -51,14 +39,7 @@ export interface StateViewProps {
 export function StateView(props: StateViewProps): JSX.Element {
   const state = createMemo(() => readInstanceState(props.instance));
   const inspection = createMemo(() => inspectState(state()));
-  const experiments = usePanelExperiments();
-  const documentViews = createMemo(() =>
-    DOCUMENT_VIEWS.filter(({ experiment }) => !experiment || experiments().has(experiment)),
-  );
-  const [requestedView, setDocumentView] = createSignal<DocumentView>("structure");
-  const documentView = createMemo<DocumentView>(() =>
-    documentViews().some(({ id }) => id === requestedView()) ? requestedView() : "structure",
-  );
+  const [documentView, setDocumentView] = createSignal<DocumentView>("structure");
   const { selected, select, selectNode, reveal } = useDocumentSelection(
     () => props.instance.view,
     state,
@@ -113,14 +94,12 @@ export function StateView(props: StateViewProps): JSX.Element {
           <span class={panelStyles.pmPaneTitle}>Document</span>
           <span class={panelStyles.pmSpacer} />
           <div aria-label="Document view" class={panelStyles.pmViewSwitch} role="group">
-            <For each={documentViews()}>
+            <For each={DOCUMENT_VIEWS}>
               {(view) => (
                 <button
                   aria-label={view.ariaLabel}
                   aria-pressed={documentView() === view.id}
-                  data-experimental={view.experiment ? "true" : undefined}
                   onClick={() => setDocumentView(view.id)}
-                  title={view.experiment ? "Experimental view. It may change." : undefined}
                   type="button"
                 >
                   {view.label}

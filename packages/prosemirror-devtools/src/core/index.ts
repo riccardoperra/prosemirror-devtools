@@ -20,12 +20,7 @@ export type * from "./extensions";
 export { instrumentProseMirrorPlugins } from "./instrument";
 export { markProseMirrorDevtools, measureProseMirrorDevtools } from "./markers";
 export type { ProseMirrorDevtoolsMarkerOptions } from "./markers";
-export { EXPERIMENTAL_FEATURES } from "./panel-types";
-export type {
-  ExperimentalFeature,
-  ExperimentalFeatures,
-  ProseMirrorDevtoolsTab,
-} from "./panel-types";
+export type { ProseMirrorDevtoolsTab } from "./panel-types";
 export { createProseMirrorDevtoolsRegistrationManager } from "./registration-manager";
 export type {
   ProseMirrorDevtoolsRegistrationManager,

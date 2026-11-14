@@ -1,5 +1,5 @@
 import type { DevtoolsExtension } from "../core/extensions";
-import type { ExperimentalFeatures, ProseMirrorDevtoolsTab } from "../core/panel-types";
+import type { ProseMirrorDevtoolsTab } from "../core/panel-types";
 import type { DevtoolsStore } from "../core/types";
 
 export type TanStackDevtoolsTheme = "light" | "dark";
@@ -15,8 +15,6 @@ export interface ProseMirrorDevtoolsPanelInit {
   extensions?: readonly DevtoolsExtension[];
   performanceFrameBudgetMs?: number;
   performanceDetailThresholdMs?: number;
-  /** Enables experimental views. `true` enables all of them. They may change in any release. */
-  experimental?: ExperimentalFeatures;
 }
 
 /** Options passed between a framework panel wrapper and the imperative panel core. */

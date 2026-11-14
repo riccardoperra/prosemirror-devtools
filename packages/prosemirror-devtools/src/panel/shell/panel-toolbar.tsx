@@ -6,7 +6,6 @@ import { startNodePicker } from "../features/inspector/node-picker";
 import {
   usePanelAppearance,
   usePanelDataAccess,
-  usePanelExperiments,
   usePanelInspection,
   usePanelNavigation,
 } from "../panel-provider";
@@ -61,10 +60,9 @@ function NodePickerButton(): JSX.Element {
       aria-label="Pick a node in the editor"
       aria-pressed={picker().kind === "picking"}
       class={panelStyles.pmIconButton}
-      data-experimental="true"
       disabled={!liveView()}
       onClick={toggle}
-      title="Pick a node in the editor (experimental). Press Escape to cancel."
+      title="Pick a node in the editor. Press Escape to cancel."
       type="button"
     >
       ⌖
@@ -77,7 +75,6 @@ export function PanelToolbar(props: PanelToolbarProps): JSX.Element {
   const activeInstanceId = useActiveInstanceId();
   const instances = useInstanceDescriptors();
   const appearance = usePanelAppearance();
-  const experiments = usePanelExperiments();
   const duplicateLabels = createMemo(() => {
     const seen = new Set<string>();
     const duplicates = new Set<string>();
@@ -118,9 +115,7 @@ export function PanelToolbar(props: PanelToolbarProps): JSX.Element {
           </For>
         </Show>
       </select>
-      <Show when={experiments().has("node-picker")}>
-        <NodePickerButton />
-      </Show>
+      <NodePickerButton />
       <Show when={!props.embedded}>
         <span class={panelStyles.pmSpacer} />
         <button

@@ -21,7 +21,6 @@ export function useProseMirrorDevtoolsProps(
   const activePanel = options?.activePanel;
   const onActivePanelChange = options?.onActivePanelChange;
   const extensions = options?.extensions;
-  const experimental = options?.experimental;
   const performanceFrameBudgetMs = options?.performanceFrameBudgetMs;
   const performanceDetailThresholdMs = options?.performanceDetailThresholdMs;
   const optionTheme = options?.theme;
@@ -37,7 +36,6 @@ export function useProseMirrorDevtoolsProps(
           defaultPanel,
           defaultTab,
           devtoolsOpen: optionDevtoolsOpen,
-          experimental,
           extensions,
           onActivePanelChange,
           performanceDetailThresholdMs,
@@ -54,7 +52,6 @@ export function useProseMirrorDevtoolsProps(
       activePanel,
       defaultPanel,
       defaultTab,
-      experimental,
       extensions,
       hostDevtoolsOpen,
       hostTheme,

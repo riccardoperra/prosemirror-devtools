@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js";
 
 import type { DevtoolsExtension } from "../core/extensions";
-import type { ExperimentalFeatures, ProseMirrorDevtoolsTab } from "../core/panel-types";
+import type { ProseMirrorDevtoolsTab } from "../core/panel-types";
 import type { DevtoolsTheme, DevtoolsStore } from "../core/types";
 import type { ProseMirrorDevtoolsCssVariable } from "../styles";
 
@@ -36,12 +36,6 @@ export interface ProseMirrorDevtoolsPanelProps {
    * dispatches. Set to `0` to use a fully linear scale.
    */
   performanceDetailThresholdMs?: number;
-  /**
-   * Enables experimental views: `true` enables all of them, a list such as
-   * `["document-boxes", "node-picker"]` enables only those. Off by default.
-   * Experimental views may change or be removed in any release.
-   */
-  experimental?: ExperimentalFeatures;
   className?: string;
   style?: ProseMirrorDevtoolsPanelStyle;
   /** Document that receives the panel stylesheet. Defaults to the current document. */
