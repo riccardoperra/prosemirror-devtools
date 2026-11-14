@@ -112,6 +112,16 @@ own UndoManager. The application disposes that observer with its editor or provi
 signals and ProseMirror dispatches have independent timing. A dispatch projection can precede a
 completed Yjs redo-stack change. A current query samples the current stack.
 
+With `syncPluginKey`, each captured dispatch carries `dispatchOrigin` for its root and appended
+transactions. It reads the y-sync metadata that y-prosemirror and @tiptap/y-tiptap set on the
+transactions they dispatch, plus the Y.Doc transaction the binding is applying at that moment.
+`local` has no y-sync change metadata. `remote-yjs` applies a Y.Doc transaction that is not local
+to this client. `yjs-undo-redo` applies this client's Y.UndoManager. `yjs-local-transaction`
+applies another local writer's Y.Doc change. `yjs-render` re-renders the whole Y.Doc, as in the
+initial sync. `yjs-snapshot` requests or clears a snapshot view. Without the key, and on current
+queries, `dispatchOrigin` is `unobserved`. The application passes the key instance its sync plugin
+uses, because the package imports neither binding.
+
 The Tiptap collaborative fixture disables StarterKit's ordinary undoRedo extension and uses the
 collaboration binding's undo system. An absent Yjs undo manager returns `unobserved`; it is never
 replaced with prosemirror-history or prosemirror-collab data. Connection and acknowledgement state
