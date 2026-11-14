@@ -44,5 +44,14 @@ normalization run inside `measureProseMirrorDevtools`, and markers report row, d
 delay counts. `createTiptapInspector` declares the plugin associations, and
 `createPluginStateInspector` projects the validation state.
 
+## The Invoice tab
+
+The inspector gets an **Invoice** tab from `src/devtools/InvoicePanel.tsx`, a React panel extension.
+It renders one pure selector, `readInvoiceDebugState` in `src/devtools/debug-state.ts`: the status
+and its allowed transitions, editability, page and row counts, totals, every comment mark, the
+validation issues grouped by rule, and the find query. Clicking a comment or an invalid row selects
+it in the editor. The domain events list shows the last 50 markers and measures the example
+emitted, kept in a ring buffer in `src/devtools/session.ts` next to the code that reports them.
+
 The bubble menu is registered by `@tiptap/react` with `registerPlugin` after the editor is
 created, so its plugin hooks are outside instrumentation coverage.

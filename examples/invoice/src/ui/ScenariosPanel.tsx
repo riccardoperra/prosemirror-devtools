@@ -22,14 +22,16 @@ export function ScenariosPanel({ editor }: { editor: Editor }) {
                 <summary>{scenario.title}</summary>
                 <div className="scenario-body">
                   <p>{scenario.description}</p>
-                  <p className="scenario-inspect">
-                    <span className="scenario-panel">
-                      {panelSections[scenario.inspect.panel] === scenario.inspect.panel
-                        ? scenario.inspect.panel
-                        : `${panelSections[scenario.inspect.panel]} › ${scenario.inspect.panel}`}
-                    </span>{" "}
-                    {scenario.inspect.observe}
-                  </p>
+                  {scenario.inspect.map(({ panel, observe }) => (
+                    <p key={panel} className="scenario-inspect">
+                      <span className="scenario-panel">
+                        {panelSections[panel] === panel
+                          ? panel
+                          : `${panelSections[panel]} › ${panel}`}
+                      </span>{" "}
+                      {observe}
+                    </p>
+                  ))}
                   <div className="scenario-actions">
                     <button
                       type="button"

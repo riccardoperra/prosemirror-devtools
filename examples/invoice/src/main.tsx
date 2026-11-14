@@ -8,6 +8,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { invoiceDevtoolsExtension } from "./devtools/InvoicePanel";
 import { store } from "./devtools/session";
 import { InvoiceEditor } from "./ui/InvoiceEditor";
 import "./style.css";
@@ -20,7 +21,11 @@ const disposeWebMCP = import.meta.env.DEV
   : null;
 
 const inspectorPlugin = import.meta.env.DEV
-  ? createProseMirrorDevtoolsPlugin({ store, defaultPanel: "history" })
+  ? createProseMirrorDevtoolsPlugin({
+      store,
+      defaultPanel: "history",
+      extensions: [invoiceDevtoolsExtension],
+    })
   : null;
 
 function App() {
