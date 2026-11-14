@@ -1,14 +1,18 @@
-import { defineConfig } from "vite";
+import { defineConfig, mergeConfig } from "vite";
+import { showcaseConfig } from "../vite-showcase.ts";
 
-export default defineConfig({
-  server: { port: 4183, strictPort: true },
-  resolve: {
-    dedupe: [
-      "prosemirror-model",
-      "prosemirror-state",
-      "prosemirror-view",
-      "prosemirror-transform",
-      "yjs",
-    ],
-  },
-});
+export default mergeConfig(
+  defineConfig({
+    server: { port: 4183, strictPort: true },
+    resolve: {
+      dedupe: [
+        "prosemirror-model",
+        "prosemirror-state",
+        "prosemirror-view",
+        "prosemirror-transform",
+        "yjs",
+      ],
+    },
+  }),
+  showcaseConfig(["standalone", "recordings-panel"]),
+);

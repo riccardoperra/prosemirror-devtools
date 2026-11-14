@@ -1,7 +1,11 @@
-import { defineConfig } from "vite";
+import { defineConfig, mergeConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
-export default defineConfig({
-  plugins: [vue()],
-  resolve: { dedupe: ["vue"] },
-  server: { port: 4177 },
-});
+import { showcaseConfig } from "../vite-showcase.ts";
+export default mergeConfig(
+  defineConfig({
+    plugins: [vue()],
+    resolve: { dedupe: ["vue"] },
+    server: { port: 4177 },
+  }),
+  showcaseConfig(["vue"]),
+);

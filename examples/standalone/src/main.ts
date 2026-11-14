@@ -23,6 +23,7 @@ import "prosemirror-inspector/styles.css";
 import "./style.css";
 import { mountComparisonControls } from "@prosemirror-devtools/demo-kit/comparison-ui";
 import { mountRecordingControls } from "@prosemirror-devtools/demo-kit/recording-ui";
+import { devtoolsEnabled } from "./env";
 
 const schema = new Schema({
   nodes: addListNodes(basicSchema.spec.nodes, "paragraph block*", "block"),
@@ -32,7 +33,7 @@ const listItem = schema.nodes.list_item;
 if (!listItem) throw new Error("The fixture requires list_item");
 const splitItem = splitListItem(listItem);
 const store = createProseMirrorDevtoolsStore();
-const inspectionClient = import.meta.env.DEV ? createProseMirrorInspectionClient({ store }) : null;
+const inspectionClient = devtoolsEnabled ? createProseMirrorInspectionClient({ store }) : null;
 const webMcp = inspectionClient ? createProseMirrorWebMcpInspector() : null;
 const disposeBridge =
   inspectionClient && webMcp
@@ -80,7 +81,7 @@ let focusEditor = () => {};
 function reset(): void {
   disposeEditor();
   const historyPlugin = history();
-  const session = import.meta.env.DEV
+  const session = devtoolsEnabled
     ? createProseMirrorDevtoolsSession({
         id: "standalone-list",
         label: "Standalone list fixture",
@@ -157,7 +158,7 @@ function reset(): void {
   };
 }
 reset();
-const panel = import.meta.env.DEV
+const panel = devtoolsEnabled
   ? mountProseMirrorDevtools(inspectorContainer, {
       store,
       defaultPanel: "history",
@@ -169,7 +170,7 @@ if (!panel) inspectorContainer.hidden = true;
 const cleanupRecordings = inspectionClient
   ? mountRecordingControls({ container: app, client: inspectionClient })
   : () => {};
-const disposeComparison = import.meta.env.DEV
+const disposeComparison = devtoolsEnabled
   ? mountComparisonControls({ container: app, store })
   : () => {};
 type RegisteredBrowserTool = { readonly name: string };

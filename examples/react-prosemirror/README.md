@@ -8,4 +8,4 @@ The application owns EditorState. Its dispatcher applies a transaction once, upd
 
 A child connects through the library's `useEditorEffect`. Its cleanup disposes the connection. Strict Mode replay and **Reset fixture** create a fresh connection. Toolbar commands use `useEditorEventCallback` for safe view access.
 
-The captured timing covers synchronous model application. Later React commits and uninstrumented plugin hooks remain outside timing coverage. The fixture guards the connection and panel with `import.meta.env.DEV`.
+The captured timing covers synchronous model application. Later React commits and uninstrumented plugin hooks remain outside timing coverage. The fixture guards the connection and panel with `devtoolsEnabled` from `src/env.ts`: development, or a showcase build with `VITE_SHOWCASE=true`.

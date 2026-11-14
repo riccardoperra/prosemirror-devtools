@@ -11,7 +11,7 @@ export function mountComparisonControls({
   readonly container: HTMLElement;
   readonly store: DevtoolsStore;
 }): () => void {
-  if (!import.meta.env.DEV) return () => {};
+  if (!import.meta.env.DEV && import.meta.env.VITE_SHOWCASE !== "true") return () => {};
   const document = container.ownerDocument;
   const controls = document.createElement("div");
   controls.className = "toolbar";

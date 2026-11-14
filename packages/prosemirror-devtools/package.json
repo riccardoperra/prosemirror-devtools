@@ -81,6 +81,10 @@
       "types": "./dist/standalone.d.ts",
       "default": "./dist/standalone.js"
     },
+    "./standalone/production": {
+      "types": "./dist/standalone/production/index.d.ts",
+      "default": "./dist/standalone/production/index.js"
+    },
     "./react-prosemirror": {
       "types": "./dist/react-prosemirror.d.ts",
       "default": "./dist/react-prosemirror.js"
@@ -116,6 +120,10 @@
     "./recordings-panel": {
       "types": "./dist/recordings-panel.d.ts",
       "default": "./dist/recordings-panel.js"
+    },
+    "./recordings-panel/production": {
+      "types": "./dist/recordings-panel/production/index.d.ts",
+      "default": "./dist/recordings-panel/production/index.js"
     }
   },
   "files": [

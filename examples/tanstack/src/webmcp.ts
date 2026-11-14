@@ -4,8 +4,9 @@ import {
   installProseMirrorWebMCPBridge,
 } from "prosemirror-inspector/agent";
 import { createProseMirrorInspectionClient } from "prosemirror-inspector/core";
+import { devtoolsEnabled } from "./env";
 
-const inspectionClient = import.meta.env.DEV
+const inspectionClient = devtoolsEnabled
   ? createProseMirrorInspectionClient({ store: prosemirrorDevtoolsStore })
   : null;
 

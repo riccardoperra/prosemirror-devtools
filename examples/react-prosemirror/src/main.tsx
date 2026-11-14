@@ -29,12 +29,13 @@ import { ProseMirrorDevtoolsPanel } from "prosemirror-inspector/react";
 import "prosemirror-view/style/prosemirror.css";
 import "prosemirror-inspector/styles.css";
 import "./style.css";
+import { devtoolsEnabled } from "./env";
 
 const store = createProseMirrorDevtoolsStore();
-const disposeBridge = import.meta.env.DEV
+const disposeBridge = devtoolsEnabled
   ? installProseMirrorChromeBridge(createProseMirrorInspectionClient({ store }))
   : null;
-const disposeWebMCP = import.meta.env.DEV
+const disposeWebMCP = devtoolsEnabled
   ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
   : null;
 const schema = new Schema({
@@ -82,7 +83,7 @@ function Connection({
 }) {
   useEditorEffect(
     (view) => {
-      if (!import.meta.env.DEV) return;
+      if (!devtoolsEnabled) return;
       const connection = createReactProseMirrorDevtools({
         id: "native-react-prosemirror",
         label: "Controlled React list fixture",
@@ -171,12 +172,12 @@ function App() {
       </p>
       <button onClick={() => setGeneration((value) => value + 1)}>Reset fixture</button>
       <p>
-        {import.meta.env.DEV
+        {devtoolsEnabled
           ? "Native model application is captured. React commits and uninstrumented plugin hooks are outside timing coverage."
           : "Diagnostics are disabled in this production build."}
       </p>
       <ControlledEditor key={generation} />
-      {import.meta.env.DEV ? (
+      {devtoolsEnabled ? (
         <div className="inspector">
           <ProseMirrorDevtoolsPanel store={store} defaultPanel="history" theme="light" />
         </div>

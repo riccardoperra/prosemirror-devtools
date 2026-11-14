@@ -20,6 +20,7 @@ import {
   type FixtureOptions,
   type Peer,
 } from "./types";
+import { devtoolsEnabled } from "./env";
 
 export function mountOfficial({
   containers,
@@ -38,10 +39,10 @@ export function mountOfficial({
     schema.node("paragraph", null, schema.text("Shared document.")),
   );
   const createPeer = (peer: Peer) => {
-    const transport = import.meta.env.DEV ? createTransportObserver() : undefined;
+    const transport = devtoolsEnabled ? createTransportObserver() : undefined;
     const plugin = collab({ clientID: peer });
     const undoPlugin = history();
-    const session = import.meta.env.DEV
+    const session = devtoolsEnabled
       ? createProseMirrorDevtoolsSession({
           id: `official-${peer}`,
           label: `Official collab ${peer}`,

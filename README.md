@@ -173,22 +173,36 @@ on this branch are unreleased until the next package release.
 
 ## Examples
 
-Start with the [kitchen sink](./examples/kitchen-sink) to try collaboration, undo and redo,
-rendering diagnostics, recordings, and agent tools from one page.
+Every example runs on [GitHub Pages](https://riccardoperra.github.io/prosemirror-devtools/) with
+the inspector enabled in a production build. Start with the
+[invoice workbench](https://riccardoperra.github.io/prosemirror-devtools/invoice/) or the
+[kitchen sink](https://riccardoperra.github.io/prosemirror-devtools/kitchen-sink/) to try
+collaboration, undo and redo, rendering diagnostics, recordings, and agent tools.
+
+| Invoice workbench                                                                  | Invoice tab                                                                            |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| ![The invoice workbench with the inspector open](./site/screenshots/invoice.jpg)   | ![The Invoice tab of the inspector](./site/screenshots/invoice-tab.jpg)                |
+| **Kitchen sink**                                                                   | **Standalone**                                                                         |
+| ![The kitchen sink with the inline inspector](./site/screenshots/kitchen-sink.jpg) | ![The standalone example with the inline inspector](./site/screenshots/standalone.jpg) |
 
 The monorepo keeps one private example per framework so each adapter can be run and tested in its
 native environment:
 
-- [Standalone ProseMirror, list and undo](./examples/standalone)
-- [Native Tiptap](./examples/tiptap)
-- [Multi-page Tiptap invoice with inspector scenarios](./examples/invoice)
-- [Controlled React ProseMirror](./examples/react-prosemirror)
-- [React and TanStack](./examples/tanstack)
-- [Preact](./examples/preact)
-- [Solid](./examples/solid)
-- [Vue](./examples/vue)
-- [Svelte](./examples/svelte)
-- [Angular](./examples/angular)
+- Kitchen sink, collaboration and Yjs: [demo](https://riccardoperra.github.io/prosemirror-devtools/kitchen-sink/) · [source](./examples/kitchen-sink)
+- Standalone ProseMirror, list and undo: [demo](https://riccardoperra.github.io/prosemirror-devtools/standalone/) · [source](./examples/standalone)
+- Native Tiptap: [demo](https://riccardoperra.github.io/prosemirror-devtools/tiptap/) · [source](./examples/tiptap)
+- Multi-page Tiptap invoice with inspector scenarios: [demo](https://riccardoperra.github.io/prosemirror-devtools/invoice/) · [source](./examples/invoice)
+- Controlled React ProseMirror: [demo](https://riccardoperra.github.io/prosemirror-devtools/react-prosemirror/) · [source](./examples/react-prosemirror)
+- React and TanStack: [demo](https://riccardoperra.github.io/prosemirror-devtools/tanstack/) · [source](./examples/tanstack)
+- Preact: [demo](https://riccardoperra.github.io/prosemirror-devtools/preact/) · [source](./examples/preact)
+- Solid: [demo](https://riccardoperra.github.io/prosemirror-devtools/solid/) · [source](./examples/solid)
+- Vue: [demo](https://riccardoperra.github.io/prosemirror-devtools/vue/) · [source](./examples/vue)
+- Svelte: [demo](https://riccardoperra.github.io/prosemirror-devtools/svelte/) · [source](./examples/svelte)
+- Angular: [demo](https://riccardoperra.github.io/prosemirror-devtools/angular/) · [source](./examples/angular)
+
+`pnpm build:pages` builds the site into `pages-dist/`. `pnpm screenshots` checks every page in a
+browser and regenerates the images in `site/screenshots/`. To add an example to the site, add a
+row to `scripts/examples.mjs`.
 
 ## License
 

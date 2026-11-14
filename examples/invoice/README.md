@@ -112,7 +112,7 @@ The shell then imports `createProseMirrorDevtoolsPlugin` from
 `prosemirror-inspector/react/production`, because the default React entry renders nothing outside
 development.
 
-`pnpm build:pages` at the root builds the package, builds this example under
-`/prosemirror-devtools/invoice/`, and assembles `pages-dist/` with the landing page from `site/`
+`pnpm build:pages` at the root builds the package, builds every example in
+`scripts/examples.mjs` (this one under `/prosemirror-devtools/invoice/`), and assembles `pages-dist/` with the landing page from `site/`
 at its root. `pnpm preview:pages` serves `pages-dist` under the same base on port 4300.
 `.github/workflows/pages.yml` runs the build and deploys it on pushes to `main`.

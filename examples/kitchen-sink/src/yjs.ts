@@ -23,6 +23,7 @@ import {
   type FixtureOptions,
   type Peer,
 } from "./types";
+import { devtoolsEnabled } from "./env";
 
 export function mountYjs({
   containers,
@@ -33,8 +34,8 @@ export function mountYjs({
 }: FixtureOptions): CollaborationFixture {
   const docs = { A: new Y.Doc(), B: new Y.Doc() };
   const transport = {
-    A: import.meta.env.DEV ? createTransportObserver() : undefined,
-    B: import.meta.env.DEV ? createTransportObserver() : undefined,
+    A: devtoolsEnabled ? createTransportObserver() : undefined,
+    B: devtoolsEnabled ? createTransportObserver() : undefined,
   };
   const remoteOrigin = { provider: "in-memory-yjs" };
   const pending: {
@@ -46,7 +47,7 @@ export function mountYjs({
   let messageSequence = 0;
   let active = true;
   const createPeer = (peer: Peer) => {
-    const diagnostics = import.meta.env.DEV ? createProseMirrorDevtoolsDiagnostics() : undefined;
+    const diagnostics = devtoolsEnabled ? createProseMirrorDevtoolsDiagnostics() : undefined;
     let inspector: YjsInspector | null = null;
     const native = Extension.create({
       name: "inspector",
@@ -93,7 +94,7 @@ export function mountYjs({
           name: "demoVisuals",
           addProseMirrorPlugins: () => [createDiagnosticDemoPlugin({ blockExamples: true })],
         }),
-        ...(import.meta.env.DEV ? [native] : []),
+        ...(devtoolsEnabled ? [native] : []),
       ],
       enableExtensionDispatchTransaction: true,
       editorProps: { attributes: { role: "textbox", "aria-label": `Tiptap Yjs editor ${peer}` } },

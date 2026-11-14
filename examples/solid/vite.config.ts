@@ -1,7 +1,11 @@
-import { defineConfig } from "vite";
+import { defineConfig, mergeConfig } from "vite";
 import solid from "vite-plugin-solid";
-export default defineConfig({
-  plugins: [solid()],
-  resolve: { dedupe: ["solid-js"] },
-  server: { port: 4176 },
-});
+import { showcaseConfig } from "../vite-showcase.ts";
+export default mergeConfig(
+  defineConfig({
+    plugins: [solid()],
+    resolve: { dedupe: ["solid-js"] },
+    server: { port: 4176 },
+  }),
+  showcaseConfig(["solid"]),
+);
