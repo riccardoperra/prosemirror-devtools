@@ -62,6 +62,19 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
 }
+/*
+ * Panel controls never inherit host styles for these properties. The selector has the same
+ * specificity as a component class and comes first, so every component still sets its own
+ * radius, shadow and spacing. See DESIGN.md, "Host isolation".
+ */
+.pm-devtools :where(button, input, select, textarea) {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
 .pm-devtools[data-embedded="true"] {
   min-block-size: 0;
 }
@@ -595,7 +608,13 @@
   .pm-list-row[aria-selected="true"],
   .pm-list-row[aria-pressed="true"] {
     background: var(--pm-accent-soft);
-    box-shadow: inset 2px 0 var(--pm-accent);
+  }
+  .pm-list-row:is([aria-selected="true"], [aria-pressed="true"]) .pm-row-title {
+    color: var(--pm-accent);
+  }
+  .pm-list-row:focus-visible,
+  .pm-doc-row-main:focus-visible {
+    outline-offset: -2px;
   }
   .pm-web-mcp-summary {
     cursor: pointer;
@@ -667,19 +686,6 @@
   }
   .pm-doc-row[data-inspected="true"] {
     background: var(--pm-accent-soft);
-  }
-  .pm-doc-row[data-editor-selection] {
-    box-shadow: inset 2px 0 var(--pm-blue);
-  }
-  .pm-doc-row[data-editor-selection="full"] {
-    background: color-mix(in srgb, var(--pm-blue-soft) 62%, transparent);
-  }
-  .pm-doc-row[data-inspected="true"][data-editor-selection] {
-    background: linear-gradient(
-      90deg,
-      var(--pm-accent-soft),
-      color-mix(in srgb, var(--pm-blue-soft) 46%, var(--pm-accent-soft))
-    );
   }
   .pm-doc-row-main {
     min-inline-size: 0;
