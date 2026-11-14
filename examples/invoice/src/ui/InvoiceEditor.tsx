@@ -1,5 +1,6 @@
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import { TextSelection } from "prosemirror-state";
 import { useEffect, useState } from "react";
 import { resumeTiptapDevtools, suspendTiptapDevtools } from "prosemirror-inspector/tiptap";
 
@@ -26,7 +27,7 @@ export function InvoiceEditor({ devtools }: { devtools: AnyExtension | null }) {
   ]);
   const editor = useEditor({
     extensions,
-    // A collaborative document comes from the room. Only its first peer seeds the fixture.
+    // A collaborative document comes from the shared Y.Doc, which the session already seeded.
     ...(collab ? {} : { content: initialInvoice }),
     immediatelyRender: false,
     shouldRerenderOnTransaction: false,
@@ -44,7 +45,11 @@ export function InvoiceEditor({ devtools }: { devtools: AnyExtension | null }) {
     },
   });
   useEffect(() => {
-    if (editor && collab) void collab.seed(editor, initialInvoice);
+    if (!editor || !collab) return;
+    // y-sync renders the shared document over an empty one and clamps the old selection into it,
+    // which leaves a range over the cover that the first keystroke would replace. Start at a caret.
+    const start = TextSelection.findFrom(editor.state.doc.resolve(0), 1, true);
+    if (start) editor.view.dispatch(editor.state.tr.setSelection(start));
   }, [editor, collab]);
   useEffect(() => {
     if (!editor || !devtools) return;

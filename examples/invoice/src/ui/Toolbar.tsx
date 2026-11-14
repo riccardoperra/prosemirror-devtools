@@ -16,7 +16,7 @@ import {
   undo,
 } from "../invoice/commands";
 import { useCollab } from "../collab/context";
-import { newRoomUrl, secondUserUrl } from "../collab/config";
+import { roomUrl, soloUrl } from "../collab/config";
 import { useDevtools } from "../devtools/context";
 import { readMeta, rowsInRange } from "../invoice/document";
 import { fieldKeys, fieldRegistry, type FieldKey } from "../invoice/fields";
@@ -134,17 +134,6 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
           </button>
         ))}
       </div>
-      {collab ? (
-        <div className="toolbar-group">
-          <button
-            type="button"
-            title="Opens this room in a new tab as another user. Tabs sync over BroadcastChannel, so only tabs of this browser join."
-            onClick={() => window.open(secondUserUrl(location.href, collab.config), "_blank")}
-          >
-            <Glyph>⧉</Glyph>Open as second user
-          </button>
-        </div>
-      ) : null}
       <div className="toolbar-group">
         <MoreMenu label="More">
           {(close) => {
@@ -188,10 +177,13 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
                   () => deleteRows(editor),
                   true,
                 )}
+                <hr />
                 {collab
-                  ? null
+                  ? item("Work alone (no collaboration)", false, () =>
+                      location.assign(soloUrl(location.href)),
+                    )
                   : item("Collaborate in two tabs", false, () =>
-                      location.assign(newRoomUrl(location.href)),
+                      location.assign(roomUrl(location.href)),
                     )}
                 {devtools ? (
                   <>
