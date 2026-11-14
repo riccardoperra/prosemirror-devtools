@@ -2393,6 +2393,60 @@
   .pm-dispatch-identity > .pm-row-detail {
     grid-column: 2;
   }
+  /* Folded JSON diff: one line per changed field or node, unchanged siblings folded. */
+  .pm-diff {
+    padding-block: 6px;
+    overflow-x: auto;
+    font:
+      500 11px/1.55 ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      monospace;
+  }
+  .pm-diff-line {
+    display: grid;
+    grid-template-columns: 1ch minmax(0, 1fr);
+    gap: 8px;
+    padding-inline: 10px;
+    color: var(--pm-muted);
+  }
+  .pm-diff-text {
+    min-inline-size: 0;
+    padding-inline-start: calc(var(--pm-diff-depth, 0) * 2ch);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .pm-diff-line[data-kind="add"] {
+    color: var(--pm-text);
+    background: var(--pm-green-soft);
+  }
+  .pm-diff-line[data-kind="del"] {
+    color: var(--pm-text);
+    background: var(--pm-red-soft);
+  }
+  .pm-diff-line[data-kind="add"] > .pm-diff-marker {
+    color: var(--pm-green);
+  }
+  .pm-diff-line[data-kind="del"] > .pm-diff-marker {
+    color: var(--pm-red);
+  }
+  .pm-diff-line[data-kind="fold"] {
+    color: var(--pm-faint);
+  }
+  .pm-diff-marker {
+    font-weight: 700;
+  }
+  .pm-diff-note {
+    color: var(--pm-faint);
+  }
+  .pm-visually-hidden {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
   .pm-dispatch-title {
     min-inline-size: 0;
     overflow: hidden;

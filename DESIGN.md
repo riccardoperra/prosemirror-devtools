@@ -300,6 +300,11 @@ recorded steps, replaying them on the document before the dispatch. `StepLine` r
 (weight 650), the subject (mono) and the position (mono, `--pm-muted`) inline, so list rows can
 truncate them with an ellipsis.
 
+Document changes use the folded diff in `document-diff.ts`: unchanged siblings collapse into one
+`⋯ N unchanged` line, a changed node opens down to the fields that differ (`"text"`, `"attrs"`,
+`"marks"`), and added or removed nodes take one `+`/`−` line each. Show a diff, not the two full
+documents; the Document tab already shows either document through the Before/After toggle.
+
 Timeline answers "what happened and why"; Performance answers "what it cost". Timeline shows a
 dispatch's total duration only, and links to Performance for phases and plugin cost.
 

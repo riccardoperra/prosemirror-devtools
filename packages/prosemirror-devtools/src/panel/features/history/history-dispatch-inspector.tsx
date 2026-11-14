@@ -1,6 +1,9 @@
 import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 
+import { Node as ProseMirrorNode } from "prosemirror-model";
+
 import { restoreDocument } from "../../../core/snapshots";
+import { getRecordedTransactionDocument } from "../../../core/store/transaction-record";
 import type { RegisteredProseMirrorInstance, TransactionRecord } from "../../../core/types";
 import { formatDateTime, formatMs, formatTime } from "../../formatters";
 import { JsonTree } from "../../json-tree";
@@ -9,6 +12,7 @@ import { cx, panelStyles } from "../../styles";
 import { Badge } from "../../ui/badge";
 import { ViewSwitch } from "../../ui/view-switch";
 import { ChangesView } from "../changes/changes-view";
+import { DocumentDiffView } from "../changes/document-diff-view";
 import { DispatchMarkers } from "../dispatch/dispatch-details";
 import { DispatchEffects } from "../dispatch/dispatch-effects";
 import { TransactionBadges } from "../dispatch/transaction-badges";
@@ -147,6 +151,25 @@ export function HistoryDispatchInspector(props: HistoryDispatchInspectorProps): 
   const headline = createMemo(() => summarizeDispatch(props.record, transactions()));
   const selectionBefore = createMemo(() => describeSelection(props.record.selectionBefore));
   const selectionAfter = createMemo(() => describeSelection(props.record.selectionAfter));
+  /** The documents around the dispatch: kept in memory, else parsed from the recorded JSON. */
+  const documents = createMemo(() => {
+    const schema = props.instance.view.state.schema;
+    const read = (phase: "before" | "after"): ProseMirrorNode | null => {
+      const kept = getRecordedTransactionDocument(props.record, phase);
+      if (kept) return kept;
+      try {
+        return ProseMirrorNode.fromJSON(
+          schema,
+          (phase === "before" ? props.record.docBefore : props.record.docAfter) as never,
+        );
+      } catch {
+        return null;
+      }
+    };
+    const before = read("before");
+    const after = read("after");
+    return before && after ? { before, after } : undefined;
+  });
   const appended = () => props.record.transactions.filter(({ appended }) => appended).length;
   const open = (panel: string): void => {
     inspection?.selectTransaction({
@@ -257,6 +280,9 @@ export function HistoryDispatchInspector(props: HistoryDispatchInspectorProps): 
               </Field>
             </dl>
           </section>
+          <Show when={props.record.docChanged ? documents() : undefined}>
+            {(docs) => <DocumentDiffView after={docs().after} before={docs().before} />}
+          </Show>
           <Show
             when={props.record.transactions.length > 0}
             fallback={
@@ -278,24 +304,6 @@ export function HistoryDispatchInspector(props: HistoryDispatchInspectorProps): 
             </For>
           </Show>
           <DispatchMarkers markers={props.record.markers} />
-          <JsonDisclosure label="Documents before and after (JSON)">
-            {() => (
-              <div class={panelStyles.pmDetailColumns}>
-                <section>
-                  <div class={panelStyles.pmDetailHeading}>
-                    <span class={panelStyles.pmSectionTitle}>Before</span>
-                  </div>
-                  <JsonTree defaultExpandedDepth={2} value={props.record.docBefore} />
-                </section>
-                <section>
-                  <div class={panelStyles.pmDetailHeading}>
-                    <span class={panelStyles.pmSectionTitle}>After</span>
-                  </div>
-                  <JsonTree defaultExpandedDepth={2} value={props.record.docAfter} />
-                </section>
-              </div>
-            )}
-          </JsonDisclosure>
         </aside>
       </Show>
     </section>
