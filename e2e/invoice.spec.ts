@@ -24,6 +24,7 @@ test("invoice totals follow edits, paid locks the editor, and the inspector show
   });
   await page.goto("http://127.0.0.1:4184");
   const editor = page.getByRole("textbox", { name: "Invoice editor", exact: true });
+  await expect(editor).toBeVisible();
   const amountDue = page.getByLabel("Amount due", { exact: true });
   const initialDue = toCents(await amountDue.textContent());
   const target = await editorTarget(page);
