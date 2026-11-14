@@ -234,8 +234,9 @@ panel IDs `history` and `decorations`.
 
 The State panel offers four document views:
 
+- **Boxes**, the default, draws block nodes as nested boxes and inline content as chips with their
+  marks.
 - **Structure** is the node tree with the positions before and after each node.
-- **Boxes** draws block nodes as nested boxes and inline content as chips with their marks.
 - **JSON** is the document as `Node.toJSON()` returns it.
 - **DOM** is the editor's rendered DOM. Each element is labelled as a node, a mark, a widget, or
   outside the document, and each label and text node shows its document range. For a state that

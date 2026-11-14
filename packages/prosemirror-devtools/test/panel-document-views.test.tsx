@@ -85,9 +85,14 @@ afterEach(() => {
 });
 
 describe("document views", () => {
-  it("offers every document view without any option", () => {
+  it("offers every document view without any option and opens on Boxes", () => {
     const panel = mountPanel();
-    expect(panel.documentViewLabels()).toEqual(["Structure", "Boxes", "JSON", "DOM"]);
+    expect(panel.documentViewLabels()).toEqual(["Boxes", "Structure", "JSON", "DOM"]);
+    expect(
+      panel.container
+        .querySelector('[aria-label="Show document as nested boxes"]')
+        ?.getAttribute("aria-pressed"),
+    ).toBe("true");
   });
 
   it("renders inline content as a flat row of chips carrying their marks", () => {

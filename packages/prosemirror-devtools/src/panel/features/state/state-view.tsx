@@ -24,8 +24,8 @@ type DocumentViewDefinition = Readonly<{
 }>;
 
 const DOCUMENT_VIEWS: readonly DocumentViewDefinition[] = [
-  { id: "structure", label: "Structure", ariaLabel: "Show document structure" },
   { id: "boxes", label: "Boxes", ariaLabel: "Show document as nested boxes" },
+  { id: "structure", label: "Structure", ariaLabel: "Show document structure" },
   { id: "json", label: "JSON", ariaLabel: "Show document JSON" },
   { id: "dom", label: "DOM", ariaLabel: "Show document DOM" },
 ];
@@ -37,7 +37,7 @@ export interface StateViewProps {
 export function StateView(props: StateViewProps): JSX.Element {
   const state = createMemo(() => readInstanceState(props.instance));
   const inspection = createMemo(() => inspectState(state()));
-  const [documentView, setDocumentView] = createSignal<DocumentView>("structure");
+  const [documentView, setDocumentView] = createSignal<DocumentView>("boxes");
   const { selected, select, selectNode, reveal } = useDocumentSelection(
     () => props.instance.view,
     state,
