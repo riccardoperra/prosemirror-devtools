@@ -12,6 +12,8 @@ import { InvoiceViewContext } from "../invoice/view-context";
 import { CommentsSidebar } from "./CommentsSidebar";
 import { FindBar } from "./FindBar";
 import { InvoiceBubbleMenu } from "./InvoiceBubbleMenu";
+import { LoadLab } from "./LoadLab";
+import { ScenariosPanel } from "./ScenariosPanel";
 import { Toolbar } from "./Toolbar";
 
 export function InvoiceEditor() {
@@ -66,9 +68,11 @@ function InvoiceWorkspace({ editor }: { editor: Editor }) {
         findOpen={findOpen}
         onToggleFind={() => (findOpen ? closeFind() : setFindOpen(true))}
       />
+      <LoadLab editor={editor} />
       {findOpen ? <FindBar editor={editor} onClose={closeFind} /> : null}
       <div className="workspace">
-        <article className="page">
+        <ScenariosPanel editor={editor} />
+        <article className="document">
           <EditorContent editor={editor} />
         </article>
         <CommentsSidebar editor={editor} />

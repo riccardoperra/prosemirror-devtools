@@ -1,5 +1,6 @@
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
+import type { Node as ProseMirrorNode } from "prosemirror-model";
 
 import { selectRange } from "../invoice/commands";
 
@@ -12,9 +13,13 @@ interface CommentThread {
   readonly quote: string;
 }
 
-function collectComments(editor: Editor): CommentThread[] {
+const threadsByDoc = new WeakMap<ProseMirrorNode, CommentThread[]>();
+
+function collectComments(doc: ProseMirrorNode): CommentThread[] {
+  const cached = threadsByDoc.get(doc);
+  if (cached) return cached;
   const threads = new Map<string, CommentThread>();
-  editor.state.doc.descendants((node, pos) => {
+  doc.descendants((node, pos) => {
     if (!node.isText) return true;
     for (const mark of node.marks) {
       if (mark.type.name !== "comment") continue;
@@ -31,13 +36,15 @@ function collectComments(editor: Editor): CommentThread[] {
     }
     return false;
   });
-  return [...threads.values()];
+  const result = [...threads.values()];
+  threadsByDoc.set(doc, result);
+  return result;
 }
 
 export function CommentsSidebar({ editor }: { editor: Editor }) {
   const comments = useEditorState({
     editor,
-    selector: ({ editor: current }) => collectComments(current),
+    selector: ({ editor: current }) => collectComments(current.state.doc),
   });
   return (
     <aside className="comments" aria-label="Comments">

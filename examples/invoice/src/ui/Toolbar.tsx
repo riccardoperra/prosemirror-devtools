@@ -8,21 +8,20 @@ import {
   deleteRows,
   duplicateSelectedRows,
   insertField,
-  loadStressInvoice,
+  insertPageBreak,
+  moveSectionToNextPage,
   redo,
   selectAllLineItems,
   setStatus,
   undo,
 } from "../invoice/commands";
-import { lineItemRows, readMeta, rowsInRange } from "../invoice/document";
+import { readMeta, rowsInRange } from "../invoice/document";
 import { fieldKeys, fieldRegistry, type FieldKey } from "../invoice/fields";
 import { isLocked, transitions } from "../invoice/model";
 
-const stressRows = 300;
-
 const statusActions = { sent: "Send", paid: "Mark paid", void: "Void", draft: "Back to draft" };
 
-function Glyph({ children }: { children: string }) {
+export function Glyph({ children }: { children: string }) {
   return (
     <span className="glyph" aria-hidden="true">
       {children}
@@ -47,13 +46,12 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
         status,
         locked: isLocked(status),
         selectedRows: rowsInRange(doc, selection.from, selection.to).length,
-        totalRows: lineItemRows(doc).length,
         canUndo: current.can().undo(),
         canRedo: current.can().redo(),
       };
     },
   });
-  const { locked, selectedRows, totalRows } = state;
+  const { locked, selectedRows } = state;
   return (
     <div className="toolbar" role="toolbar" aria-label="Invoice actions">
       <div className="toolbar-group">
@@ -77,7 +75,7 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
         </button>
         <button
           type="button"
-          disabled={locked || selectedRows === 0 || selectedRows >= totalRows}
+          disabled={locked || selectedRows === 0}
           onClick={() => deleteRows(editor)}
         >
           <Glyph>−</Glyph>Delete row{selectedRows > 1 ? "s" : ""}
@@ -119,15 +117,14 @@ export function Toolbar({ editor, findOpen, onToggleFind }: ToolbarProps) {
         ))}
       </div>
       <div className="toolbar-group">
+        <button type="button" disabled={locked} onClick={() => insertPageBreak(editor)}>
+          <Glyph>⤓</Glyph>Page break
+        </button>
+        <button type="button" disabled={locked} onClick={() => moveSectionToNextPage(editor)}>
+          <Glyph>↧</Glyph>Move section to next page
+        </button>
         <button type="button" aria-pressed={findOpen} onClick={onToggleFind}>
           <Glyph>⌕</Glyph>Find
-        </button>
-        <button
-          type="button"
-          disabled={locked}
-          onClick={() => loadStressInvoice(editor, stressRows)}
-        >
-          <Glyph>↯</Glyph>Load {stressRows}-line stress invoice
         </button>
       </div>
     </div>

@@ -206,27 +206,36 @@ select {
   text-align: right;
 }
 
-/* Page */
+/* Workspace: scenarios in the left gutter, pages in the column, comments in the right gutter */
 
 .workspace {
   display: grid;
-  grid-template-columns: 1fr min(var(--column), 100% - 32px) 1fr;
-  column-gap: 16px;
-  padding: 40px 0 120px;
+  grid-template-columns: minmax(0, 1fr) min(var(--column), 100% - 32px) minmax(0, 1fr);
+  column-gap: 24px;
+  padding: 32px 0 120px;
 }
 
-.page {
+.document {
   grid-column: 2;
   min-width: 0;
 }
 
 .invoice-document {
+  display: grid;
+  gap: 32px;
   outline: none;
 }
 
+.invoice-document h2 {
+  margin: 8px 0 4px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
 .invoice-document h3 {
-  margin: 40px 0 4px;
-  font-size: 18px;
+  margin: 24px 0 4px;
+  font-size: 17px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -235,13 +244,65 @@ select {
   margin: 2px 0;
 }
 
-.invoice-document ul {
+.invoice-document ul,
+.invoice-document ol {
   margin: 4px 0;
   padding-left: 24px;
 }
 
+.invoice-document blockquote {
+  margin: 16px 0;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--text);
+}
+
 .invoice-document ::selection {
   background: rgb(35 131 226 / 0.2);
+}
+
+/* Pages are explicit nodes. Header and footer are computed by the node view, never stored. */
+
+.page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 980px;
+  padding: 0 56px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 15 15 / 0.03);
+}
+
+.node-page.ProseMirror-selectednode > .page,
+.page.is-selected {
+  box-shadow: 0 0 0 2px var(--accent-ring);
+}
+
+.page-header,
+.page-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 0;
+  color: var(--text-faint);
+  font-size: 12px;
+  user-select: none;
+}
+
+.page-header {
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-footer {
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
+.page-body {
+  min-width: 0;
 }
 
 /* Invoice properties, styled like a page's property list */
@@ -647,7 +708,7 @@ mark.comment.is-resolved {
 .comments {
   grid-column: 3;
   position: sticky;
-  top: 64px;
+  top: 104px;
   align-self: start;
   max-width: 260px;
   padding-left: 16px;
@@ -699,6 +760,236 @@ mark.comment.is-resolved {
   font-size: 13px;
 }
 
+/* Load lab */
+
+.load-lab {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 10px;
+  max-width: 1080px;
+  margin: 12px auto 0;
+  padding: 0 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.load-lab label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.load-lab-stats {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
+/* Scenarios */
+
+.scenarios {
+  grid-column: 1;
+  justify-self: end;
+  position: sticky;
+  top: 104px;
+  align-self: start;
+  width: 100%;
+  max-width: 280px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.scenarios > summary {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.scenarios > summary::-webkit-details-marker,
+.scenario > summary::-webkit-details-marker {
+  display: none;
+}
+
+.scenarios h2 {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.scenarios-hint {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.scenarios ol {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scenario {
+  border-radius: var(--radius-sm);
+  transition: background-color var(--hover-duration) ease;
+}
+
+.scenario[open] {
+  background: var(--surface-subtle);
+}
+
+.scenario > summary {
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  list-style: none;
+  transition: background-color var(--hover-duration) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .scenario > summary:hover {
+    background: var(--hover);
+  }
+}
+
+.scenario p {
+  margin: 0;
+  padding: 0 8px 6px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.scenario-panel {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.scenario-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 8px;
+}
+
+.scenario-actions button {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+}
+
+.scenario-outcome {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.scenario-outcome.is-applied {
+  color: var(--success);
+}
+
+/* Appendix sections */
+
+.timesheet {
+  display: grid;
+  gap: 20px;
+}
+
+.timesheet table,
+.schedule table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timesheet caption {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-strong);
+  font-weight: 600;
+  text-align: left;
+}
+
+.timesheet td,
+.schedule td,
+.schedule th {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.timesheet td:last-child,
+.schedule td:nth-child(n + 2),
+.schedule th:nth-child(n + 2) {
+  text-align: right;
+}
+
+.timesheet input {
+  width: 72px;
+  height: 26px;
+  padding: 0 4px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule th {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.signature {
+  display: grid;
+  gap: 8px;
+}
+
+.signature-line {
+  height: 56px;
+  border-bottom: 1px solid var(--text);
+  display: flex;
+  align-items: flex-end;
+}
+
+.signature-ink {
+  font:
+    italic 26px/1.2 "Snell Roundhand",
+    "Segoe Script",
+    cursive;
+}
+
+.signature-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.signature-caption button {
+  border: 1px solid var(--border-strong);
+}
+
+.signature.is-selected .signature-line {
+  box-shadow: 0 2px 0 var(--accent-ring);
+}
+
 .loading {
   max-width: var(--column);
   margin: 40px auto;
@@ -706,11 +997,17 @@ mark.comment.is-resolved {
 }
 
 @media (max-width: 1180px) {
-  .comments {
+  .comments,
+  .scenarios {
     grid-column: 2;
     position: static;
     max-width: none;
-    padding: 40px 0 0;
+    max-height: none;
+    padding: 0 0 24px;
+  }
+
+  .comments {
+    padding: 24px 0 0;
   }
 }
 
@@ -746,6 +1043,8 @@ mark.comment.is-resolved {
 @media print {
   .app-header,
   .toolbar,
+  .load-lab,
+  .scenarios,
   .find-bar,
   .comments,
   .bubble-menu,
@@ -758,6 +1057,17 @@ mark.comment.is-resolved {
   .workspace {
     display: block;
     padding: 0;
+  }
+
+  .invoice-document {
+    display: block;
+  }
+
+  .page {
+    min-height: 0;
+    border: none;
+    box-shadow: none;
+    break-after: page;
   }
 
   .node-lineItem > .line-item {
