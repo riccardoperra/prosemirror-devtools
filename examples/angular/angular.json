@@ -32,6 +32,11 @@
               "budgets": [{ "type": "initial", "maximumWarning": "2MB", "maximumError": "3MB" }],
               "outputHashing": "all"
             },
+            "showcase": {
+              "fileReplacements": [
+                { "replace": "src/app/inspector.ts", "with": "src/app/inspector.showcase.ts" }
+              ]
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,

@@ -17,13 +17,14 @@ import { mountOfficial } from "./official";
 import { textImpactExtension } from "./text-impact";
 import { mountYjs } from "./yjs";
 import { commandLabels, commands, peers, type CollaborationFixture, type Peer } from "./types";
+import { devtoolsEnabled } from "./env";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing application container");
 app.innerHTML = `<main class="kitchen-sink">
   <h1>ProseMirror Inspector kitchen sink</h1>
   <p>Two editors, a shared document, and controls to see what happens before and after delivery.</p>
-  <details class="demo-guide" ${import.meta.env.DEV ? "" : "hidden"}>
+  <details class="demo-guide" ${devtoolsEnabled ? "" : "hidden"}>
     <summary>Try the kitchen sink</summary>
     <ol>
       <li>Hold delivery and insert a sample in A. Open <strong>Transactions</strong> to see the pending step, then deliver it and inspect the new dispatch. Try <strong>Insert outside history in A</strong> to see an explicit undo exclusion.</li>
@@ -52,7 +53,7 @@ app.innerHTML = `<main class="kitchen-sink">
     .join("")}</div>
   <output id="status" aria-live="polite"></output>
   <p id="coverage"></p>
-  <details id="sample-details" ${import.meta.env.DEV ? "" : "hidden"}><summary>Current provider samples and coverage</summary><pre id="samples"></pre></details>
+  <details id="sample-details" ${devtoolsEnabled ? "" : "hidden"}><summary>Current provider samples and coverage</summary><pre id="samples"></pre></details>
   <div id="inspector" class="inspector" aria-label="ProseMirror Inspector"></div>
   <div id="demo-actions"></div>
 </main>`;
@@ -76,9 +77,9 @@ const containers = {
 };
 const store = createProseMirrorDevtoolsStore();
 const client = createProseMirrorInspectionClient({ store });
-const disposeBridge = import.meta.env.DEV ? installProseMirrorChromeBridge(client) : null;
-const disposeWebMCP = import.meta.env.DEV ? await installProseMirrorWebMCPBridge(client) : null;
-const panel = import.meta.env.DEV
+const disposeBridge = devtoolsEnabled ? installProseMirrorChromeBridge(client) : null;
+const disposeWebMCP = devtoolsEnabled ? await installProseMirrorWebMCPBridge(client) : null;
+const panel = devtoolsEnabled
   ? mountProseMirrorDevtools(element("#inspector", HTMLDivElement), {
       store,
       theme: "light",
@@ -170,8 +171,8 @@ function reset(): void {
     instrumentPlugins: profile.value === "instrumented",
   };
   fixture = system.value === "yjs" ? mountYjs(options) : mountOfficial(options);
-  excludedSample.hidden = !import.meta.env.DEV || system.value !== "official";
-  coverage.textContent = !import.meta.env.DEV
+  excludedSample.hidden = !devtoolsEnabled || system.value !== "official";
+  coverage.textContent = !devtoolsEnabled
     ? "Diagnostics are disabled in this production build."
     : profile.value === "attach"
       ? "Attach only captures editor state, dispatches and provider samples. Instrument before state to see plugin callbacks and rendering observations."
@@ -214,10 +215,10 @@ hold.addEventListener("change", holdChanged);
 const unsubscribe = store.subscribe(changed);
 reset();
 const actions = element("#demo-actions", HTMLDivElement);
-const disposeComparison = import.meta.env.DEV
+const disposeComparison = devtoolsEnabled
   ? mountComparisonControls({ container: actions, store })
   : null;
-const disposeRecordings = import.meta.env.DEV
+const disposeRecordings = devtoolsEnabled
   ? mountRecordingControls({ container: actions, client })
   : null;
 function dispose(): void {

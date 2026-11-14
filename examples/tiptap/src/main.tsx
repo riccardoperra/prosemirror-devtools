@@ -25,12 +25,13 @@ import {
 } from "prosemirror-inspector/tiptap";
 import "prosemirror-inspector/styles.css";
 import "./style.css";
+import { devtoolsEnabled } from "./env";
 
 const store = createProseMirrorDevtoolsStore();
-const disposeBridge = import.meta.env.DEV
+const disposeBridge = devtoolsEnabled
   ? installProseMirrorChromeBridge(createProseMirrorInspectionClient({ store }))
   : null;
-const disposeWebMCP = import.meta.env.DEV
+const disposeWebMCP = devtoolsEnabled
   ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
   : null;
 const fixture = "<ul><li><p>Alpha</p></li></ul><aside>Callout rendered by a node view</aside>";
@@ -56,7 +57,7 @@ function NativeTiptap({ instrumentPlugins }: { instrumentPlugins: boolean }) {
   const [extensions] = useState(() => [
     StarterKit.configure({ trailingNode: false }),
     Callout,
-    ...(import.meta.env.DEV
+    ...(devtoolsEnabled
       ? [
           Extension.create({
             name: "prosemirrorInspector",
@@ -101,7 +102,7 @@ function NativeTiptap({ instrumentPlugins }: { instrumentPlugins: boolean }) {
     },
   });
   useEffect(() => {
-    if (!editor || !import.meta.env.DEV) return;
+    if (!editor || !devtoolsEnabled) return;
     resumeTiptapDevtools(editor);
     return () => suspendTiptapDevtools(editor);
   }, [editor]);
@@ -163,7 +164,7 @@ function App() {
         </label>
       </div>
       <p>
-        {import.meta.env.DEV
+        {devtoolsEnabled
           ? instrumentPlugins
             ? "Generated plugins are instrumented. Plugins added later with registerPlugin are outside hook coverage."
             : "Only native dispatches are recorded. Plugin hooks are outside coverage."
@@ -173,7 +174,7 @@ function App() {
         key={`${generation}-${instrumentPlugins}`}
         instrumentPlugins={instrumentPlugins}
       />
-      {import.meta.env.DEV ? (
+      {devtoolsEnabled ? (
         <div className="inspector">
           <ProseMirrorDevtoolsPanel store={store} defaultPanel="history" theme="light" />
         </div>
