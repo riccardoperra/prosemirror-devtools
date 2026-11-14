@@ -13,6 +13,7 @@ import { DocumentBoxes } from "./document-boxes";
 import { DocumentTree, getDocumentNodeRange } from "./document-tree";
 import { RenderedDomView } from "./rendered-dom-view";
 import { useDocumentSelection } from "./use-document-selection";
+import { useNodeHoverOutline } from "../inspector/use-node-hover-outline";
 import { useOptionalPanelContext, usePanelExperiments } from "../../panel-provider";
 import type { ExperimentalFeature } from "../../../core/panel-types";
 
@@ -62,6 +63,7 @@ export function StateView(props: StateViewProps): JSX.Element {
     () => props.instance.view,
     state,
   );
+  const outlineNode = useNodeHoverOutline(() => props.instance.view, state);
   const selectAt = (pos: number, isRoot: boolean): void => {
     const doc = state().doc;
     const node = isRoot ? doc : doc.nodeAt(pos);
@@ -146,6 +148,7 @@ export function StateView(props: StateViewProps): JSX.Element {
             <DocumentTree
               depth={0}
               node={state().doc}
+              onHover={outlineNode}
               onReveal={reveal}
               onSelect={select}
               onSelectNode={selectNode}
@@ -158,6 +161,7 @@ export function StateView(props: StateViewProps): JSX.Element {
           <Match when={documentView() === "boxes"}>
             <DocumentBoxes
               doc={state().doc}
+              onHover={outlineNode}
               onReveal={reveal}
               onSelect={select}
               selectedPosition={selected().pos}
@@ -166,6 +170,7 @@ export function StateView(props: StateViewProps): JSX.Element {
           </Match>
           <Match when={documentView() === "dom"}>
             <RenderedDomView
+              onHover={outlineNode}
               onSelect={selectAt}
               selectedPosition={selected().pos}
               selectedRoot={selected().isRoot}

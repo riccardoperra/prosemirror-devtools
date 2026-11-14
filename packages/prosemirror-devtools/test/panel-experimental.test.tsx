@@ -2,13 +2,14 @@ import { Schema } from "prosemirror-model";
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { render } from "solid-js/web";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   attachProseMirrorDevtools,
   createProseMirrorDevtoolsStore,
   type ExperimentalFeatures,
 } from "../src/core";
+import { startNodePicker } from "../src/panel/features/inspector/node-picker";
 import { readRenderedDom, type RenderedDomEntry } from "../src/panel/features/state/rendered-dom";
 import { ProseMirrorDevtoolsPanel } from "../src/panel/panel";
 
@@ -234,5 +235,95 @@ describe("rendered DOM", () => {
 
     panel.view.dispatch(panel.view.state.tr.insertText("!", 39));
     expect(panel.container.textContent).toContain('"b!"');
+  });
+});
+
+describe("node picker", () => {
+  function startPicker() {
+    const { view } = mountPanel();
+    const onPick = vi.fn();
+    const onCancel = vi.fn();
+    const stop = startNodePicker(view, { onPick, onCancel });
+    cleanups.push(stop);
+    const paragraphs = view.dom.querySelectorAll("p");
+    return { view, onPick, onCancel, paragraphs };
+  }
+
+  function fire(target: Element, type: string): MouseEvent {
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true, composed: true });
+    target.dispatchEvent(event);
+    return event;
+  }
+
+  it("swallows pointer presses inside the editor only", () => {
+    const { view, paragraphs } = startPicker();
+    const editorListener = vi.fn();
+    view.dom.addEventListener("mousedown", editorListener);
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const outsideListener = vi.fn();
+    outside.addEventListener("mousedown", outsideListener);
+
+    expect(fire(paragraphs[0]!, "mousedown").defaultPrevented).toBe(true);
+    expect(editorListener).not.toHaveBeenCalled();
+    fire(outside, "mousedown");
+    expect(outsideListener).toHaveBeenCalledTimes(1);
+  });
+
+  it("picks the node whose element was clicked", () => {
+    const { onPick, paragraphs } = startPicker();
+
+    fire(paragraphs[1]!, "click");
+
+    expect(onPick).toHaveBeenCalledWith(35, false);
+  });
+
+  it("prefers the text leaf under the pointer", () => {
+    const { view, onPick, paragraphs } = startPicker();
+    view.posAtCoords = () => ({ pos: 12, inside: -1 });
+
+    fire(paragraphs[0]!.querySelector("strong")!, "click");
+
+    expect(onPick).toHaveBeenCalledWith(9, false);
+  });
+
+  it("outlines the hovered node and cancels on Escape", () => {
+    const { view, onPick, onCancel, paragraphs } = startPicker();
+
+    fire(paragraphs[1]!, "mousemove");
+    expect(document.querySelector("[data-prosemirror-node-overlay]")?.textContent).toBe(
+      "paragraph 35–40",
+    );
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", cancelable: true }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(document.querySelector("[data-prosemirror-node-overlay]")).toBeNull();
+
+    const editorListener = vi.fn();
+    view.dom.addEventListener("pointerdown", editorListener);
+    fire(paragraphs[1]!, "pointerdown");
+    fire(paragraphs[1]!, "click");
+    expect(editorListener).toHaveBeenCalledTimes(1);
+    expect(onPick).not.toHaveBeenCalled();
+  });
+
+  it("is a toolbar toggle that inspects the picked node", () => {
+    const panel = mountPanel(["node-picker"]);
+    const toggle = panel.container.querySelector<HTMLButtonElement>(
+      '[aria-label="Pick a node in the editor"]',
+    )!;
+
+    toggle.click();
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    fire(panel.view.dom.querySelectorAll("p")[1]!, "click");
+
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    expect(panel.container.textContent).toContain("open 35");
+    expect(panel.container.textContent).toContain("close 40");
+  });
+
+  it("hides the toolbar toggle when the experiment is off", () => {
+    const panel = mountPanel(["document-boxes"]);
+    expect(panel.container.querySelector('[aria-label="Pick a node in the editor"]')).toBeNull();
   });
 });

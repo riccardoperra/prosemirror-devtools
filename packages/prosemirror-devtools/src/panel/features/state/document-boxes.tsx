@@ -3,6 +3,7 @@ import { createMemo, createSignal, For, Index, Show, type JSX } from "solid-js";
 
 import { panelStyles } from "../../styles";
 
+import type { NodeTarget } from "../inspector/node-picker";
 import { getDocumentNodeRange, previewText } from "./document-tree";
 
 type BoxesModel = Readonly<{
@@ -11,6 +12,7 @@ type BoxesModel = Readonly<{
   holdsInspected: (node: ProseMirrorNode, pos: number) => boolean;
   select: (node: ProseMirrorNode, pos: number) => void;
   reveal: (pos: number) => void;
+  hover: (target: NodeTarget | null) => void;
 }>;
 
 type PositionedNode = Readonly<{ node: ProseMirrorNode; pos: number }>;
@@ -55,6 +57,8 @@ function Chip(props: { node: ProseMirrorNode; pos: number; model: BoxesModel }):
         aria-pressed={isInspected()}
         class={panelStyles.pmDocBoxChipMain}
         onClick={() => props.model.select(props.node, props.pos)}
+        onMouseEnter={() => props.model.hover({ pos: props.pos, isRoot: false })}
+        onMouseLeave={() => props.model.hover(null)}
         onDblClick={() => props.model.reveal(props.pos)}
         title="Inspect this node. Double-click to reveal it in the editor."
         type="button"
@@ -108,7 +112,11 @@ function Box(props: {
       data-node-type={props.node.type.name}
       style={{ "--pm-node-hue": nodeHue(props.node.type.name) } as JSX.CSSProperties}
     >
-      <div class={panelStyles.pmDocBoxHeader}>
+      <div
+        class={panelStyles.pmDocBoxHeader}
+        onMouseEnter={() => props.model.hover({ pos: props.pos, isRoot: isRoot() })}
+        onMouseLeave={() => props.model.hover(null)}
+      >
         <Show when={props.node.childCount > 0}>
           <button
             aria-expanded={expanded()}
@@ -172,6 +180,7 @@ export interface DocumentBoxesProps {
   selectedRoot: boolean;
   onSelect: (node: ProseMirrorNode, pos: number) => void;
   onReveal: (pos: number) => void;
+  onHover: (target: NodeTarget | null) => void;
 }
 
 /** Block nodes as nested boxes and inline content as a flat row of chips. */
@@ -184,6 +193,7 @@ export function DocumentBoxes(props: DocumentBoxesProps): JSX.Element {
       props.selectedPosition < pos + node.nodeSize - 1,
     select: (node, pos) => props.onSelect(node, pos),
     reveal: (pos) => props.onReveal(pos),
+    hover: (target) => props.onHover(target),
   };
 
   return (

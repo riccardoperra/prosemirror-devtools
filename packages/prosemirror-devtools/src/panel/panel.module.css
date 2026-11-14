@@ -317,6 +317,11 @@
     border-color: var(--pm-border-strong);
     background: var(--pm-panel-2);
   }
+  .pm-icon-button[aria-pressed="true"] {
+    color: var(--pm-accent);
+    border-color: var(--pm-accent);
+    background: var(--pm-accent-soft);
+  }
   .pm-button[data-variant="primary"] {
     background: var(--pm-accent);
     border-color: var(--pm-accent);

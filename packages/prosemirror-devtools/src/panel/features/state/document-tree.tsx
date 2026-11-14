@@ -4,6 +4,7 @@ import { createMemo, createSignal, Index, Show, type JSX } from "solid-js";
 import { panelStyles } from "../../styles";
 
 import { Badge } from "../../ui/badge";
+import type { NodeTarget } from "../inspector/node-picker";
 
 export type DocumentSelectionRange = Readonly<{
   empty: boolean;
@@ -56,6 +57,7 @@ interface DocumentTreeProps {
   onSelect: (node: ProseMirrorNode, pos: number) => void;
   onReveal: (pos: number) => void;
   onSelectNode: (node: ProseMirrorNode, pos: number) => void;
+  onHover: (target: NodeTarget | null) => void;
 }
 
 export function DocumentTree(props: DocumentTreeProps): JSX.Element {
@@ -85,6 +87,8 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
         data-editor-selection={selectionCoverage() ?? undefined}
         data-inspected={isInspected()}
         data-node-type={props.node.type.name}
+        onMouseEnter={() => props.onHover({ pos: props.pos, isRoot: isRoot() })}
+        onMouseLeave={() => props.onHover(null)}
         style={{ "--depth": props.depth } as JSX.CSSProperties}
       >
         <Show
@@ -170,6 +174,7 @@ export function DocumentTree(props: DocumentTreeProps): JSX.Element {
             <DocumentTree
               depth={props.depth + 1}
               node={child().node}
+              onHover={props.onHover}
               onReveal={props.onReveal}
               onSelect={props.onSelect}
               onSelectNode={props.onSelectNode}

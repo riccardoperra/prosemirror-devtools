@@ -5,6 +5,7 @@ import { createMemo, createSignal, For, Index, Match, Show, Switch, type JSX } f
 import { panelStyles } from "../../styles";
 
 import { useOptionalPanelInspection } from "../../panel-provider";
+import type { NodeTarget } from "../inspector/node-picker";
 import { previewText } from "./document-tree";
 import { readRenderedDom, type RenderedDomElement, type RenderedDomEntry } from "./rendered-dom";
 
@@ -13,6 +14,7 @@ const RENDERED_DOM_LIMIT = 2000;
 type DomTreeModel = Readonly<{
   isInspected: (pos: number, isRoot: boolean) => boolean;
   select: (pos: number, isRoot: boolean) => void;
+  hover: (target: NodeTarget | null) => void;
 }>;
 
 function TagLabel(props: { element: RenderedDomElement }): JSX.Element {
@@ -85,6 +87,11 @@ function DomElement(props: {
         data-dom-kind="element"
         data-inspected={isInspected()}
         data-node-type={props.element.node?.name}
+        onMouseEnter={() => {
+          const node = props.element.node;
+          props.model.hover(node ? { pos: node.from, isRoot: isRoot() } : null);
+        }}
+        onMouseLeave={() => props.model.hover(null)}
         style={{ "--depth": props.depth } as JSX.CSSProperties}
       >
         <Show
@@ -146,6 +153,7 @@ export interface RenderedDomViewProps {
   selectedPosition: number;
   selectedRoot: boolean;
   onSelect: (pos: number, isRoot: boolean) => void;
+  onHover: (target: NodeTarget | null) => void;
 }
 
 /** The editor's rendered DOM, annotated with the document nodes it renders. Live moment only. */
@@ -161,6 +169,7 @@ export function RenderedDomView(props: RenderedDomViewProps): JSX.Element {
   const model: DomTreeModel = {
     isInspected: (pos, isRoot) => props.selectedPosition === pos && props.selectedRoot === isRoot,
     select: (pos, isRoot) => props.onSelect(pos, isRoot),
+    hover: (target) => props.onHover(target),
   };
 
   return (
