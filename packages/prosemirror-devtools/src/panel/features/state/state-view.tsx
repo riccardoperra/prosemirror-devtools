@@ -1,5 +1,4 @@
 import { readInstanceState } from "../../store/instance-state";
-import { DOMSerializer } from "prosemirror-model";
 import { createMemo, createSignal, For, Match, Show, Switch, type JSX } from "solid-js";
 
 import { panelStyles } from "../../styles";
@@ -16,7 +15,7 @@ import { useDocumentSelection } from "./use-document-selection";
 import { useNodeHoverOutline } from "../inspector/use-node-hover-outline";
 import { useOptionalPanelContext } from "../../panel-provider";
 
-type DocumentView = "structure" | "json" | "html" | "boxes" | "dom";
+type DocumentView = "structure" | "boxes" | "json" | "dom";
 
 type DocumentViewDefinition = Readonly<{
   id: DocumentView;
@@ -25,11 +24,10 @@ type DocumentViewDefinition = Readonly<{
 }>;
 
 const DOCUMENT_VIEWS: readonly DocumentViewDefinition[] = [
-  { id: "html", label: "HTML", ariaLabel: "Show exported document HTML" },
   { id: "structure", label: "Structure", ariaLabel: "Show document structure" },
-  { id: "json", label: "JSON", ariaLabel: "Show document JSON" },
   { id: "boxes", label: "Boxes", ariaLabel: "Show document as nested boxes" },
-  { id: "dom", label: "DOM", ariaLabel: "Show rendered editor DOM" },
+  { id: "json", label: "JSON", ariaLabel: "Show document JSON" },
+  { id: "dom", label: "DOM", ariaLabel: "Show document DOM" },
 ];
 
 export interface StateViewProps {
@@ -69,23 +67,6 @@ export function StateView(props: StateViewProps): JSX.Element {
   const panelContext = useOptionalPanelContext();
   const context = panelContext?.inspection;
   const navigation = panelContext?.navigation;
-  const html = createMemo(() => {
-    if (documentView() !== "html") return undefined;
-    try {
-      const container = props.instance.view.dom.ownerDocument.createElement("div");
-      container.append(
-        DOMSerializer.fromSchema(state().schema).serializeFragment(state().doc.content, {
-          document: container.ownerDocument,
-        }),
-      );
-      return { kind: "available", value: container.innerHTML } as const;
-    } catch (error) {
-      return {
-        kind: "unavailable",
-        reason: error instanceof Error ? error.message : String(error),
-      } as const;
-    }
-  });
 
   return (
     <ResizableSplit label="Document width">
@@ -156,22 +137,6 @@ export function StateView(props: StateViewProps): JSX.Element {
               state={state()}
               view={props.instance.view}
             />
-          </Match>
-          <Match when={documentView() === "html"}>
-            <div class={panelStyles.pmDocumentJson}>
-              <p class={panelStyles.pmPerformanceNote}>
-                HTML serializes document content through the schema. Root attributes remain in JSON.
-                NodeViews are not HTML serializers.
-              </p>
-              <pre
-                aria-label="Exported document HTML"
-                style={{ "white-space": "pre-wrap", "overflow-wrap": "anywhere" }}
-              >
-                {html()?.kind === "available"
-                  ? html()?.value
-                  : `HTML unavailable: ${html()?.reason ?? ""}`}
-              </pre>
-            </div>
           </Match>
           <Match when={documentView() === "json"}>
             <div class={panelStyles.pmDocumentJson}>

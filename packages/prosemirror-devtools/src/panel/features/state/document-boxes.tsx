@@ -17,7 +17,7 @@ type BoxesModel = Readonly<{
 
 type PositionedNode = Readonly<{ node: ProseMirrorNode; pos: number }>;
 
-function nodeHue(name: string): number {
+export function nodeHue(name: string): number {
   let hash = 0;
   for (let index = 0; index < name.length; index++) {
     hash = (hash * 31 + name.charCodeAt(index)) % 360;
