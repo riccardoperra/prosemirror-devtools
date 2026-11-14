@@ -6,16 +6,61 @@ ProseMirror facts.
 
 ## Install the skills
 
-For a Codex project, copy the versioned skills from the installed package.
+The npm package ships three versioned Agent Skills under `skills/<name>/SKILL.md`. Installing the
+package never activates them without an explicit decision.
+
+### pnpm 12
+
+pnpm 12 discovers the skills of direct dependencies and asks for approval before linking them.
+
+```sh
+pnpm add -D prosemirror-inspector
+pnpm approve
+```
+
+`pnpm add` reports `Agent skills awaiting approval: prosemirror-inspector`. `pnpm approve` reviews
+build scripts and skills in one prompt. Since pnpm 12.18 it also asks which of the three skills to
+link. To approve the package without the interactive prompt, run `pnpm approve prosemirror-inspector`.
+The decision is stored under `permissions` in `pnpm-workspace.yaml`:
+
+```yaml
+permissions:
+  prosemirror-inspector:
+    skills: true
+```
+
+Every later `pnpm install` links the approved skills from `node_modules` into the project's agent
+skill directory. Inside Claude Code this is `.claude/skills`. Otherwise it is `.agents/skills`.
+pnpm writes a `.gitignore` there for the links, so the skills follow the installed package version
+after each upgrade. Global installs, `pnpm dlx`, and `pnpm deploy` do not link dependency skills.
+Run `pnpm permissions list` to see granted and pending decisions.
+
+### npm, Yarn, or earlier pnpm
+
+Link the skills with the [`skills` CLI](https://github.com/vercel-labs/skills) after installing the
+package.
+
+```sh
+# Link every skill shipped by installed packages into the project's agent directories.
+npx skills experimental_sync
+# Or copy selected skills from the installed package and record them in skills-lock.json.
+npx skills add ./node_modules/prosemirror-inspector --skill prosemirror-inspector-debug
+```
+
+`experimental_sync` links the skills to `node_modules` and is experimental in the CLI. `add` copies
+the selected version, so repeat it after upgrading the package. Pass `--agent codex` (or another
+agent name) to choose the target directory.
+
+Without any tool, copy the directories manually:
 
 ```sh
 mkdir -p .agents/skills
 cp -R node_modules/prosemirror-inspector/skills/prosemirror-inspector-* .agents/skills/
 ```
 
-Review existing copies before replacing them. Installing the npm package does not activate skills
-in an agent. For another runner, place these Agent Skills directories in the location that runner
-supports. The skills declare inspection protocol version 1 in their metadata.
+Review existing copies before replacing them. For another runner, place these Agent Skills
+directories in the location that runner supports. The skills declare inspection protocol version 1
+in their metadata.
 
 Use `prosemirror-inspector-integrate` to connect an editor and check its lifecycle. Use
 `prosemirror-inspector-debug` to investigate a bounded problem. Use `prosemirror-inspector-validate`
@@ -88,6 +133,10 @@ Choose `completeness: "capture"` when a claim requires a complete trace. Use `"v
 current value that does not depend on omitted dispatches. A missing or truncated result produces
 `inconclusive`. An observed mismatch produces `failed`. Matching evidence produces `passed`.
 Semantic checks do not establish that the browser rendered the expected content.
+
+A path that does not resolve produces `failed` with a reason that names the first missing segment,
+for example a string segment such as `"length"` applied to an array. Arrays accept only integer
+indexes. Use that reason to correct the query before treating the result as an editor defect.
 
 Predicates inspect JSON structure. When a value belongs to a known nested evidence wrapper, declare
 that wrapper in `requiredEvidence`. For example, a Tiptap extension storage check can require
