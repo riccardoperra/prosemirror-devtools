@@ -463,7 +463,9 @@ describe("performance panel", () => {
       expect(inspector?.textContent).not.toContain("Changed ranges");
       expect(inspector?.textContent).toContain("Selection");
 
-      const documents = inspector?.querySelector<HTMLDetailsElement>(".pm-document-disclosure");
+      const documents = Array.from(
+        inspector?.querySelectorAll<HTMLDetailsElement>(".pm-disclosure") ?? [],
+      ).find((details) => details.querySelector("summary")?.textContent?.includes("Documents"));
       expect(documents?.open).toBe(false);
       await flush(async () => {
         documents?.querySelector<HTMLElement>("summary")?.click();

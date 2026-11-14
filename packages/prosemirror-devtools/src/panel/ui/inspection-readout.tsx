@@ -16,7 +16,7 @@ export function InspectionReadout(props: { result: InspectionResult; label: stri
   };
 
   return (
-    <section aria-label={props.label}>
+    <section aria-label={props.label} class={panelStyles.pmSection}>
       <div class={panelStyles.pmDetailHeading}>
         <span class={panelStyles.pmSectionTitle}>{props.label}</span>
         <Badge tone={props.result.kind === "available" ? "green" : "yellow"}>
@@ -32,14 +32,14 @@ export function InspectionReadout(props: { result: InspectionResult; label: stri
       <Show
         when={available()}
         fallback={
-          <p role="status" class={panelStyles.pmPerformanceNote}>
+          <p role="status" class={panelStyles.pmSectionNote}>
             {unavailableReason()}
           </p>
         }
       >
         {(data) => <JsonTree defaultExpandedDepth={2} value={data().value} />}
       </Show>
-      <details class={panelStyles.pmDocumentDisclosure} aria-label={`${props.label} coverage`}>
+      <details class={panelStyles.pmDisclosure} aria-label={`${props.label} coverage`}>
         <summary>Coverage and read point</summary>
         <JsonTree
           defaultExpandedDepth={2}

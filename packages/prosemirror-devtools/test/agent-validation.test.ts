@@ -168,6 +168,45 @@ describe("semantic agent validation", () => {
     ).toBe("passed");
   });
 
+  it("names the unresolved path segment instead of reporting a value mismatch", () => {
+    const document = observed({ content: [{ content: [{ type: "list_item" }] }] });
+    expect(
+      evaluateProseMirrorInspection(document, {
+        path: ["content", 0, "content", "length"],
+        completeness: "value",
+        predicate: { kind: "equals", expected: 1 },
+      }),
+    ).toEqual({
+      kind: "failed",
+      reason:
+        'The path ["content",0,"content","length"] does not resolve: segment 3 ("length") is not present in an array of 1 items. Arrays accept only integer indexes.',
+      evidence: [point],
+    });
+    expect(
+      evaluateProseMirrorInspection(document, {
+        path: ["content", 0, "content", 1],
+        completeness: "value",
+        predicate: { kind: "exists" },
+      }),
+    ).toEqual({
+      kind: "failed",
+      reason:
+        'The path ["content",0,"content",1] does not resolve: segment 3 (1) is not present in an array of 1 items.',
+      evidence: [point],
+    });
+    expect(
+      evaluateProseMirrorInspection(document, {
+        path: ["content", 0, "content", 0, "type"],
+        completeness: "value",
+        predicate: { kind: "equals", expected: "paragraph" },
+      }),
+    ).toEqual({
+      kind: "failed",
+      reason: "The observed value does not satisfy the expectation.",
+      evidence: [point],
+    });
+  });
+
   it("requires a referenced observation and never looks through the prototype", () => {
     expect(
       evaluateProseMirrorInspection(

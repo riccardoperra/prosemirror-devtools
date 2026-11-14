@@ -48,9 +48,25 @@ function mountPanel(inspector: ReturnType<typeof createProseMirrorWebMcpInspecto
     ),
     host,
   );
+  const showView = (label: string) =>
+    Array.from(host.querySelectorAll<HTMLButtonElement>('[aria-label="WebMCP view"] button'))
+      .find((button) => button.textContent?.startsWith(label))!
+      .click();
+  const readTools = (section: string) => {
+    showView("Available tools");
+    const text = host.querySelector(`[aria-label="${section}"]`)?.textContent;
+    showView("Call history");
+    return text;
+  };
   return {
-    tools: () => host.querySelector('[aria-label="Registered WebMCP tools"]')?.textContent,
-    calls: () => Array.from(host.querySelectorAll<HTMLDetailsElement>("details")),
+    tools: () => readTools("Native WebMCP tools"),
+    chromeTools: () => readTools("Chrome DevTools MCP tools"),
+    viewSwitch: () => host.querySelector('[aria-label="WebMCP view"]')?.textContent,
+    calls: () =>
+      Array.from(
+        host.querySelectorAll<HTMLButtonElement>('[aria-label="WebMCP call history"] button'),
+      ),
+    detail: () => host.querySelector('[aria-label="WebMCP call details"]')?.textContent,
     clear: () =>
       host.querySelector<HTMLButtonElement>('[aria-label="Clear WebMCP call history"]')!.click(),
     selectTab: (name: string) =>
@@ -86,8 +102,8 @@ describe("WebMCP panel", () => {
       await registered
         .get("prosemirror_editors")!
         .execute({}, { signal: new AbortController().signal });
-      expect(panel.calls()[0]?.textContent).toContain("Succeeded");
-      expect(panel.calls()[0]?.textContent).toContain("bridge-editor");
+      expect(panel.calls()[0]?.textContent).toContain("Returned");
+      expect(panel.detail()).toContain("bridge-editor");
       dispose?.();
       expect(panel.tools()).toContain("No WebMCP tools registered");
       expect(panel.calls()).toHaveLength(1);
@@ -127,16 +143,73 @@ describe("WebMCP panel", () => {
 
       expect(panel.calls()).toHaveLength(2);
       const [nativeCall, chromeCall] = panel.calls();
-      expect(nativeCall?.textContent).toContain("Native WebMCP");
-      expect(chromeCall?.textContent).toContain("Chrome DevTools MCP");
+      expect(nativeCall?.textContent).toContain("Native ·");
+      expect(chromeCall?.textContent).toContain("Chrome MCP ·");
       expect(chromeCall?.textContent).toContain("prosemirror_editors");
-      expect(chromeCall?.textContent).toContain("Succeeded");
-      expect(chromeCall?.textContent).toContain("bridge-editor");
+      expect(chromeCall?.textContent).toContain("Returned");
+      chromeCall!.click();
+      expect(chromeCall?.getAttribute("aria-pressed")).toBe("true");
+      expect(panel.detail()).toContain("Chrome DevTools MCP");
+      expect(panel.detail()).toContain("bridge-editor");
+
+      const editorsTarget = (result as { editors: [{ target: object }] }).editors[0].target;
+      const execute = (name: string, input: object) =>
+        tools.find((tool) => tool.name === name)!.execute(input);
+      const inspected = execute("prosemirror_inspect", {
+        target: editorsTarget,
+        query: { kind: "document" },
+      }) as { point: object };
+      view.dispatch(view.state.tr.insertText("!"));
+      execute("prosemirror_read", { point: inspected.point, query: { kind: "selection" } });
+      execute("prosemirror_check", {
+        request: { target: editorsTarget, query: { kind: "document" } },
+        assertion: {
+          path: ["missing"],
+          predicate: { kind: "equals", expected: 1 },
+          completeness: "value",
+        },
+      });
+      const [check, read, inspect] = panel.calls();
+      expect(inspect?.querySelector('[data-tone="green"]')?.textContent).toBe("available");
+      expect(read?.querySelector('[data-tone="yellow"]')?.textContent).toBe("expired");
+      expect(check?.querySelector('[data-tone="red"]')?.textContent).toBe("failed");
+      read!.click();
+      expect(panel.detail()).toContain("Returned");
+      expect(panel.detail()).toContain("Result expired");
+      expect(panel.detail()).toContain("Reason This live read point advanced");
+      expect(panel.viewSwitch()).toContain("Call history (5)");
     } finally {
       disposeChrome();
       panel.dispose();
       editor.dispose();
       view.destroy();
+    }
+  });
+
+  it("lists the tools offered to Chrome DevTools MCP and marks their discovery", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const inspector = createProseMirrorWebMcpInspector();
+    const panel = mountPanel(inspector);
+    const target = new EventTarget();
+    const client = createProseMirrorInspectionClient({ store });
+    try {
+      expect(panel.chromeTools()).toContain("Not installed");
+      const disposeChrome = installProseMirrorChromeBridge(client, { target, inspector });
+      expect(panel.viewSwitch()).toContain("Available tools (5)");
+      expect(panel.chromeTools()).toContain("Waiting for discovery");
+      expect(panel.chromeTools()).toContain("prosemirror_check");
+
+      const event = new Event("devtoolstooldiscovery");
+      Object.defineProperty(event, "respondWith", { value: () => {} });
+      target.dispatchEvent(event);
+      expect(panel.chromeTools()).toContain("Discovered");
+      expect(panel.chromeTools()).not.toContain("has not discovered");
+
+      disposeChrome();
+      expect(panel.chromeTools()).toContain("Not installed");
+      expect(panel.viewSwitch()).toContain("Available tools (0)");
+    } finally {
+      panel.dispose();
     }
   });
 
@@ -177,21 +250,24 @@ describe("WebMCP panel", () => {
       const pending = registeredTool.execute(input, context);
       expect(read).toHaveBeenCalledWith(input, context);
       const firstRow = panel.calls()[0]!;
-      firstRow.open = true;
       expect(firstRow.textContent).toContain("Pending");
-      expect(firstRow.textContent).toContain('"format": "text"');
+      expect(panel.detail()).toContain('"format": "text"');
+      firstRow.click();
 
       await expect(registered.get("read_selection")!.execute({}, context)).rejects.toBe(failure);
       expect(panel.calls()[0]?.textContent).toContain("Failed");
-      expect(panel.calls()[0]?.textContent).toContain("Error: Editor unavailable");
+      expect(panel.detail()).toContain("Pending");
+      panel.calls()[0]!.click();
+      expect(panel.detail()).toContain("Error: Editor unavailable");
+      firstRow.click();
 
       const output = { text: "Hello from ProseMirror" };
       deferred.resolve(output);
       await expect(pending).resolves.toBe(output);
       expect(panel.calls()[1]).toBe(firstRow);
-      expect(firstRow.open).toBe(true);
-      expect(firstRow.textContent).toContain("Succeeded");
-      expect(firstRow.textContent).toContain("Hello from ProseMirror");
+      expect(firstRow.getAttribute("aria-pressed")).toBe("true");
+      expect(firstRow.textContent).toContain("Returned");
+      expect(panel.detail()).toContain("Hello from ProseMirror");
 
       unregister();
       unregister();
@@ -256,7 +332,7 @@ describe("WebMCP panel", () => {
       deferred.resolve("Late result");
       await expect(pending).resolves.toBe("Late result");
       expect(panel.calls()[0]?.textContent).toContain("Canceled");
-      expect(panel.calls()[0]?.textContent).not.toContain("Late result");
+      expect(panel.detail()).not.toContain("Late result");
     } finally {
       panel.dispose();
     }
@@ -288,7 +364,9 @@ describe("WebMCP panel", () => {
     const panel = mountPanel(inspector);
     try {
       expect(inspector.isSupported).toBe(false);
-      expect(panel.tools()).toContain("WebMCP is unavailable in this document");
+      expect(panel.tools()).toContain("Native WebMCP is unavailable in this document");
+      expect(panel.tools()).toContain("Unavailable");
+      expect(panel.chromeTools()).toContain("No Chrome DevTools MCP bridge");
       await expect(
         inspector.registerTool({ name: "test_tool", description: "Test tool", execute: () => {} }),
       ).rejects.toThrow("WebMCP is unavailable");

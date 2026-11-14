@@ -584,10 +584,18 @@ query discovery and returns its cleanup. Enable it only in development with a co
 and MCP setup. It uses the same query catalogue and does not start a server.
 
 The package ships `prosemirror-inspector-integrate`, `prosemirror-inspector-debug`, and
-`prosemirror-inspector-validate` under `skills/`. For Codex projects, copy them into `.agents/skills`
-from the installed package. npm does not activate skills automatically. The
+`prosemirror-inspector-validate` under `skills/`. Installing the package does not activate them.
+pnpm 12 links them into the project's agent skill directory after approval:
+
+```sh
+pnpm add -D prosemirror-inspector
+pnpm approve
+```
+
+With npm, Yarn, or earlier pnpm, use the [`skills` CLI](https://github.com/vercel-labs/skills):
+`npx skills add ./node_modules/prosemirror-inspector`. The
 [agent guide](https://github.com/riccardoperra/prosemirror-devtools/blob/main/docs/agent-validation.md)
-describes installation, prerequisites, browser evidence, and the list and undo scenario.
+describes each installation route, prerequisites, browser evidence, and the list and undo scenario.
 
 `await installProseMirrorWebMCPBridge(client)` registers the same tools for native WebMCP
 browser agents. It returns cleanup, or `null` when unsupported. Registration uses the current
