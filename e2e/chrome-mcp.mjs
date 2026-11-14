@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "@playwright/test";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const fixture = resolve(root, "packages/standalone-demo");
+const fixture = resolve(root, "examples/standalone");
 const fixtureRequire = createRequire(resolve(fixture, "package.json"));
 const require = createRequire(import.meta.url);
 const { createServer } = await import(pathToFileURL(fixtureRequire.resolve("vite")).href);

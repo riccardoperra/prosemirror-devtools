@@ -10,6 +10,7 @@
   "ignore": [
     "@prosemirror-devtools/angular-demo",
     "@prosemirror-devtools/demo-kit",
+    "@prosemirror-devtools/invoice-demo",
     "@prosemirror-devtools/preact-demo",
     "@prosemirror-devtools/solid-demo",
     "@prosemirror-devtools/svelte-demo",

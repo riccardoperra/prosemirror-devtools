@@ -348,7 +348,7 @@ background. Global panel defaults for controls (such as `font: inherit`) also us
 component rule and silently discards its font or color. This includes `<pre>` blocks: hosts commonly style `pre` globally, so `pmCode` sets
 its own background, border and padding. Test the panel inside
 a host that styles `button`, `input` and `select` globally. The standalone demo does this
-(`packages/standalone-demo/src/style.css`), so any rounding or padding that appears there and not
+(`examples/standalone/src/style.css`), so any rounding or padding that appears there and not
 in this guide is a leak.
 
 ## Accessibility

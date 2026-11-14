@@ -1,5 +1,6 @@
 packages:
   - "packages/*"
+  - "examples/*"
 
 overrides:
   # The WASI parser binding pins an alpha rejected by its WASM runtime peer ranges.
@@ -19,9 +20,11 @@ allowBuilds:
 
 catalog:
   "@changesets/cli": ^3.0.3
+  "@floating-ui/dom": 1.8.0
   "@handlewithcare/react-prosemirror": 3.3.0
   "@tiptap/core": 3.31.4
   "@tiptap/extension-collaboration": 3.31.4
+  "@tiptap/extension-collaboration-caret": 3.31.4
   "@tiptap/pm": 3.31.4
   "@tiptap/react": 3.31.4
   "@tiptap/starter-kit": 3.31.4

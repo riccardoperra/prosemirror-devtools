@@ -64,6 +64,6 @@ entries keep their adapters active by choice. Core and Tiptap calls require a de
 ## Evidence locations
 
 The package tests cover capture, query identity, input metadata exclusion, host context, provider
-projections, native editors, and checkpoint restore. Native fixtures live in `packages/standalone-demo`,
-`packages/tiptap-demo`, and `packages/react-prosemirror-demo`. The
+projections, native editors, and checkpoint restore. Native fixtures live in `examples/standalone`,
+`examples/tiptap`, and `examples/react-prosemirror`. The
 [execution ledger](./roadmap/execution.md) records final commands and scenario results.

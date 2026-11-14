@@ -320,7 +320,7 @@ With `@tiptap/react`, call `resumeTiptapDevtools(editor)` in the editor effect s
 `suspendTiptapDevtools(editor)` in its cleanup. Keep `detachTiptapDevtools` in `onDestroy` for terminal
 cleanup. Suspension releases the registration before Tiptap's deferred destroy and permits Strict
 Mode to resume the same editor. See the
-[native Tiptap fixture](https://github.com/riccardoperra/prosemirror-devtools/tree/main/packages/tiptap-demo).
+[native Tiptap fixture](https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/tiptap).
 
 ## Controlled React ProseMirror
 
@@ -333,7 +333,7 @@ update the model reference, and schedule React state from `apply`. Return `conne
 from the effect cleanup. The helper does not patch the view dispatcher or force `view.updateState`.
 A later React commit is outside this synchronous measurement boundary.
 
-The [controlled fixture](https://github.com/riccardoperra/prosemirror-devtools/tree/main/packages/react-prosemirror-demo)
+The [controlled fixture](https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/react-prosemirror)
 verifies React ProseMirror 3.2.11, React 19.2.8, react-reconciler 0.33.0, and ProseMirror view 1.42.3.
 Its `Connection` and dispatch callback form the complete integration. Keep one compatible
 ProseMirror runtime and guard connection setup in development.
@@ -476,7 +476,7 @@ frameworks can implement the same DOM `mount(container, context) => cleanup` con
 
 ### Add details to Transactions and Events
 
-Register a `DevtoolsDispatchPresenter` in a panel host's `extensions` option. Match the inspector's descriptor ID and version exactly. Register the inspector separately in the editor session's `inspectors` option. A presenter-only extension uses `panels: []`. The [kitchen sink example](../collab-demo/src/text-impact.ts) defines both parts.
+Register a `DevtoolsDispatchPresenter` in a panel host's `extensions` option. Match the inspector's descriptor ID and version exactly. Register the inspector separately in the editor session's `inspectors` option. A presenter-only extension uses `panels: []`. The [kitchen sink example](https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/kitchen-sink/src/text-impact.ts) defines both parts.
 
 `present({ value, record })` receives an available, serialized capture and its retained dispatch. Return `label` and `text` for the detail in Transactions and in linked Events, with optional `badge` and `note`. Include `listLabel` to show the badge and a short description in the Transactions list. Return `undefined` to hide the sample. Keep the function synchronous and free of side effects because the same dispatch can render in several places.
 

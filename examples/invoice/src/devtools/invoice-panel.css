@@ -1,0 +1,306 @@
+/* Mounted inside the inspector, so colors come from its public custom properties. */
+.invoice-panel {
+  --ip-bg: var(--prosemirror-devtools-background, #fff);
+  --ip-surface: var(--prosemirror-devtools-surface, #fff);
+  --ip-subtle: var(--prosemirror-devtools-surface-subtle, #f6f6f4);
+  --ip-border: var(--prosemirror-devtools-border, #e8e8e6);
+  --ip-text: var(--prosemirror-devtools-text, #2f2e2b);
+  --ip-muted: var(--prosemirror-devtools-text-muted, #73726e);
+  --ip-faint: var(--prosemirror-devtools-text-faint, #a5a49f);
+  --ip-accent: var(--prosemirror-devtools-accent, #2383e2);
+  --ip-accent-soft: var(--prosemirror-devtools-accent-soft, rgb(35 131 226 / 0.1));
+  --ip-success: var(--prosemirror-devtools-success, #2f7a52);
+  --ip-success-soft: var(--prosemirror-devtools-success-soft, rgb(68 131 97 / 0.12));
+  --ip-warning: var(--prosemirror-devtools-warning, #a16207);
+  --ip-warning-soft: var(--prosemirror-devtools-warning-soft, rgb(202 138 4 / 0.12));
+  --ip-danger: var(--prosemirror-devtools-danger, #c4403b);
+  --ip-danger-soft: var(--prosemirror-devtools-danger-soft, rgb(212 76 71 / 0.1));
+  --ip-info: var(--prosemirror-devtools-info, #1f6fc1);
+  --ip-info-soft: var(--prosemirror-devtools-info-soft, rgb(35 131 226 / 0.1));
+  --ip-radius: var(--prosemirror-devtools-radius, 6px);
+  --ip-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(260px, 1fr) minmax(300px, 1.2fr);
+  gap: 1px;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ip-border);
+  color: var(--ip-text);
+  font-family: var(--prosemirror-devtools-font-family, inherit);
+  font-size: var(--prosemirror-devtools-font-size, 12px);
+  line-height: 1.45;
+}
+
+.invoice-panel *,
+.invoice-panel *::before,
+.invoice-panel *::after {
+  box-sizing: border-box;
+}
+
+.invoice-panel__column {
+  min-width: 0;
+  overflow-y: auto;
+  background: var(--ip-bg);
+}
+
+.invoice-panel__section {
+  padding: 10px 12px 12px;
+}
+
+.invoice-panel__section + .invoice-panel__section {
+  border-top: 1px solid var(--ip-border);
+}
+
+.invoice-panel__section > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.invoice-panel__section h3 {
+  margin: 0;
+  color: var(--ip-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.invoice-panel__section > header > span {
+  color: var(--ip-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.invoice-panel__empty {
+  margin: 0;
+  color: var(--ip-muted);
+}
+
+.invoice-panel__facts {
+  display: grid;
+  margin: 0;
+}
+
+.invoice-panel__facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+
+.invoice-panel__facts dt {
+  color: var(--ip-muted);
+}
+
+.invoice-panel__facts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.invoice-panel__status {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--ip-subtle);
+  color: var(--ip-muted);
+  font-weight: 500;
+}
+
+.invoice-panel__status[data-status="sent"] {
+  background: var(--ip-info-soft);
+  color: var(--ip-info);
+}
+
+.invoice-panel__status[data-status="paid"] {
+  background: var(--ip-success-soft);
+  color: var(--ip-success);
+}
+
+.invoice-panel__status[data-status="void"] {
+  background: var(--ip-danger-soft);
+  color: var(--ip-danger);
+}
+
+.invoice-panel__list,
+.invoice-panel__chips,
+.invoice-panel__events {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.invoice-panel__list {
+  display: grid;
+  gap: 4px;
+}
+
+.invoice-panel button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.invoice-panel__list button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--ip-radius);
+  background: var(--ip-subtle);
+  text-align: left;
+}
+
+.invoice-panel__list button:hover,
+.invoice-panel__chips button:hover {
+  background: var(--ip-accent-soft);
+}
+
+.invoice-panel button:focus-visible {
+  outline: 2px solid var(--ip-accent);
+  outline-offset: 1px;
+}
+
+.invoice-panel__row-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.invoice-panel [data-tone="success"] {
+  color: var(--ip-success);
+}
+
+.invoice-panel [data-tone="warning"] {
+  color: var(--ip-warning);
+}
+
+.invoice-panel__quote {
+  color: var(--ip-muted);
+}
+
+.invoice-panel code {
+  color: var(--ip-faint);
+  font-family: var(--ip-mono);
+  font-size: 11px;
+}
+
+.invoice-panel__group + .invoice-panel__group {
+  margin-top: 10px;
+}
+
+.invoice-panel__group p {
+  margin: 0 0 4px;
+  color: var(--ip-muted);
+}
+
+.invoice-panel__group p code {
+  color: var(--ip-danger);
+}
+
+.invoice-panel__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.invoice-panel__chips button {
+  padding: 1px 6px;
+  border: none;
+  border-radius: var(--ip-radius);
+  background: var(--ip-subtle);
+  font-family: var(--ip-mono);
+  font-size: 11px;
+}
+
+.invoice-panel__events li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, auto);
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--ip-border);
+}
+
+.invoice-panel__events time {
+  color: var(--ip-faint);
+  font-family: var(--ip-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.invoice-panel__event-label {
+  display: grid;
+  min-width: 0;
+}
+
+.invoice-panel__event-label small {
+  color: var(--ip-faint);
+  font-size: 11px;
+}
+
+.invoice-panel__events code {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.invoice-panel__events li[data-tone="info"] .invoice-panel__event-label {
+  color: var(--ip-info);
+}
+
+.invoice-panel__events li[data-tone="success"] .invoice-panel__event-label {
+  color: var(--ip-success);
+}
+
+.invoice-panel__events li[data-tone="warning"] .invoice-panel__event-label {
+  color: var(--ip-warning);
+}
+
+@media (max-width: 900px) {
+  .invoice-panel {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .invoice-panel__column {
+    overflow: visible;
+  }
+}
+
+.invoice-panel__peers {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.invoice-panel__peers li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invoice-panel__peers small {
+  color: var(--ip-muted);
+}
+
+.invoice-panel__peers code {
+  margin-left: auto;
+  color: var(--ip-faint);
+  font-family: var(--ip-mono);
+}
+
+.invoice-panel__peer-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
