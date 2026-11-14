@@ -8,9 +8,18 @@ export interface WebMcpInspectorOptions {
   limit?: number;
 }
 
-interface ToolMetadata {
+export interface WebMcpToolMetadata {
   name: string;
   description: string;
+}
+
+type ToolMetadata = WebMcpToolMetadata;
+
+/** Tools offered to Chrome DevTools MCP through `devtoolstooldiscovery`. */
+export interface ChromeToolExposure {
+  readonly tools: readonly WebMcpToolMetadata[];
+  /** When a Chrome DevTools MCP client last discovered the tools, or `null`. */
+  readonly discoveredAt: number | null;
 }
 
 interface Registration {
@@ -21,7 +30,7 @@ interface Registration {
 
 type CallOutcome =
   | { status: "canceled" }
-  | { status: "succeeded"; output: string; resultKind?: string }
+  | { status: "succeeded"; output: string; resultKind?: string; resultReason?: string }
   | { status: "failed"; error: string };
 
 type CallSource = "webmcp" | "chrome-devtools-mcp";
@@ -71,13 +80,13 @@ function preview(value: unknown): string {
   }
 }
 
-/** Reads the top-level `kind` of a tool result, such as `expired` or `inconclusive`. */
-function resultKind(value: unknown): string | undefined {
+/** Reads a top-level string field of a tool result, such as its `kind` or `reason`. */
+function resultField(value: unknown, field: string, maxLength: number): string | undefined {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return undefined;
   try {
-    const descriptor = Object.getOwnPropertyDescriptor(value, "kind");
-    const kind: unknown = descriptor && "value" in descriptor ? descriptor.value : undefined;
-    return typeof kind === "string" && kind.length > 0 ? truncate(kind, 40) : undefined;
+    const descriptor = Object.getOwnPropertyDescriptor(value, field);
+    const text: unknown = descriptor && "value" in descriptor ? descriptor.value : undefined;
+    return typeof text === "string" && text.length > 0 ? truncate(text, maxLength) : undefined;
   } catch {
     return undefined;
   }
@@ -99,6 +108,7 @@ export function createWebMcpRecorder(options: WebMcpInspectorOptions) {
   const scheduler = createSignalScheduler();
   const tools = createStoreSignal<readonly ToolMetadata[]>([], scheduler);
   const calls = createStoreSignal<ReadonlyMap<number, WebMcpCall>>(new Map(), scheduler);
+  const chromeTools = createStoreSignal<ChromeToolExposure | null>(null, scheduler);
   const registrations = new Map<string, Registration>();
   let nextCallId = 0;
   let disposed = false;
@@ -142,10 +152,12 @@ export function createWebMcpRecorder(options: WebMcpInspectorOptions) {
       cancel: () => finish(() => ({ status: "canceled" })),
       succeed: (output: unknown) =>
         finish(() => {
-          const kind = resultKind(output);
-          return kind === undefined
-            ? { status: "succeeded", output: preview(output) }
-            : { status: "succeeded", output: preview(output), resultKind: kind };
+          const outcome: CallOutcome = { status: "succeeded", output: preview(output) };
+          const kind = resultField(output, "kind", 40);
+          const reason = resultField(output, "reason", 500);
+          if (kind !== undefined) outcome.resultKind = kind;
+          if (reason !== undefined) outcome.resultReason = reason;
+          return outcome;
         }),
       fail: (error: unknown) => finish(() => ({ status: "failed", error: errorPreview(error) })),
     };
@@ -155,7 +167,32 @@ export function createWebMcpRecorder(options: WebMcpInspectorOptions) {
     isSupported: native.isSupported,
     tools,
     calls,
+    chromeTools,
     clearCalls: () => calls.set(new Map()),
+    /**
+     * Records the tools a Chrome DevTools MCP bridge offers. The returned handle marks discovery
+     * by an MCP client and removes the tools when the bridge is disposed.
+     */
+    exposeChromeTools(exposed: readonly WebMcpToolMetadata[]) {
+      if (disposed) return { markDiscovered() {}, remove() {} };
+      const exposure: { current: ChromeToolExposure } = {
+        current: {
+          tools: exposed.map(({ name, description }) => ({ name, description })),
+          discoveredAt: null,
+        },
+      };
+      chromeTools.set(exposure.current);
+      return {
+        markDiscovered() {
+          if (disposed || chromeTools() !== exposure.current) return;
+          exposure.current = { ...exposure.current, discoveredAt: Date.now() };
+          chromeTools.set(exposure.current);
+        },
+        remove() {
+          if (chromeTools() === exposure.current) chromeTools.set(null);
+        },
+      };
+    },
     traceChromeToolCall<T>(name: string, input: unknown, execute: () => T): T {
       const call = startCall("chrome-devtools-mcp", name, input);
       try {
@@ -237,6 +274,7 @@ export function createWebMcpRecorder(options: WebMcpInspectorOptions) {
       scheduler.batch(() => {
         publishTools();
         calls.set(new Map());
+        chromeTools.set(null);
       });
     },
   };

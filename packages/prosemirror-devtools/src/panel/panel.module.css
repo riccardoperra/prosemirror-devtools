@@ -597,20 +597,11 @@
     background: var(--pm-accent-soft);
     box-shadow: inset 2px 0 var(--pm-accent);
   }
-  .pm-web-mcp-summary {
-    cursor: pointer;
-  }
-  .pm-web-mcp-summary::before {
-    content: "";
-    inline-size: 6px;
-    block-size: 6px;
-    flex: none;
-    border-inline-end: 1px solid currentColor;
-    border-block-end: 1px solid currentColor;
-    transform: rotate(-45deg);
-  }
-  details[open] > .pm-web-mcp-summary::before {
-    transform: rotate(45deg);
+  .pm-web-mcp-layout {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    block-size: 100%;
+    min-block-size: 0;
   }
   .pm-row-main {
     min-inline-size: 0;
