@@ -62,6 +62,23 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
 }
+/*
+ * Panel controls never inherit host styles for these properties. The selector has the same
+ * specificity as a component class and comes first, so every component still sets its own
+ * radius, shadow and spacing. See DESIGN.md, "Host isolation".
+ */
+.pm-devtools :where(button, input, select, textarea) {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+/* Landmark containers have no default margin. Keep it that way whatever the host sets. */
+.pm-devtools :where(section, article, aside, nav, header, footer, main) {
+  margin: 0;
+}
 .pm-devtools[data-embedded="true"] {
   min-block-size: 0;
 }
@@ -486,7 +503,7 @@
   .pm-eyebrow {
     display: block;
     color: var(--pm-muted);
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 750;
     letter-spacing: 0.07em;
     text-transform: uppercase;
@@ -531,7 +548,7 @@
     max-inline-size: 210px;
     overflow: hidden;
     color: var(--pm-faint);
-    font-size: 9px;
+    font-size: 10px;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -595,7 +612,13 @@
   .pm-list-row[aria-selected="true"],
   .pm-list-row[aria-pressed="true"] {
     background: var(--pm-accent-soft);
-    box-shadow: inset 2px 0 var(--pm-accent);
+  }
+  .pm-list-row:is([aria-selected="true"], [aria-pressed="true"]) .pm-row-title {
+    color: var(--pm-accent);
+  }
+  .pm-list-row:focus-visible,
+  .pm-doc-row-main:focus-visible {
+    outline-offset: -2px;
   }
   .pm-web-mcp-layout {
     display: grid;
@@ -659,19 +682,6 @@
   .pm-doc-row[data-inspected="true"] {
     background: var(--pm-accent-soft);
   }
-  .pm-doc-row[data-editor-selection] {
-    box-shadow: inset 2px 0 var(--pm-blue);
-  }
-  .pm-doc-row[data-editor-selection="full"] {
-    background: color-mix(in srgb, var(--pm-blue-soft) 62%, transparent);
-  }
-  .pm-doc-row[data-inspected="true"][data-editor-selection] {
-    background: linear-gradient(
-      90deg,
-      var(--pm-accent-soft),
-      color-mix(in srgb, var(--pm-blue-soft) 46%, var(--pm-accent-soft))
-    );
-  }
   .pm-doc-row-main {
     min-inline-size: 0;
     min-block-size: 22px;
@@ -717,7 +727,7 @@
     color: var(--pm-blue);
     background: var(--pm-blue-soft);
     font:
-      700 8px/1 ui-monospace,
+      700 10px/1 ui-monospace,
       monospace;
     letter-spacing: 0.02em;
   }
@@ -733,7 +743,7 @@
     gap: 3px;
     color: var(--pm-faint);
     font:
-      600 9px/1 ui-monospace,
+      600 10px/1 ui-monospace,
       monospace;
     font-variant-numeric: tabular-nums;
   }
@@ -750,7 +760,7 @@
     pointer-events: none;
     color: var(--pm-blue);
     background: var(--pm-panel);
-    font-size: 8.5px;
+    font-size: 10px;
     font-weight: 750;
   }
   .pm-doc-row:hover .pm-node-select-action,
@@ -828,6 +838,16 @@
   .pm-json-row:hover .pm-json-actions,
   .pm-json-row:focus-within .pm-json-actions {
     opacity: 1;
+  }
+  .pm-section {
+    background: var(--pm-panel);
+    border-block-end: 1px solid var(--pm-border);
+  }
+  .pm-section-note {
+    margin: 0;
+    padding: 8px 10px;
+    color: var(--pm-muted);
+    font-size: 10px;
   }
   .pm-detail-block {
     border-block-end: 1px solid var(--pm-border);
@@ -938,12 +958,6 @@
     border-block-end: 1px solid var(--pm-border);
     background: var(--pm-panel);
   }
-  .pm-dispatch-related > summary {
-    cursor: pointer;
-    padding: 5px 9px;
-    color: var(--pm-muted);
-    font-size: 10px;
-  }
   .pm-dispatch-related-links {
     display: flex;
     flex-wrap: wrap;
@@ -1037,7 +1051,7 @@
     padding: 0 8px;
     color: var(--pm-muted);
     background: transparent;
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
   }
   .pm-view-switch > button + button {
@@ -1135,7 +1149,7 @@
     min-inline-size: 56px;
     color: var(--pm-accent);
     font:
-      700 9px/1 ui-monospace,
+      700 10px/1 ui-monospace,
       monospace;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -1151,7 +1165,7 @@
   }
   .pm-transaction-payload .pm-json,
   .pm-selection-detail .pm-json,
-  .pm-document-disclosure .pm-json {
+  .pm-disclosure .pm-json {
     margin: 8px;
     overflow: auto;
     border: 1px solid var(--pm-border);
@@ -1168,32 +1182,40 @@
   .pm-selection-detail {
     border-block-start: 1px solid var(--pm-border);
   }
-  .pm-document-disclosure {
+  .pm-disclosure {
     border-block-start: 1px solid var(--pm-border);
+    background: var(--pm-panel);
   }
-  .pm-document-disclosure > summary {
-    min-block-size: 36px;
+  .pm-disclosure > summary {
+    min-block-size: 32px;
     display: flex;
     align-items: center;
-    gap: 7px;
-    padding: 6px 9px;
+    gap: 6px;
+    padding: 6px 10px;
     list-style: none;
-    background: var(--pm-panel-2);
+    color: var(--pm-muted);
+    font-size: 12px;
     cursor: pointer;
   }
-  .pm-document-disclosure > summary::-webkit-details-marker {
+  .pm-disclosure > summary:hover {
+    color: var(--pm-text);
+    background: var(--pm-panel-2);
+  }
+  .pm-disclosure > summary::-webkit-details-marker {
     display: none;
   }
-  .pm-document-disclosure > summary::before {
-    content: "›";
-    color: var(--pm-faint);
-    font:
-      700 14px/1 ui-monospace,
-      monospace;
+  .pm-disclosure > summary::before {
+    content: "";
+    inline-size: 6px;
+    block-size: 6px;
+    flex: none;
+    border-inline-end: 1px solid currentColor;
+    border-block-end: 1px solid currentColor;
+    transform: rotate(-45deg);
     transition: transform 120ms ease;
   }
-  .pm-document-disclosure[open] > summary::before {
-    transform: rotate(90deg);
+  .pm-disclosure[open] > summary::before {
+    transform: rotate(45deg);
   }
   .pm-chart-wrap {
     container-type: inline-size;
@@ -1252,7 +1274,7 @@
   }
   .pm-chart-summary-metric > span {
     color: var(--pm-muted);
-    font-size: 9.5px;
+    font-size: 10px;
   }
   .pm-chart-summary-metric > strong {
     font:
@@ -1264,7 +1286,7 @@
   }
   .pm-chart-summary-metric > small {
     color: var(--pm-faint);
-    font-size: 8.5px;
+    font-size: 10px;
   }
   .pm-chart-summary-metric > small::before {
     content: "· ";
@@ -1318,7 +1340,7 @@
     color: var(--pm-text);
     background: var(--pm-panel-2);
     font:
-      700 9px/1 ui-monospace,
+      700 10px/1 ui-monospace,
       SFMono-Regular,
       Menlo,
       monospace;
@@ -1443,7 +1465,7 @@
     gap: 4px 14px;
     margin-block-start: 7px;
     color: var(--pm-muted);
-    font-size: 9px;
+    font-size: 10px;
   }
   .pm-dispatch-cost-legend > span {
     display: inline-flex;
@@ -1457,7 +1479,7 @@
   .pm-dispatch-cost-note {
     margin: 5px 0 0;
     color: var(--pm-faint);
-    font-size: 9px;
+    font-size: 10px;
   }
   .pm-fast-plugin-disclosure {
     padding: 6px 10px;
@@ -1475,7 +1497,7 @@
     color: var(--pm-muted);
     background: var(--pm-panel-2);
     font:
-      650 9.5px/1 ui-monospace,
+      650 10px/1 ui-monospace,
       SFMono-Regular,
       Menlo,
       monospace;
@@ -1513,7 +1535,7 @@
   .pm-plugin-timeline-copy > span {
     overflow: hidden;
     color: var(--pm-muted);
-    font-size: 9px;
+    font-size: 10px;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -1527,7 +1549,7 @@
     border-block-end: 1px solid var(--pm-border);
     color: var(--pm-muted);
     background: var(--pm-panel-2);
-    font-size: 8.5px;
+    font-size: 10px;
   }
   .pm-plugin-timeline-legend > span {
     display: inline-flex;
@@ -1562,7 +1584,7 @@
     margin-inline-start: auto;
     color: var(--pm-faint);
     font:
-      650 8.5px/1 ui-monospace,
+      650 10px/1 ui-monospace,
       SFMono-Regular,
       Menlo,
       monospace;
@@ -1607,7 +1629,7 @@
     inline-size: 18px;
     color: var(--pm-faint);
     font:
-      650 8px/1 ui-monospace,
+      650 9px/1 ui-monospace,
       SFMono-Regular,
       Menlo,
       monospace;
@@ -1626,12 +1648,12 @@
   }
   .pm-timeline-lane-copy > strong {
     color: var(--pm-text);
-    font-size: 9.5px;
+    font-size: 10px;
   }
   .pm-timeline-lane-copy > span {
     color: var(--pm-faint);
     font:
-      600 8px/1.15 ui-monospace,
+      600 10px/1.15 ui-monospace,
       SFMono-Regular,
       Menlo,
       monospace;
@@ -1725,7 +1747,7 @@
     color: var(--pm-muted);
     background: var(--pm-panel-2);
     border-block-end: 1px solid var(--pm-border);
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
@@ -1765,7 +1787,7 @@
     color: var(--pm-muted);
     background: var(--pm-panel-2);
     font:
-      700 9px/1 ui-monospace,
+      700 10px/1 ui-monospace,
       monospace;
   }
   .pm-plugin-timing-group:first-child .pm-plugin-timing-rank {
@@ -1827,7 +1849,7 @@
   .pm-plugin-hook-count {
     color: var(--pm-faint);
     font:
-      650 9px/1 ui-monospace,
+      650 10px/1 ui-monospace,
       monospace;
   }
   .pm-plugin-full-time {
@@ -1845,7 +1867,7 @@
   .pm-plugin-full-label {
     margin-block-start: 1px;
     color: var(--pm-faint);
-    font-size: 9px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
@@ -1869,6 +1891,7 @@
     text-align: center;
   }
   .pm-performance-note {
+    margin: 0;
     padding: 8px 10px;
     border-block-end: 1px solid var(--pm-border);
     color: var(--pm-muted);
@@ -1896,7 +1919,7 @@
     color: var(--pm-muted);
     background: var(--pm-panel-2);
     border-block-end: 1px solid var(--pm-border);
-    font-size: 9px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.07em;
   }

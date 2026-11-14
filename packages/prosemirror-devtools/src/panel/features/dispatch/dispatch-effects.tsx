@@ -29,7 +29,10 @@ export function DispatchEffects(props: {
           )}
         </For>
         <Show when={props.showRaw}>
-          <details onToggle={(event) => setOpen(event.currentTarget.open)}>
+          <details
+            class={panelStyles.pmDisclosure}
+            onToggle={(event) => setOpen(event.currentTarget.open)}
+          >
             <summary>Raw effect samples</summary>
             <Show when={open()}>
               <JsonTree

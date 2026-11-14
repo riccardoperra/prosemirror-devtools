@@ -53,10 +53,12 @@ export function HistoricalPanel(props: { panel: ProseMirrorDevtoolsTab }): JSX.E
         }}
       </For>
       <Show when={props.panel === "plugins" && inspection.transaction()}>
-        <div class={panelStyles.pmDetailHeading}>
-          <span class={panelStyles.pmSectionTitle}>Captured plugin hook timings</span>
-        </div>
-        <JsonTree value={inspection.transaction()?.timings} defaultExpandedDepth={1} />
+        <section aria-label="Captured plugin hook timings" class={panelStyles.pmSection}>
+          <div class={panelStyles.pmDetailHeading}>
+            <span class={panelStyles.pmSectionTitle}>Captured plugin hook timings</span>
+          </div>
+          <JsonTree value={inspection.transaction()?.timings} defaultExpandedDepth={1} />
+        </section>
       </Show>
     </div>
   );

@@ -89,7 +89,7 @@ function DispatchInspectorHeader(): JSX.Element {
         </button>
       </header>
       <Show when={inspection}>
-        <details class={panelStyles.pmDispatchRelated}>
+        <details class={cx(panelStyles.pmDisclosure, panelStyles.pmDispatchRelated)}>
           <summary>Related evidence</summary>
           <nav class={panelStyles.pmDispatchRelatedLinks} aria-label="Related dispatch evidence">
             <For

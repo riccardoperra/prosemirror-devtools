@@ -112,7 +112,7 @@ export function DispatchDocuments(props: DispatchDocumentsProps): JSX.Element {
         />
       </section>
       <details
-        class={panelStyles.pmDocumentDisclosure}
+        class={panelStyles.pmDisclosure}
         onToggle={(event) => setOpen(event.currentTarget.open)}
         open={open()}
       >

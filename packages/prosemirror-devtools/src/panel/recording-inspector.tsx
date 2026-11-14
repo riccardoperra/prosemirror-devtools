@@ -184,10 +184,7 @@ export function RecordingInspector(props: RecordingInspectorProps): JSX.Element 
           >
             {(value) => <InspectionReadout label={label()} result={value()} />}
           </Show>
-          <details
-            class={panelStyles.pmDocumentDisclosure}
-            aria-label="Recording origin and omissions"
-          >
+          <details class={panelStyles.pmDisclosure} aria-label="Recording origin and omissions">
             <summary>Recording origin and omissions</summary>
             <p class={panelStyles.pmPerformanceNote} style={{ "overflow-wrap": "anywhere" }}>
               Origin editor {props.recording.origin.target.editorId}, session{" "}
