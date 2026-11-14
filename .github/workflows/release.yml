@@ -39,7 +39,6 @@ jobs:
           node-version-file: .nvmrc
           check-latest: true
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -53,6 +52,32 @@ jobs:
       - name: Validate package
         run: pnpm --filter prosemirror-inspector run publint
 
+      # npm trusted publishing: pnpm exchanges the GitHub OIDC token for a
+      # short-lived npm token. When that exchange fails pnpm only prints a
+      # warning, which `changeset publish` swallows, and npm answers the
+      # unauthenticated PUT with a bare 404. Run the exchange here first so a
+      # misconfigured trusted publisher fails with npm's actual reason.
+      - name: Verify npm trusted publishing
+        run: |
+          if find .changeset -name '*.md' ! -name 'README.md' | grep -q .; then
+            echo "Pending changesets: this run opens the release PR and publishes nothing."
+            exit 0
+          fi
+          id_token=$(curl -fsS -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=npm:registry.npmjs.org" | jq -r .value)
+          echo "::add-mask::$id_token"
+          response="$RUNNER_TEMP/npm-oidc.json"
+          status=$(curl -sS -o "$response" -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $id_token" -H "Content-Length: 0" \
+            https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/prosemirror-inspector)
+          if [ "$status" != "200" ]; then
+            echo "::error title=npm trusted publishing::OIDC token exchange failed (HTTP $status): $(cat "$response")"
+            echo "Check the trusted publisher on npmjs.com: owner riccardoperra, repository prosemirror-devtools, workflow release.yml, no environment."
+            exit 1
+          fi
+          rm -f "$response"
+          echo "npm accepts this workflow as a trusted publisher for prosemirror-inspector."
+
       - name: Create release pull request or publish
         uses: changesets/action@v2
         with:
@@ -62,6 +87,6 @@ jobs:
           publish-script: pnpm ci:publish
           version-script: pnpm ci:version
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Publishing authenticates through npm trusted publishing (OIDC,
+          # `id-token: write` above); no npm token secret is needed.
           NPM_CONFIG_PROVENANCE: "true"
