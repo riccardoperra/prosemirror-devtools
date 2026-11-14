@@ -68,6 +68,7 @@ function collabInspectors(editor: Editor, collab: CollabSession) {
   const yjs = createYjsInspector({
     document: collab.doc,
     transport,
+    syncPluginKey: ySyncPluginKey,
     getUndoManager: undoManager,
     describeOrigin: (origin) =>
       origin === collab.provider

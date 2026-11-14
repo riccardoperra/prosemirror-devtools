@@ -2,7 +2,7 @@ import { createDiagnosticDemoPlugin } from "@prosemirror-devtools/demo-kit/diagn
 import { Editor, Extension } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import StarterKit from "@tiptap/starter-kit";
-import { yUndoPluginKey } from "@tiptap/y-tiptap";
+import { ySyncPluginKey, yUndoPluginKey } from "@tiptap/y-tiptap";
 import * as Y from "yjs";
 import {
   detachTiptapDevtools,
@@ -57,6 +57,7 @@ export function mountYjs({
         inspector = createYjsInspector({
           document: docs[peer],
           ...(transport[peer] ? { transport: transport[peer] } : {}),
+          syncPluginKey: ySyncPluginKey,
           getUndoManager: () => yUndoPluginKey.getState(editor.state)?.undoManager,
           describeOrigin: (origin) =>
             origin === remoteOrigin
