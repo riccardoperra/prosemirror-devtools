@@ -322,10 +322,13 @@ booleans `--pm-accent`, null and summaries `--pm-faint`. Toggles and copy action
 
 ## Host isolation
 
-The panel resets every property it relies on for its own controls and containers. Inside
-`.pm-devtools`:
+The panel rolls back host element rules on itself and every descendant, then resets the control
+properties it relies on:
 
 ```css
+:where(.pm-devtools, .pm-devtools *):not(svg):not(svg *) {
+  all: revert;
+}
 .pm-devtools :where(button, input, select, textarea) {
   margin: 0;
   border-radius: 0;
@@ -334,22 +337,25 @@ The panel resets every property it relies on for its own controls and containers
   letter-spacing: inherit;
   line-height: inherit;
 }
-.pm-devtools :where(section, article, aside, nav, header, footer, main) {
-  margin: 0;
-}
 ```
 
-`:where()` keeps the specificity of a single class, so the reset beats host element selectors
-such as `button {}` while component classes, declared later, still win. Host rules that are more
-specific than one class (for example `.app button`) can still leak; components must set every
-property they depend on. Every component then sets its own radius, padding, border and
-background. Global panel defaults for controls (such as `font: inherit`) also use
+`all: revert` returns every property to the browser default, so host rules such as
+`button { height: 28px }` or `* { line-height: 1 }` have no effect. The two `:not()` give the
+selector a specificity of two type selectors: it beats host element selectors and loses to any
+class, so panel components and extension panels keep their own styles whatever the stylesheet
+order. SVG is left out because `revert` would discard its presentation attributes. The control
+reset uses `:where()` to keep the specificity of a single class; component classes, declared later,
+still win. Global panel defaults for controls (such as `font: inherit`) also use
 `.pm-devtools :where(...)`: a selector like `.pm-devtools button` outranks every single-class
-component rule and silently discards its font or color. This includes `<pre>` blocks: hosts commonly style `pre` globally, so `pmCode` sets
-its own background, border and padding. Test the panel inside
-a host that styles `button`, `input` and `select` globally. The standalone demo does this
-(`examples/standalone/src/style.css`), so any rounding or padding that appears there and not
-in this guide is a leak.
+component rule and silently discards its font or color.
+
+Host rules with a class or two or more type selectors (for example `.app button` or `ul li`) can
+still leak; components must set every property they depend on. Inherited properties that the
+panel root does not set (for example `text-align` on `body`) also still reach the panel.
+Hosts commonly style `pre` globally, so `pmCode` sets its own background, border and padding.
+`e2e/host-css-isolation.spec.ts` checks the panel against a hostile host stylesheet, and the
+standalone demo styles `button`, `select`, `p` and `pre` globally
+(`examples/standalone/src/style.css`).
 
 ## Accessibility
 

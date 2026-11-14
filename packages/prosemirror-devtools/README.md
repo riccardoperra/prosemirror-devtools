@@ -532,6 +532,10 @@ without depending on generated class names. Typed variable names are exported fr
 `prosemirror-inspector/styles`; the compiled stylesheet is available as
 `prosemirror-inspector/styles.css` for custom hosts.
 
+The panel does not use a shadow root, so it rolls back global element rules from the host page,
+such as `button { height: 28px }` or `* { line-height: 1 }`, on all its elements. Rules that use a
+class, such as `.app button`, still apply inside the panel.
+
 ## Performance options
 
 `performanceFrameBudgetMs` controls the reference line and minimum chart scale. It defaults to a

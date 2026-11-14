@@ -66,9 +66,18 @@
   letter-spacing: -0.005em;
 }
 /*
+ * Host element rules such as `button { height: 28px }` or `* { line-height: 1 }` roll back to
+ * browser defaults. The two `:not()` give the selector (0,0,2): it beats element selectors,
+ * loses to any panel or extension class, and skips SVG, whose presentation attributes `revert`
+ * would discard. See DESIGN.md, "Host isolation".
+ */
+:where(.pm-devtools, .pm-devtools *):not(svg):not(svg *) {
+  all: revert;
+}
+/*
  * Panel controls never inherit host styles for these properties. The selector has the same
  * specificity as a component class and comes first, so every component still sets its own
- * radius, shadow and spacing. See DESIGN.md, "Host isolation".
+ * radius, shadow and spacing.
  */
 .pm-devtools :where(button, input, select, textarea) {
   margin: 0;
@@ -77,10 +86,6 @@
   text-transform: none;
   letter-spacing: inherit;
   line-height: inherit;
-}
-/* Landmark containers have no default margin. Keep it that way whatever the host sets. */
-.pm-devtools :where(section, article, aside, nav, header, footer, main) {
-  margin: 0;
 }
 .pm-devtools[data-embedded="true"] {
   min-block-size: 0;
