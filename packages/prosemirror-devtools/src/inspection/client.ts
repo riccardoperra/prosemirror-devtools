@@ -1,6 +1,7 @@
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 
+import { uninstrumentedPluginsReason } from "../core/diagnostics";
 import { getInspectionStateId } from "../core/state-id";
 import { prosemirrorDevtoolsStore } from "../core/store/create-devtools-store";
 import { getRecordedTransactionDocument } from "../core/store/transaction-record";
@@ -527,6 +528,13 @@ export function createProseMirrorInspectionClient(
               };
             const diagnostics = instance.diagnostics.getSnapshot();
             const retention = diagnostics.retention;
+            const uninstrumented = uninstrumentedPluginsReason(diagnostics);
+            if (uninstrumented && query.kind !== "events")
+              return { kind: "unobserved", reason: uninstrumented };
+            if (uninstrumented)
+              notes.push(
+                "Plugin hooks and input handlers are not instrumented. Retained events include traced commands only.",
+              );
             if (query.kind === "events" && retention?.events.discarded)
               notes.push(
                 `${retention.events.discarded} event observations were evicted or cleared. The retained list does not cover the full session.`,
@@ -565,6 +573,7 @@ export function createProseMirrorInspectionClient(
               return {
                 kind: "unobserved",
                 reason:
+                  uninstrumented ??
                   "No matching observation is retained. An empty trace does not prove the event did not happen.",
               };
             return { kind: "available", value: bounded<unknown>(values) };

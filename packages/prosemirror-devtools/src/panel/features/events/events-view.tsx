@@ -148,17 +148,30 @@ export function EventsView(props: { instance: RegisteredProseMirrorInstance }): 
               </select>
             </div>
           </div>
-          <p class={panelStyles.pmPerformanceNote}>
-            Invocation order. Instrumented callbacks and named commands only; uninstrumented
-            handlers are outside this trace.
-          </p>
+          <Show
+            when={events.uninstrumented()}
+            fallback={
+              <p class={panelStyles.pmPerformanceNote}>
+                Invocation order. Instrumented callbacks and named commands only; uninstrumented
+                handlers are outside this trace.
+              </p>
+            }
+          >
+            {(reason) => (
+              <p class={panelStyles.pmWarning} role="note">
+                {reason()}
+              </p>
+            )}
+          </Show>
           <Show
             when={events.visible().length > 0}
             fallback={
               <div class={panelStyles.pmPerformanceNote}>
                 {events.events().length > 0
                   ? "No calls match these filters."
-                  : "No calls recorded. Use the editor’s keys, paste, or a named command. No transaction is required."}
+                  : events.uninstrumented()
+                    ? "No traced commands recorded. Handler calls are not captured in this session."
+                    : "No calls recorded. Use the editor’s keys, paste, or a named command. No transaction is required."}
               </div>
             }
           >

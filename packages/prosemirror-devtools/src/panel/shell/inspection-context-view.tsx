@@ -1,5 +1,9 @@
-import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
+import { createEffect, createMemo, createSignal, For, onCleanup, Show, type JSX } from "solid-js";
 
+import {
+  uninstrumentedPluginsReason,
+  type DevtoolsDiagnosticsSnapshot,
+} from "../../core/diagnostics";
 import { resolveInspectionLimits, serializeInspectionValue } from "../../inspection/serialization";
 import { usePanelInspection, usePanelMeta, usePanelNavigation } from "../panel-provider";
 import { readInstanceState } from "../store/instance-state";
@@ -15,6 +19,14 @@ export function InspectionContextView(): JSX.Element {
   const capture = () => inspection.instance()?.inspection?.capture;
   const inspectors = () => inspection.instance()?.inspection?.inspectors ?? [];
   const gaps = () => (capture()?.gaps.length ?? 0) + (capture()?.omittedGapCount ?? 0);
+  const [diagnostics, setDiagnostics] = createSignal<DevtoolsDiagnosticsSnapshot>();
+  createEffect(() => {
+    const controller = inspection.instance()?.diagnostics;
+    setDiagnostics(controller?.getSnapshot());
+    if (!controller) return;
+    onCleanup(controller.subscribe(() => setDiagnostics(controller.getSnapshot())));
+  });
+  const uninstrumented = () => uninstrumentedPluginsReason(diagnostics());
   const [detailsOpen, setDetailsOpen] = createSignal(false);
   const capabilities = createMemo(() =>
     detailsOpen() ? inspection.read({ kind: "capabilities" }) : undefined,
@@ -92,6 +104,14 @@ export function InspectionContextView(): JSX.Element {
                       ? "1 recorded gap"
                       : `${gaps()} recorded gaps`}
                 </p>
+                <Show when={uninstrumented()}>
+                  {(reason) => (
+                    <>
+                      <Badge tone="yellow">Plugins not instrumented</Badge>
+                      <p>{reason()}</p>
+                    </>
+                  )}
+                </Show>
               </>
             )}
           </Show>

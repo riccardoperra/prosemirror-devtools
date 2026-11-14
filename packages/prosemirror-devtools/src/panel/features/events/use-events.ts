@@ -1,8 +1,9 @@
 import { createEffect, createMemo, createSignal, onCleanup, type Accessor } from "solid-js";
 
-import type {
-  DevtoolsDiagnosticEvent,
-  DevtoolsDiagnosticsSnapshot,
+import {
+  uninstrumentedPluginsReason,
+  type DevtoolsDiagnosticEvent,
+  type DevtoolsDiagnosticsSnapshot,
 } from "../../../core/diagnostics";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { useOptionalPanelInspection } from "../../panel-provider";
@@ -113,6 +114,8 @@ export function useEvents(instance: Accessor<RegisteredProseMirrorInstance>) {
 
   return {
     controller,
+    /** Why handler events are missing, when plugins were not instrumented. */
+    uninstrumented: () => uninstrumentedPluginsReason(snapshot()),
     events,
     plugins,
     query,

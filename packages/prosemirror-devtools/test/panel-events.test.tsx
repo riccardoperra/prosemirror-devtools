@@ -17,7 +17,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function mountEvents(options: { diagnostics?: boolean; plugins?: Plugin[]; limit?: number } = {}) {
+function mountEvents(
+  options: { diagnostics?: boolean; plugins?: Plugin[]; limit?: number; instrument?: boolean } = {},
+) {
   const store = createProseMirrorDevtoolsStore();
   const session = createProseMirrorDevtoolsSession({
     id: "events-editor",
@@ -27,7 +29,10 @@ function mountEvents(options: { diagnostics?: boolean; plugins?: Plugin[]; limit
     getPluginLabel: (_plugin, index) =>
       ["First keymap", "Second keymap"][index] ?? `Plugin ${index}`,
   });
-  const plugins = session.instrumentPlugins(options.plugins ?? []);
+  const plugins =
+    options.instrument === false
+      ? (options.plugins ?? [])
+      : session.instrumentPlugins(options.plugins ?? []);
   const view = createTestView(createTestState("", plugins));
   session.attach(view);
   const instance = store.getInstance("events-editor")!;
@@ -63,6 +68,25 @@ describe("Events and commands panel", () => {
       expect(fixture.host.textContent).toContain("diagnostics: true");
       expect(fixture.host.textContent).toContain("session.instrumentPlugins(plugins)");
       expect(fixture.host.textContent).toContain('traceCommand("Bold"');
+    } finally {
+      fixture.destroy();
+    }
+  });
+
+  it("says that handler calls are not captured when plugins are not instrumented", () => {
+    const keymap = new Plugin({ props: { handleKeyDown: () => false } });
+    const fixture = mountEvents({ plugins: [keymap], instrument: false });
+    try {
+      const note = fixture.host.querySelector('[role="note"]');
+      expect(note?.textContent).toContain("not instrumented");
+      expect(fixture.host.textContent).toContain("No traced commands recorded");
+      expect(fixture.host.textContent).not.toContain("Use the editor’s keys");
+
+      fixture.session.diagnostics!.traceCommand("Bold", () => true);
+      expect(fixture.rows()).toHaveLength(1);
+      expect(fixture.host.querySelector('[role="note"]')?.textContent).toContain(
+        "not instrumented",
+      );
     } finally {
       fixture.destroy();
     }
