@@ -23,6 +23,8 @@
   "scripts": {
     "build": "pnpm --recursive --if-present run build",
     "build:package": "pnpm --filter prosemirror-inspector run build",
+    "build:pages": "node scripts/build-pages.mjs",
+    "preview:pages": "node scripts/preview-pages.mjs",
     "check": "pnpm build && pnpm test",
     "changeset": "changeset",
     "changeset:status": "changeset status --since=main",

@@ -15,4 +15,8 @@ export default defineConfig({
     ],
   },
   server: { port: 4184, strictPort: true },
+  // A literal, even when unset, lets the bundler drop the devtools shell from ordinary builds.
+  define: {
+    "import.meta.env.VITE_SHOWCASE": JSON.stringify(process.env.VITE_SHOWCASE ?? "false"),
+  },
 });

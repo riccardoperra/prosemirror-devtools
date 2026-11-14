@@ -6,6 +6,7 @@ import { resumeTiptapDevtools, suspendTiptapDevtools } from "prosemirror-inspect
 import { findQuery } from "../invoice/commands";
 import { readMeta } from "../invoice/document";
 import { useCollab } from "../collab/context";
+import { devtoolsEnabled } from "../env";
 import { createInvoiceExtensions } from "../invoice/extensions";
 import { initialInvoice } from "../invoice/fixture";
 import { InvoiceViewContext } from "../invoice/view-context";
@@ -83,7 +84,7 @@ function InvoiceWorkspace({ editor }: { editor: Editor }) {
         <p className="topbar-note">
           {collab
             ? `${collab.config.user.name} · room ${collab.config.room} · this browser only`
-            : import.meta.env.DEV
+            : devtoolsEnabled
               ? "⌘⇧D outside the editor opens the inspector"
               : "Diagnostics are off in production"}
         </p>

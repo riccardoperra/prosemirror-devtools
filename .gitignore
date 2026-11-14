@@ -4,6 +4,7 @@ node_modules/
 
 # Build and test output
 dist/
+pages-dist/
 coverage/
 *.tsbuildinfo
 .vite/

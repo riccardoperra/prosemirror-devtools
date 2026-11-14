@@ -4,17 +4,18 @@ import { createRoot } from "react-dom/client";
 import { readCollabConfig } from "./collab/config";
 import { CollabContext } from "./collab/context";
 import { DevtoolsContext } from "./devtools/context";
+import { loadDevtoolsShell } from "./env";
 import { InvoiceEditor } from "./ui/InvoiceEditor";
 import "./style.css";
 
 const collabConfig = readCollabConfig(location.search);
-// Dynamic imports keep Yjs out of single-user tabs and the devtools shell, its panel styles, and
-// its fonts out of production bundles.
+// Yjs loads only in a room. The devtools shell, its panel styles, and its fonts load only when
+// diagnostics are on.
 const collab = collabConfig
   ? (await import("./collab/session")).createCollabSession(collabConfig)
   : null;
-const devtools = import.meta.env.DEV
-  ? await (await import("./devtools/shell")).createDevtoolsShell(collab)
+const devtools = loadDevtoolsShell
+  ? await (await loadDevtoolsShell()).createDevtoolsShell(collab)
   : null;
 
 function App() {

@@ -104,3 +104,15 @@ emitted, kept in a ring buffer in `src/devtools/session.ts` next to the code tha
 
 The bubble menu is registered by `@tiptap/react` with `registerPlugin` after the editor is
 created, so its plugin hooks are outside instrumentation coverage.
+
+## The GitHub Pages showcase
+
+`src/env.ts` holds the one diagnostics flag: development, or a build with `VITE_SHOWCASE=true`.
+The shell then imports `createProseMirrorDevtoolsPlugin` from
+`prosemirror-inspector/react/production`, because the default React entry renders nothing outside
+development.
+
+`pnpm build:pages` at the root builds the package, builds this example under
+`/prosemirror-devtools/invoice/`, and assembles `pages-dist/` with the landing page from `site/`
+at its root. `pnpm preview:pages` serves `pages-dist` under the same base on port 4300.
+`.github/workflows/pages.yml` runs the build and deploys it on pushes to `main`.
