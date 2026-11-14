@@ -22,6 +22,53 @@ function tab(host: HTMLElement, title: string): HTMLButtonElement | undefined {
 }
 
 describe("host inspection context", () => {
+  it("reports when diagnostics run without instrumented plugins", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const instrumented = createProseMirrorDevtoolsSession({
+      id: "instrumented",
+      store,
+      diagnostics: true,
+      performanceMarks: false,
+    });
+    const attachOnly = createProseMirrorDevtoolsSession({
+      id: "attach-only",
+      store,
+      diagnostics: true,
+      performanceMarks: false,
+    });
+    const first = createTestView(createTestState("", instrumented.instrumentPlugins([])));
+    const second = createTestView(createTestState(""));
+    instrumented.attach(first);
+    attachOnly.attach(second);
+    const host = document.createElement("div");
+    document.body.append(host);
+    const dispose = render(
+      () => <ProseMirrorDevtoolsPanel store={store} defaultPanel="inspection-context" />,
+      host,
+    );
+    const captured = () => host.querySelector('[aria-label="Captured data"]')?.textContent;
+    const selectEditor = (id: string) => {
+      const select = host.querySelector<HTMLSelectElement>(
+        'select[aria-label="Active ProseMirror instance"]',
+      )!;
+      select.value = id;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+    try {
+      selectEditor("instrumented");
+      expect(captured()).not.toContain("Plugins not instrumented");
+      selectEditor("attach-only");
+      expect(captured()).toContain("Plugins not instrumented");
+      expect(captured()).toContain("session.instrumentPlugins");
+    } finally {
+      dispose();
+      instrumented.dispose();
+      attachOnly.dispose();
+      first.destroy();
+      second.destroy();
+    }
+  });
+
   it("reads historical projections without querying live plugin state and copies an explicit context", () => {
     const store = createProseMirrorDevtoolsStore();
     const counter = new Plugin({ state: { init: () => 0, apply: (_tr, value) => value + 1 } });

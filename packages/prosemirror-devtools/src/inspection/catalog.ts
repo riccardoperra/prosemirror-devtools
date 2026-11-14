@@ -1,3 +1,4 @@
+import { uninstrumentedPluginsReason } from "../core/diagnostics";
 import type { RegisteredProseMirrorInstance } from "../core/types";
 import type { InspectionCatalog, InspectionCapability, InspectionQuery } from "./types";
 
@@ -70,6 +71,7 @@ export function inspectionCapabilities(
   instance: RegisteredProseMirrorInstance,
 ): readonly InspectionCapability[] {
   const diagnostics = new Set<InspectionQuery["kind"]>(["events", "decorations", "nodeViews"]);
+  const uninstrumented = uninstrumentedPluginsReason(instance.diagnostics?.getSnapshot());
   return [
     ...inspectionQueryCatalog.map((query): InspectionCapability => ({
       id: query.kind,
@@ -81,10 +83,12 @@ export function inspectionCapabilities(
       evidence:
         diagnostics.has(query.kind) && !instance.diagnostics
           ? { kind: "disabled", reason: "Diagnostics were not enabled for this session." }
-          : (query.kind === "contributions" || query.kind === "contribution") &&
-              !instance.inspection?.inspectors.length
-            ? { kind: "unsupported", reason: "No semantic inspectors are registered." }
-            : { kind: "available", value: true },
+          : diagnostics.has(query.kind) && uninstrumented
+            ? { kind: "unobserved", reason: uninstrumented }
+            : (query.kind === "contributions" || query.kind === "contribution") &&
+                !instance.inspection?.inspectors.length
+              ? { kind: "unsupported", reason: "No semantic inspectors are registered." }
+              : { kind: "available", value: true },
     })),
     ...(instance.inspection?.inspectors ?? []).map((inspector): InspectionCapability => ({
       ...inspector.descriptor,

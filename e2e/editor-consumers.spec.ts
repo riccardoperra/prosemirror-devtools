@@ -216,12 +216,18 @@ test("V6 attach-only capture leaves unobserved input evidence inconclusive", asy
       assertion: { path: [], predicate: { kind: "exists" }, completeness: "capture" },
     }),
   ).toMatchObject({ kind: "inconclusive", missing: ["unobserved"] });
+  expect(
+    await callTool(page, "prosemirror_inspect", { target, query: { kind: "events" } }),
+  ).toMatchObject({
+    kind: "unobserved",
+    reason: expect.stringContaining("not instrumented"),
+  });
   await page.getByRole("tab", { name: /^Events/ }).click();
+  await expect(page.getByRole("note")).toContainText("not instrumented");
   await expect(
-    page.getByText(
-      "No calls recorded. Use the editor’s keys, paste, or a named command. No transaction is required.",
-      { exact: true },
-    ),
+    page.getByText("No traced commands recorded. Handler calls are not captured in this session.", {
+      exact: true,
+    }),
   ).toBeVisible();
 });
 
