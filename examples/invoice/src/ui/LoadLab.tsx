@@ -10,7 +10,8 @@ import {
   resetDocument,
   setSlowPlugin,
 } from "../invoice/commands";
-import { lineItemRows, pages } from "../invoice/document";
+import { lineItemRows, pages, readMeta } from "../invoice/document";
+import { isLocked } from "../invoice/model";
 import { validationKey } from "../invoice/plugins/validation";
 
 const stressSizes = [300, 500, 1000, 2000] as const;
@@ -24,6 +25,7 @@ export function LoadLab({ editor }: { editor: Editor }) {
       rows: lineItemRows(current.state.doc).length,
       pages: pages(current.state.doc).length,
       delayMs: validationKey.getState(current.state)?.delayMs ?? 0,
+      locked: isLocked(readMeta(current.state.doc).status),
     }),
   });
   return (
@@ -49,7 +51,11 @@ export function LoadLab({ editor }: { editor: Editor }) {
                 </option>
               ))}
             </select>
-            <button type="button" onClick={() => loadStressInvoice(editor, rows)}>
+            <button
+              type="button"
+              disabled={stats.locked}
+              onClick={() => loadStressInvoice(editor, rows)}
+            >
               Load
             </button>
           </span>
@@ -69,10 +75,14 @@ export function LoadLab({ editor }: { editor: Editor }) {
           </select>
         </label>
         <div className="load-lab-actions">
-          <button type="button" onClick={() => repriceInOneTransaction(editor, 5)}>
+          <button
+            type="button"
+            disabled={stats.locked}
+            onClick={() => repriceInOneTransaction(editor, 5)}
+          >
             +5% in one transaction
           </button>
-          <button type="button" onClick={() => repriceRowByRow(editor, 5)}>
+          <button type="button" disabled={stats.locked} onClick={() => repriceRowByRow(editor, 5)}>
             +5% row by row (max {repriceDispatchLimit})
           </button>
           <button type="button" className="is-danger" onClick={() => resetDocument(editor)}>

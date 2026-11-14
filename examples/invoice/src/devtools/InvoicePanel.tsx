@@ -1,18 +1,14 @@
 import { createReactDevtoolsExtension } from "prosemirror-inspector/react";
 import type { DevtoolsExtensionContext } from "prosemirror-inspector";
-import { NodeSelection, TextSelection, type Selection } from "prosemirror-state";
+import { NodeSelection, TextSelection } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { useMemo, useSyncExternalStore, type ReactNode } from "react";
 
+import { revealSelection } from "../invoice/commands";
 import { formatMoney, type Cents } from "../invoice/model";
 import { readInvoiceDebugState, type InvoiceDebugState } from "./debug-state";
 import { domainEventLog, sessionId, type DomainEventEntry } from "./session";
 import "./invoice-panel.css";
-
-function select(view: EditorView, selection: (state: EditorView["state"]) => Selection): void {
-  view.dispatch(view.state.tr.setSelection(selection(view.state)).scrollIntoView());
-  view.focus();
-}
 
 function formatTime(at: number): string {
   const time = new Date(at);
@@ -92,7 +88,15 @@ function CommentsSection({
                 type="button"
                 aria-label={`Select comment by ${comment.author}`}
                 onClick={() =>
-                  select(view, (state) => TextSelection.create(state.doc, comment.from, comment.to))
+                  revealSelection(
+                    view,
+                    (doc) => TextSelection.create(doc, comment.from, comment.to),
+                    {
+                      kind: "text",
+                      from: comment.from,
+                      to: comment.to,
+                    },
+                  )
                 }
               >
                 <span className="invoice-panel__row-title">
@@ -140,9 +144,15 @@ function ValidationSection({
                   <button
                     type="button"
                     aria-label={`Select row ${row.id}`}
-                    onClick={() =>
-                      select(view, (state) => NodeSelection.create(state.doc, row.pos))
-                    }
+                    onClick={() => {
+                      const node = view.state.doc.nodeAt(row.pos);
+                      if (!node) return;
+                      revealSelection(view, (doc) => NodeSelection.create(doc, row.pos), {
+                        kind: "node",
+                        from: row.pos,
+                        to: row.pos + node.nodeSize,
+                      });
+                    }}
                   >
                     {row.id} @ {row.pos}
                   </button>

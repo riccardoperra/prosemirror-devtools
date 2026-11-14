@@ -1,7 +1,7 @@
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
 import { collectComments } from "../invoice/comments";
-import { selectRange } from "../invoice/commands";
+import { revealRange } from "../invoice/commands";
 
 export function CommentsSidebar({ editor }: { editor: Editor }) {
   const comments = useEditorState({
@@ -20,7 +20,7 @@ export function CommentsSidebar({ editor }: { editor: Editor }) {
               <button
                 type="button"
                 className={comment.resolved ? "comment-card is-resolved" : "comment-card"}
-                onClick={() => selectRange(editor, comment.from, comment.to)}
+                onClick={() => revealRange(editor, comment.from, comment.to)}
               >
                 <span className="comment-meta">
                   <span className="comment-author">{comment.author}</span>

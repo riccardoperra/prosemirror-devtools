@@ -44,7 +44,7 @@ The left panel lists named scenarios from `src/scenarios.ts`. Each one runs a co
 inspector panel to open and what to look for. They cover node, cross-page, and all selections, id
 normalization in an appended transaction, a slow plugin, a decoration flood, one bulk transaction
 against many dispatches, undoing a bulk edit, comments, the status that flips editability,
-NodeView lifecycles under load, page breaks, and the plugin state inspector.
+mounting 1,000 node views, page breaks, and the plugin state inspector.
 
 The collapsible load lab under the scenarios has the knobs: a 300 to 2,000 row stress invoice, a busy-wait delay
 for the validation plugin, and a 5% reprice either in one transaction or as one dispatch per row

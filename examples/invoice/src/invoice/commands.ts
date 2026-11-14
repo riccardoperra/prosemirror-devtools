@@ -35,9 +35,24 @@ function run(editor: Editor, name: string, build: Build): boolean {
   return traceCommand(editor, name, () => {
     const tr = build(editor.state);
     if (!tr) return false;
+    const unfocused = !editor.view.hasFocus();
     editor.view.dispatch(tr);
+    if (tr.scrolledIntoView && unfocused) scrollToSelection(editor.view);
     return true;
   });
+}
+
+/**
+ * ProseMirror scrolls to the DOM selection, which an unfocused editor does not have. Focusing it
+ * instead would swallow ⌘⇧D, which TanStack Devtools ignores inside editable elements.
+ */
+function scrollToSelection(view: EditorView): void {
+  const { selection } = view.state;
+  const node = selection instanceof NodeSelection ? view.nodeDOM(selection.from) : null;
+  const rect =
+    node instanceof HTMLElement ? node.getBoundingClientRect() : view.coordsAtPos(selection.head);
+  if (rect.top >= 80 && rect.bottom <= window.innerHeight - 24) return;
+  window.scrollBy({ top: rect.top - window.innerHeight / 3 });
 }
 
 function selectedRows(state: EditorState) {

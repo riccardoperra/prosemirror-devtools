@@ -585,6 +585,8 @@ body {
     padding: 3px 8px;
     box-shadow: 0 1px 0 var(--hairline);
     font-size: 13px;
+    /* 13px × 1.6 left rows at fractional offsets, where Chrome rounds select text 1px above inputs. */
+    line-height: 20px;
     transition: background-color var(--hover-duration) ease;
   }
 
@@ -874,9 +876,23 @@ body {
     font-size: 13px;
   }
 
+  /* Each section scrolls on its own, so the outline never slides half out of view. */
   .sidebar-start {
     grid-column: 1;
     justify-self: end;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-start > .sidebar-section {
+    flex: none;
+  }
+
+  .sidebar-start > .scenarios[open] {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
   }
 
   .sidebar-end {

@@ -1,45 +1,19 @@
-import {
-  installProseMirrorChromeBridge,
-  installProseMirrorWebMCPBridge,
-} from "prosemirror-inspector/agent";
-import { createProseMirrorInspectionClient } from "prosemirror-inspector/core";
-import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/react";
-import { TanStackDevtools } from "@tanstack/react-devtools";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { invoiceDevtoolsExtension } from "./devtools/InvoicePanel";
-import { store } from "./devtools/session";
 import { InvoiceEditor } from "./ui/InvoiceEditor";
 import "./style.css";
 
-const disposeBridge = import.meta.env.DEV
-  ? installProseMirrorChromeBridge(createProseMirrorInspectionClient({ store }))
-  : null;
-const disposeWebMCP = import.meta.env.DEV
-  ? await installProseMirrorWebMCPBridge(createProseMirrorInspectionClient({ store }))
-  : null;
-
-const inspectorPlugin = import.meta.env.DEV
-  ? createProseMirrorDevtoolsPlugin({
-      store,
-      defaultPanel: "history",
-      extensions: [invoiceDevtoolsExtension],
-    })
-  : null;
+// A dynamic import keeps the shell, its panel styles, and its fonts out of production bundles.
+const devtools = import.meta.env.DEV ? await import("./devtools/shell") : null;
 
 function App() {
   return (
     <>
       <main className="workbench">
-        <InvoiceEditor />
+        <InvoiceEditor devtools={devtools?.InvoiceDevtools ?? null} />
       </main>
-      {inspectorPlugin ? (
-        <TanStackDevtools
-          config={{ position: "bottom-right", openHotkey: ["CtrlOrMeta", "Shift", "D"] }}
-          plugins={[inspectorPlugin]}
-        />
-      ) : null}
+      {devtools ? <devtools.DevtoolsShell /> : null}
     </>
   );
 }
@@ -54,8 +28,7 @@ root.render(
 );
 function dispose(): void {
   window.removeEventListener("pagehide", dispose);
-  disposeBridge?.();
-  disposeWebMCP?.();
+  devtools?.disposeDevtools();
   root.unmount();
 }
 window.addEventListener("pagehide", dispose, { once: true });

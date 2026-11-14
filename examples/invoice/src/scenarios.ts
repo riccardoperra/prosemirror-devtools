@@ -248,9 +248,14 @@ export const scenarios: readonly Scenario[] = [
     run: (editor) => loadStressInvoice(editor, 1000),
     inspect: [
       {
+        panel: "Performance",
+        observe:
+          "One dispatch whose view update dominates while React mounts about 1,000 row node views.",
+      },
+      {
         panel: "Rendering",
         observe:
-          "NodeView lifecycle counters: about 1,000 lineItem views created and the old ones destroyed.",
+          "Node views stay at 0: Tiptap passes node views to the view, not through a plugin, so they are not instrumented.",
       },
     ],
   },

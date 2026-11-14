@@ -1,9 +1,8 @@
-import type { Editor } from "@tiptap/core";
+import type { AnyExtension, Editor } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { useEffect, useState } from "react";
 import { resumeTiptapDevtools, suspendTiptapDevtools } from "prosemirror-inspector/tiptap";
 
-import { InvoiceDevtools } from "../devtools/extension";
 import { findQuery } from "../invoice/commands";
 import { readMeta } from "../invoice/document";
 import { invoiceExtensions } from "../invoice/extensions";
@@ -15,11 +14,9 @@ import { InvoiceBubbleMenu } from "./InvoiceBubbleMenu";
 import { ScenariosPanel } from "./ScenariosPanel";
 import { Toolbar } from "./Toolbar";
 
-export function InvoiceEditor() {
-  const [extensions] = useState(() => [
-    ...invoiceExtensions,
-    ...(import.meta.env.DEV ? [InvoiceDevtools] : []),
-  ]);
+/** The devtools extension arrives from the lazily loaded shell, so production never bundles it. */
+export function InvoiceEditor({ devtools }: { devtools: AnyExtension | null }) {
+  const [extensions] = useState(() => [...invoiceExtensions, ...(devtools ? [devtools] : [])]);
   const editor = useEditor({
     extensions,
     content: initialInvoice,
@@ -27,6 +24,9 @@ export function InvoiceEditor() {
     shouldRerenderOnTransaction: false,
     enableExtensionDispatchTransaction: true,
     editorProps: {
+      // Keeps scrolled-to selections clear of the sticky top bar.
+      scrollMargin: { top: 80, bottom: 24, left: 0, right: 0 },
+      scrollThreshold: { top: 80, bottom: 24, left: 0, right: 0 },
       attributes: {
         "aria-label": "Invoice editor",
         "aria-multiline": "true",
@@ -36,10 +36,10 @@ export function InvoiceEditor() {
     },
   });
   useEffect(() => {
-    if (!editor || !import.meta.env.DEV) return;
+    if (!editor || !devtools) return;
     resumeTiptapDevtools(editor);
     return () => suspendTiptapDevtools(editor);
-  }, [editor]);
+  }, [editor, devtools]);
   return editor ? (
     <InvoiceWorkspace editor={editor} />
   ) : (
@@ -70,7 +70,9 @@ function InvoiceWorkspace({ editor }: { editor: Editor }) {
           onToggleFind={() => (findOpen ? closeFind() : setFindOpen(true))}
         />
         <p className="topbar-note">
-          {import.meta.env.DEV ? "⌘⇧D opens the inspector" : "Diagnostics are off in production"}
+          {import.meta.env.DEV
+            ? "⌘⇧D outside the editor opens the inspector"
+            : "Diagnostics are off in production"}
         </p>
         {findOpen ? <FindBar editor={editor} onClose={closeFind} /> : null}
       </header>
