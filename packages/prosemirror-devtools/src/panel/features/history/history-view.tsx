@@ -7,6 +7,7 @@ import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { useSelectedTransaction } from "../../hooks/use-selected-transaction";
 import { HistoryDispatchInspector } from "./history-dispatch-inspector";
 import { TransactionList } from "./transaction-list";
+import { EmptyState } from "../../ui/empty-state";
 
 export interface HistoryViewProps {
   instance: RegisteredProseMirrorInstance;
@@ -20,9 +21,7 @@ export function HistoryView(props: HistoryViewProps): JSX.Element {
   return (
     <Show
       when={selected()}
-      fallback={
-        <div class={panelStyles.pmEmpty}>Dispatch a transaction to begin recording history.</div>
-      }
+      fallback={<EmptyState>Dispatch a transaction to begin recording history.</EmptyState>}
     >
       {(record) => (
         <ResizableSplit label="Dispatch list width" class={panelStyles.pmHistoryLayout}>

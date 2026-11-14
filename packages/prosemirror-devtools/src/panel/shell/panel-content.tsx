@@ -31,7 +31,7 @@ import {
   usePanelInspection,
 } from "../panel-provider";
 import { useActiveInstance } from "../store/selectors";
-import { EmptyState } from "../ui/empty-state";
+import { EmptyState, NoInstancesState } from "../ui/empty-state";
 import { HistoricalPanel } from "./historical-panel";
 import { InspectionContextView } from "./inspection-context-view";
 
@@ -136,7 +136,7 @@ function ActivePanelView(props: ActivePanelViewProps): JSX.Element {
             </Match>
             <Match when={props.tab === "performance"}>
               <Suspense
-                fallback={<div class={panelStyles.pmEmpty}>Loading performance tools…</div>}
+                fallback={<EmptyState role="status">Loading performance tools…</EmptyState>}
               >
                 <PerformanceView
                   detailThresholdMs={props.performanceDetailThresholdMs}
@@ -197,11 +197,11 @@ export function PanelContent(props: PanelContentProps): JSX.Element {
       role="tabpanel"
       tabIndex={0}
     >
-      <Show when={!showEmptyState()} fallback={<EmptyState />}>
+      <Show when={!showEmptyState()} fallback={<NoInstancesState />}>
         <Show
           when={extensionDefinition()}
           fallback={
-            <Show when={activeInstance() && builtinDefinition()} fallback={<EmptyState />}>
+            <Show when={activeInstance() && builtinDefinition()} fallback={<NoInstancesState />}>
               <ActivePanelView
                 instance={activeInstance()!}
                 onClearHistory={() => {

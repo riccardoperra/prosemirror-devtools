@@ -8,6 +8,7 @@ import { Badge } from "../../ui/badge";
 import { downloadSnapshot } from "./snapshot-files";
 import { useSnapshots } from "./use-snapshots";
 import { SnapshotComparison } from "./snapshot-comparison";
+import { EmptyState } from "../../ui/empty-state";
 
 export interface SnapshotsViewProps {
   instance: RegisteredProseMirrorInstance;
@@ -73,9 +74,7 @@ export function SnapshotsView(props: SnapshotsViewProps): JSX.Element {
       <Show
         when={snapshots().length > 0}
         fallback={
-          <div class={panelStyles.pmEmpty}>
-            Save the current document to compare or restore it later.
-          </div>
+          <EmptyState>Save the current document to compare or restore it later.</EmptyState>
         }
       >
         <div class={panelStyles.pmPaneHeader}>

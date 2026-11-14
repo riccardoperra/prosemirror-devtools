@@ -117,30 +117,32 @@ export function SelectionView(props: { instance: RegisteredProseMirrorInstance }
             </button>
           </Show>
         </div>
-        <table aria-label="Ancestors at the selected endpoint" class={panelStyles.pmTable}>
-          <thead>
-            <tr>
-              <th scope="col">Ancestor</th>
-              <th scope="col">Depth</th>
-              <th scope="col">Index</th>
-              <th scope="col">Content start</th>
-              <th scope="col">Content end</th>
-            </tr>
-          </thead>
-          <tbody>
-            <For each={inspection().ancestors}>
-              {(ancestor) => (
-                <tr>
-                  <th scope="row">{ancestor.type}</th>
-                  <td>{ancestor.depth}</td>
-                  <td>{ancestor.index}</td>
-                  <td>{ancestor.start}</td>
-                  <td>{ancestor.end}</td>
-                </tr>
-              )}
-            </For>
-          </tbody>
-        </table>
+        <div class={panelStyles.pmTableScroll}>
+          <table aria-label="Ancestors at the selected endpoint" class={panelStyles.pmTable}>
+            <thead>
+              <tr>
+                <th scope="col">Ancestor</th>
+                <th scope="col">Depth</th>
+                <th scope="col">Index</th>
+                <th scope="col">Content start</th>
+                <th scope="col">Content end</th>
+              </tr>
+            </thead>
+            <tbody>
+              <For each={inspection().ancestors}>
+                {(ancestor) => (
+                  <tr>
+                    <th scope="row">{ancestor.type}</th>
+                    <td>{ancestor.depth}</td>
+                    <td>{ancestor.index}</td>
+                    <td>{ancestor.start}</td>
+                    <td>{ancestor.end}</td>
+                  </tr>
+                )}
+              </For>
+            </tbody>
+          </table>
+        </div>
         <div class={panelStyles.pmDetailBlock}>
           <div class={panelStyles.pmDetailHeading}>
             <span class={panelStyles.pmSectionTitle}>Ancestor boundaries & attributes</span>

@@ -3,8 +3,9 @@ import { createMemo, createSignal, For, Show, type JSX } from "solid-js";
 import { mapRecordedPosition } from "../../../core/transaction-changes";
 import type { TransactionRecord } from "../../../core/types";
 import { JsonTree } from "../../json-tree";
-import { panelStyles } from "../../styles";
+import { cx, panelStyles } from "../../styles";
 import { Badge } from "../../ui/badge";
+import { EmptyState } from "../../ui/empty-state";
 
 export function ChangesView(props: { record: TransactionRecord }): JSX.Element {
   const steps = createMemo(() =>
@@ -34,21 +35,21 @@ export function ChangesView(props: { record: TransactionRecord }): JSX.Element {
       <Show
         when={props.record.applicationStatus === "applied"}
         fallback={
-          <div class={panelStyles.pmEmpty}>
+          <EmptyState>
             {props.record.applicationStatus === "filtered"
               ? "This dispatch was filtered. No steps were applied."
               : "Applied steps were not observed for this custom dispatch. Position mapping is unavailable."}
-          </div>
+          </EmptyState>
         }
       >
         <Show
           when={steps().length > 0}
           fallback={
-            <div class={panelStyles.pmEmpty}>
+            <EmptyState>
               {props.record.stepCount === 0
                 ? "This dispatch contains no document steps."
                 : "This record has no captured step maps. Record a new dispatch to inspect its changes."}
-            </div>
+            </EmptyState>
           }
         >
           <div class={panelStyles.pmPaneHeader}>
@@ -57,7 +58,7 @@ export function ChangesView(props: { record: TransactionRecord }): JSX.Element {
               Before dispatch{" "}
               <input
                 aria-label="Position before dispatch"
-                class={panelStyles.pmSearch}
+                class={cx(panelStyles.pmSearch, panelStyles.pmNumberInput)}
                 type="number"
                 min="0"
                 max={steps()[0]?.step.documentSizeBefore}
@@ -66,7 +67,6 @@ export function ChangesView(props: { record: TransactionRecord }): JSX.Element {
                 onInput={(event) =>
                   setProbe({ record: props.record, value: event.currentTarget.value })
                 }
-                style={{ width: "90px" }}
               />
             </label>
             <select

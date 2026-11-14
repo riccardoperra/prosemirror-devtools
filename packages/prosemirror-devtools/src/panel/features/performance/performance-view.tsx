@@ -7,6 +7,7 @@ import { useSelectedTransaction } from "../../hooks/use-selected-transaction";
 import { PluginPerformanceTable } from "./cumulative/plugin-performance-table";
 import { PerformanceDispatchInspector } from "./performance-dispatch-inspector";
 import { buildInitializationTimelineEntry, DispatchTimeline } from "./overview/dispatch-timeline";
+import { EmptyState } from "../../ui/empty-state";
 
 export interface PerformanceViewProps {
   instance: RegisteredProseMirrorInstance;
@@ -23,9 +24,7 @@ export function PerformanceView(props: PerformanceViewProps): JSX.Element {
   return (
     <Show
       when={hasPerformanceData()}
-      fallback={
-        <div class={panelStyles.pmEmpty}>Dispatch a transaction to render performance bars.</div>
-      }
+      fallback={<EmptyState>Dispatch a transaction to render performance bars.</EmptyState>}
     >
       <div class={cx(panelStyles.pmScroll, panelStyles.pmPerformanceView)}>
         <DispatchTimeline

@@ -10,6 +10,7 @@ import { panelStyles } from "../../styles";
 import { formatMs } from "../../formatters";
 import { JsonTree } from "../../json-tree";
 import { Badge } from "../../ui/badge";
+import { EmptyState } from "../../ui/empty-state";
 
 interface AppliedTransactionProps {
   transaction: AppliedTransactionRecord;
@@ -74,11 +75,11 @@ export function AppliedTransactions(props: AppliedTransactionsProps): JSX.Elemen
     <Show
       when={props.record.transactions.length > 0}
       fallback={
-        <div class={panelStyles.pmInspectorEmpty}>
+        <EmptyState>
           {props.record.filtered
             ? "The root transaction was filtered before it could be applied."
             : "No applied transaction payload was observed for this dispatch."}
-        </div>
+        </EmptyState>
       }
     >
       <div class={panelStyles.pmTransactionStack}>

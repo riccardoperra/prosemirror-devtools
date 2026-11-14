@@ -15,6 +15,7 @@ import { Badge } from "../../ui/badge";
 import { ResizableSplit } from "../../ui/resizable-split";
 import { collectDecorationRows } from "./decoration-list";
 import { mountDecorationOverlay } from "./decoration-overlay";
+import { EmptyState } from "../../ui/empty-state";
 
 const PAGE_SIZE = 100;
 
@@ -37,16 +38,15 @@ session.attach(view);
 
 function DiagnosticsSetup(): JSX.Element {
   return (
-    <div class={panelStyles.pmScroll} style={{ padding: "16px" }}>
-      <h2 style={{ "font-size": "14px", margin: "0 0 8px" }}>Enable decoration diagnostics</h2>
+    <div class={cx(panelStyles.pmScroll, panelStyles.pmSetup)}>
+      <h2>Enable decoration diagnostics</h2>
       <p>
         Opt in before creating the editor to observe decoration results and NodeView lifecycles as
         instrumented plugin hooks run.
       </p>
       <pre
         aria-label="Decoration diagnostics setup"
-        class={panelStyles.pmMono}
-        style={{ "white-space": "pre-wrap", "overflow-wrap": "anywhere" }}
+        class={cx(panelStyles.pmMono, panelStyles.pmSetupCode, panelStyles.pmPreWrap)}
       >
         {SETUP}
       </pre>
@@ -167,14 +167,7 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
 
   return (
     <Show when={diagnostics()} fallback={<DiagnosticsSetup />}>
-      <div
-        style={{
-          display: "flex",
-          "flex-direction": "column",
-          "block-size": "100%",
-          "min-block-size": "0",
-        }}
-      >
+      <div class={panelStyles.pmColumnFill}>
         <div class={panelStyles.pmPaneHeader}>
           <ViewSwitch
             label="Decoration diagnostics view"
@@ -235,20 +228,18 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
             </button>
           </div>
         </Show>
-        <ResizableSplit label="Rendering list width" style={{ flex: "1", "min-block-size": "0" }}>
+        <ResizableSplit label="Rendering list width">
           <div class={panelStyles.pmPane}>
             <Show
               when={totalRows() > 0}
               fallback={
-                <div class={panelStyles.pmEmpty}>
-                  <p>
-                    {plugin() || kind() !== "all"
-                      ? "No observations match these filters."
-                      : mode() === "decorations"
-                        ? "No decorations observed yet. Interact with an editor using instrumented decoration plugins."
-                        : "No NodeViews observed yet. Instrument plugins before creating the editor to capture NodeView creation."}
-                  </p>
-                </div>
+                <EmptyState>
+                  {plugin() || kind() !== "all"
+                    ? "No observations match these filters."
+                    : mode() === "decorations"
+                      ? "No decorations observed yet. Interact with an editor using instrumented decoration plugins."
+                      : "No NodeViews observed yet. Instrument plugins before creating the editor to capture NodeView creation."}
+                </EmptyState>
               }
             >
               <ul
@@ -328,9 +319,9 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
               <Show
                 when={selectedRange()}
                 fallback={
-                  <div class={panelStyles.pmEmpty}>
+                  <EmptyState>
                     Select a decoration to inspect its captured range and spec.
-                  </div>
+                  </EmptyState>
                 }
               >
                 {(selected) => (
@@ -387,7 +378,7 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
                       defaultExpandedDepth={0}
                       value={selected().range.spec}
                     />
-                    <p class={panelStyles.pmMuted} style={{ padding: "0 9px" }}>
+                    <p class={panelStyles.pmSectionNote}>
                       Source: {selected().source.pluginKey}. Values are captured observations;
                       inspecting them does not call the plugin.
                     </p>
@@ -399,9 +390,7 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
               <Show
                 when={selectedNodeView()}
                 fallback={
-                  <div class={panelStyles.pmEmpty}>
-                    Select a NodeView to inspect its observed lifecycle.
-                  </div>
+                  <EmptyState>Select a NodeView to inspect its observed lifecycle.</EmptyState>
                 }
               >
                 {(selected) => (
@@ -460,7 +449,7 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
                       defaultExpandedDepth={0}
                       value={selected()}
                     />
-                    <p class={panelStyles.pmMuted} style={{ padding: "0 9px" }}>
+                    <p class={panelStyles.pmSectionNote}>
                       Counts cover retained, instrumented NodeViews. Positions and status reflect
                       the last observed lifecycle callback.
                     </p>
