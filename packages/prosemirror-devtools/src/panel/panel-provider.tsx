@@ -30,7 +30,7 @@ import type {
 } from "../core/types";
 import { useResolvedTheme } from "./hooks/use-resolved-theme";
 import type { DispatchPresenters } from "./features/dispatch/read-dispatch-effects";
-import type { ResolvedPanelDefinition } from "./panel-registry";
+import type { ResolvedPanelDefinition, ResolvedPanelGroup } from "./panel-registry";
 import type { PanelDensity } from "./panel.types";
 import { ensurePanelStyles } from "./styles";
 import { createHostDataAccess } from "./store/host-data-access";
@@ -79,6 +79,7 @@ export type PanelInspectionContext = Readonly<{
 
 type PanelNavigation = Readonly<{
   activePanel: Accessor<string>;
+  groups: Accessor<readonly ResolvedPanelGroup[]>;
   panels: Accessor<readonly ResolvedPanelDefinition[]>;
   selectPanel: (panelId: string) => void;
 }>;
@@ -95,6 +96,7 @@ type PanelMeta = Readonly<{
   panelId: string;
   tabPanelId: string;
   tabId: (panelId: string) => string;
+  groupTabId: (groupId: string) => string;
 }>;
 
 type PanelContextValue = Readonly<{
@@ -131,7 +133,7 @@ export interface PanelProviderProps {
   defaultPanel: string;
   activePanel: string | undefined;
   onActivePanelChange: ((panelId: string) => void) | undefined;
-  panels: readonly ResolvedPanelDefinition[];
+  groups: readonly ResolvedPanelGroup[];
   dispatchPresenters?: DispatchPresenters;
   styleTarget: Document | undefined;
   children: JSX.Element;
@@ -153,11 +155,10 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
     return preference.source === props.theme ? preference.value : props.theme;
   });
   const resolvedTheme = useResolvedTheme(themeChoice, ownerDocument);
+  const panels = createMemo(() => props.groups.flatMap((group) => group.panels));
   const activePanel = createMemo(() => {
     const requested = props.activePanel ?? uncontrolledActivePanel();
-    return props.panels.some(({ id }) => id === requested)
-      ? requested
-      : (props.panels[0]?.id ?? "");
+    return panels().some(({ id }) => id === requested) ? requested : (panels()[0]?.id ?? "");
   });
   const dataAccess = createHostDataAccess(props.store);
   onCleanup(dataAccess.dispose);
@@ -233,7 +234,7 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
     });
   };
   const selectPanel = (nextPanelId: string): void => {
-    if (!props.panels.some(({ id }) => id === nextPanelId)) {
+    if (!panels().some(({ id }) => id === nextPanelId)) {
       throw new Error(`Cannot select unknown devtools panel "${nextPanelId}".`);
     }
     if (props.activePanel === undefined) setUncontrolledActivePanel(nextPanelId);
@@ -242,7 +243,8 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
 
   const navigation: PanelNavigation = {
     activePanel,
-    panels: () => props.panels,
+    groups: () => props.groups,
+    panels,
     selectPanel,
   };
   const appearance: PanelAppearance = {
@@ -256,6 +258,7 @@ export function PanelProvider(props: PanelProviderProps): JSX.Element {
     panelId,
     tabPanelId: `${panelId}-tabpanel`,
     tabId: (nextPanelId) => `${panelId}-tab-${encodePanelId(nextPanelId)}`,
+    groupTabId: (groupId) => `${panelId}-group-${encodePanelId(groupId)}`,
   };
   const inspection: PanelInspectionContext = {
     instance,

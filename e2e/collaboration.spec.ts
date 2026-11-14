@@ -181,7 +181,7 @@ test("kitchen sink combines collaboration, history, rendering and offline record
   await page.getByRole("tab", { name: "Events", exact: true }).click();
   await page.getByRole("button", { name: /^Inspect Insert sample, call #/ }).click();
   await expect(effects()).toContainText("Text impact Text added 16 → 36 characters");
-  await page.getByRole("tab", { name: /^Transactions/ }).click();
+  await page.getByRole("tab", { name: "Transactions", exact: true }).click();
   await page.getByRole("button", { name: "Open another inspector", exact: true }).click();
   const another = page.getByRole("region", { name: "Additional inspector", exact: true });
   const otherEffects = another.getByRole("region", { name: "Captured dispatch effects" });

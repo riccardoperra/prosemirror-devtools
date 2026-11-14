@@ -35,7 +35,7 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
     },
     input,
   );
-  const panels = createMemo(() => resolvePanelRegistry(props.extensions));
+  const groups = createMemo(() => resolvePanelRegistry(props.extensions));
   const dispatchPresenters = createMemo(() => resolveDispatchPresenters(props.extensions));
 
   return (
@@ -45,7 +45,7 @@ export function ProseMirrorDevtoolsPanel(input: ProseMirrorDevtoolsPanelProps = 
           activePanel={props.activePanel}
           defaultPanel={props.defaultPanel ?? props.defaultTab}
           onActivePanelChange={props.onActivePanelChange}
-          panels={panels()}
+          groups={groups()}
           dispatchPresenters={dispatchPresenters()}
           store={store}
           styleTarget={props.styleTarget}

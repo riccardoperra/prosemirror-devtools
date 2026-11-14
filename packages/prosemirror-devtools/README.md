@@ -215,17 +215,23 @@ adapter to stay active in a production build.
 
 ## What the panel shows
 
-| Panel             | Contents                                                                                           |
-| ----------------- | -------------------------------------------------------------------------------------------------- |
-| State             | Document tree, boxes, JSON, and annotated DOM views; node JSON, selection, marks, and statistics   |
-| Transactions      | Root/appended transactions, document restore, step diffs, changed ranges, and position mapping     |
-| Selection         | Anchor/head ancestry, offsets, boundaries, adjacent nodes, ranges, and marks                       |
-| Events & commands | Opt-in handler outcomes, nested calls, synchronous dispatch IDs, and named commands                |
-| Rendering         | Opt-in ranges/specs, position overlays, and NodeView lifecycle counters                            |
-| Performance       | Dispatch timeline, apply/view phases, plugin ranking, hook timings, markers, average, p95, and max |
-| Plugins           | Searchable plugin order, state, runtime keys, and exposed editor props                             |
-| Schema            | Node specs, mark specs, and the top node type                                                      |
-| Snapshots         | Local save, restore, import, export, and delete controls                                           |
+| Section     | Panel             | Contents                                                                                           |
+| ----------- | ----------------- | -------------------------------------------------------------------------------------------------- |
+| Document    | State             | Document tree, boxes, JSON, and annotated DOM views; node JSON, selection, marks, and statistics   |
+| Document    | Selection         | Anchor/head ancestry, offsets, boundaries, adjacent nodes, ranges, and marks                       |
+| Document    | Schema            | Node specs, mark specs, and the top node type                                                      |
+| Timeline    | Transactions      | Root/appended transactions, document restore, step diffs, changed ranges, and position mapping     |
+| Timeline    | Events & commands | Opt-in handler outcomes, nested calls, synchronous dispatch IDs, and named commands                |
+| Snapshots   | Snapshots         | Local save, restore, import, export, and delete controls                                           |
+| Performance | Performance       | Dispatch timeline, apply/view phases, plugin ranking, hook timings, markers, average, p95, and max |
+| Plugins     | Plugins           | Searchable plugin order, state, runtime keys, and exposed editor props                             |
+| Plugins     | Rendering         | Opt-in ranges/specs, position overlays, and NodeView lifecycle counters                            |
+| Context     | Context           | Capture status, installed inspectors, and a copyable diagnostic context                            |
+
+The top row of tabs lists the sections. A section with more than one panel shows its panels in a
+second row, and selecting the section again reopens the panel you last used in it. Navigation
+stays panel-based: `defaultPanel`, `activePanel` and `onActivePanelChange` take and report panel
+IDs such as `schema` or `history`, and the matching section opens on its own.
 
 Each panel host keeps its editor and inspection selection. Transactions and Performance share the
 selected dispatch. **Follow live** returns to the current state. Historical document and provider
@@ -255,7 +261,7 @@ custom dispatch outcomes do not claim applied mapping results.
 
 JSON branches render 100 children at a time with **Show more**. Closed document disclosures defer
 serialization. Narrow layouts stack independently scrollable panes, embedded panels follow their
-host height, and tab navigation supports arrow keys, Home, and End.
+host height, and both tab rows support arrow keys, Home, and End.
 
 ## Tiptap 3
 
@@ -427,8 +433,9 @@ simply not recorded when called outside a dispatch.
 
 ## Panel extensions
 
-Add application-specific tabs without coupling them to a UI framework. An extension receives
-scoped data, safe actions, host details, and a cleanup signal.
+Add application-specific tabs without coupling them to a UI framework. Each extension panel is a
+section of its own in the top row, placed by its `order`. An extension receives scoped data, safe
+actions, host details, and a cleanup signal.
 
 ```ts
 import type { DevtoolsExtension } from "prosemirror-inspector/core";

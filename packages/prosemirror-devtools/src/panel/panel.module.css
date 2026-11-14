@@ -249,6 +249,7 @@
   .pm-header[data-embedded="true"] .pm-header-navigation {
     display: flex;
     align-items: stretch;
+    flex-wrap: wrap;
     min-inline-size: 0;
   }
   .pm-header[data-embedded="true"] .pm-toolbar {
@@ -259,6 +260,9 @@
     min-inline-size: 0;
     flex: 1;
     align-items: stretch;
+  }
+  .pm-header[data-embedded="true"] .pm-sub-tabs {
+    flex-basis: 100%;
   }
   .pm-toolbar {
     min-inline-size: 0;
@@ -390,6 +394,13 @@
   }
   .pm-tab[aria-selected="true"]::after {
     background: var(--pm-accent);
+  }
+  .pm-sub-tabs {
+    border-block-start: 1px solid var(--pm-border);
+  }
+  .pm-sub-tab {
+    min-block-size: 30px;
+    font-weight: 500;
   }
   .pm-tab-count {
     margin-inline-start: 4px;

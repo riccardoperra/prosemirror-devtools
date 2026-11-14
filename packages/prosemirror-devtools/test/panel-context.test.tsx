@@ -11,7 +11,7 @@ import {
   type DevtoolsExtension,
 } from "../src/core";
 import { ProseMirrorDevtoolsPanel } from "../src/panel/panel";
-import { createTestState, createTestView } from "./helpers";
+import { activeViewTab, createTestState, createTestView } from "./helpers";
 
 afterEach(() => document.body.replaceChildren());
 
@@ -126,6 +126,7 @@ describe("host inspection context", () => {
       });
       expect(context.evidence.coverage).toHaveProperty("complete");
       expect(new TextEncoder().encode(copied).length).toBeLessThanOrEqual(16_000);
+      tab(host, "Plugins")?.click();
       tab(host, "Rendering")?.click();
       expect(host.querySelector('[aria-label="Historical decorations"]')?.textContent).toContain(
         "disabled",
@@ -170,9 +171,7 @@ describe("host inspection context", () => {
       host
         .querySelector<HTMLButtonElement>('[aria-label="Inspect dispatch #1 in events"]')
         ?.click();
-      expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
-        "Transactions",
-      );
+      expect(activeViewTab(host)?.textContent).toBe("Transactions");
       expect(host.querySelector('[aria-label="Dispatch 1 inspector"]')).not.toBeNull();
       tab(host, "Events")?.click();
       expect(host.querySelector('[data-event-id="2"]')?.getAttribute("aria-pressed")).toBe("true");
@@ -323,7 +322,8 @@ describe("host inspection context", () => {
       );
       view.dispatch(view.state.tr.insertText("c"));
       expect(host.querySelector('[aria-label="Dispatch 1 inspector"]')).not.toBeNull();
-      tab(host, "Transactions")?.click();
+      tab(host, "Timeline")?.click();
+      expect(activeViewTab(host)?.textContent).toBe("Transactions");
       expect(
         host.querySelector('[aria-label="Inspect dispatch #1"]')?.getAttribute("aria-pressed"),
       ).toBe("true");

@@ -166,7 +166,9 @@ test("V5 repeats the list scenario through accessible UI without JavaScript eval
   await page
     .getByRole("button", { name: "Inspect dispatch #1 in standalone-list", exact: true })
     .click();
-  await expect(page.getByRole("tab", { selected: true })).toContainText("Transactions");
+  await expect(
+    page.getByRole("tablist", { name: "Timeline views" }).getByRole("tab", { selected: true }),
+  ).toHaveText("Transactions");
   await page.getByRole("tab", { name: "Context", exact: true }).click();
   await expect(page.getByLabel("Installed inspectors", { exact: true })).toContainText(
     "Undo history",
@@ -329,7 +331,8 @@ test("V5 narrow panel preserves readable navigation and context", async ({ page 
   const editor = page.getByRole("textbox", { name: "Standalone editor", exact: true });
   await editor.press("Enter");
   await page.getByRole("button", { name: "Inspect dispatch #1", exact: true }).click();
-  await page.getByRole("tab", { name: /^State/ }).click();
+  await page.getByRole("tab", { name: "Document", exact: true }).click();
+  await page.getByRole("tab", { name: "State", exact: true }).click();
   await expect(page.getByLabel("Inspection context", { exact: true })).toContainText("Dispatch #1");
   await expect(page.getByRole("button", { name: "Follow live", exact: true })).toBeVisible();
   const screenshot = testInfo.outputPath("standalone-narrow.png");

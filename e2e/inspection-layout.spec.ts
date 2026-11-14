@@ -23,7 +23,7 @@ for (const host of ["standalone", "tanstack"]) {
       await expect(
         page.getByRole("region", { name: "Capabilities and coverage", exact: true }),
       ).toBeVisible();
-      const tabs = page.getByRole("tablist", { name: "ProseMirror Inspector panels" });
+      const tabs = page.getByRole("tablist", { name: "Inspector sections" });
       const tabsBounds = await tabs.boundingBox();
       const contextBounds = await context.boundingBox();
       const panelBounds = await panel.boundingBox();
@@ -34,6 +34,7 @@ for (const host of ["standalone", "tanstack"]) {
       expect(panelBounds!.height).toBeGreaterThan(100);
       expect(panelBounds!.y - (tabsBounds!.y + tabsBounds!.height)).toBeLessThanOrEqual(2);
       expect(panelBounds!.height).toBe(initialBounds!.height);
+      await page.getByRole("tab", { name: "Document", exact: true }).click();
       await page.getByRole("tab", { name: "Selection", exact: true }).click();
       await expect(panel).toContainText("Head");
       await expect(context).not.toBeVisible();
@@ -43,7 +44,10 @@ for (const host of ["standalone", "tanstack"]) {
           exact: true,
         })
         .press("x");
-      await page.getByRole("tab", { name: /^Transactions/ }).click();
+      await page.getByRole("tab", { name: /^Timeline/ }).click();
+      await expect(
+        page.getByRole("tablist", { name: "Timeline views" }).getByRole("tab", { selected: true }),
+      ).toHaveText("Transactions");
       const dispatch = page.getByRole("region", { name: /^Dispatch \d+ inspector$/ });
       const divider = panel.getByRole("separator", { name: "Dispatch list width", exact: true });
       if (width === 1280) {

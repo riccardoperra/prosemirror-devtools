@@ -6,13 +6,30 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProseMirrorDevtoolsPanel } from "../src";
 import { createProseMirrorDevtoolsStore, type DevtoolsExtension } from "../src/core";
 import { createReactDevtoolsExtension } from "../src/adapters/react/extension";
-import { BUILTIN_PANELS } from "../src/panel/panel-registry";
-import { appendTextTransaction, createTestState, createTestView } from "./helpers";
+import { BUILTIN_PANEL_GROUPS } from "../src/panel/panel-registry";
+import { activeViewTab, appendTextTransaction, createTestState, createTestView } from "./helpers";
 
 const reactTestEnvironment = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 const originalActEnvironment = reactTestEnvironment.IS_REACT_ACT_ENVIRONMENT;
+
+function tabsIn(root: ParentNode, listName: string): HTMLButtonElement[] {
+  const list = root.querySelector(`[role="tablist"][aria-label="${listName}"]`);
+  return Array.from(list?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? []);
+}
+
+function sectionTab(root: ParentNode, title: string): HTMLButtonElement {
+  const tab = tabsIn(root, "Inspector sections").find((button) =>
+    button.textContent?.startsWith(title),
+  );
+  if (!tab) throw new Error(`No "${title}" section tab.`);
+  return tab;
+}
+
+function viewTitles(root: ParentNode, sectionTitle: string): string[] {
+  return tabsIn(root, `${sectionTitle} views`).map(({ textContent }) => textContent ?? "");
+}
 
 afterEach(() => {
   if (originalActEnvironment === undefined) {
@@ -60,8 +77,8 @@ describe("devtools panel shell", () => {
 
     try {
       const panel = container.querySelector<HTMLElement>(".pm-devtools");
-      const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
-      expect(tabs).toHaveLength(BUILTIN_PANELS.length);
+      const tabs = tabsIn(container, "Inspector sections");
+      expect(tabs).toHaveLength(BUILTIN_PANEL_GROUPS.length);
       expect(panel?.dataset.theme).toBe("light");
 
       tabs[0]?.focus();
@@ -89,7 +106,7 @@ describe("devtools panel shell", () => {
     const dispose = render(() => <ProseMirrorDevtoolsPanel />, container);
 
     try {
-      const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+      const tabs = tabsIn(container, "Inspector sections");
       const first = tabs[0]!;
       const last = tabs.at(-1)!;
       const press = (key: string, options: KeyboardEventInit = {}): KeyboardEvent => {
@@ -131,14 +148,14 @@ describe("devtools panel shell", () => {
     const dispose = render(() => <ProseMirrorDevtoolsPanel extensions={extensions()} />, container);
 
     try {
-      const state = container.querySelector<HTMLButtonElement>('[role="tab"]')!;
+      const state = sectionTab(container, "Document");
       setExtensions([
         {
           id: "leading-extension",
           panels: [{ id: "overview", title: "Overview", order: -1, mount() {} }],
         },
       ]);
-      const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+      const tabs = tabsIn(container, "Inspector sections");
       expect(tabs[1]).toBe(state);
       state.focus();
       state.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
@@ -165,14 +182,14 @@ describe("devtools panel shell", () => {
     );
 
     try {
-      const tabList = container.querySelector<HTMLElement>('[role="tablist"]')!;
-      const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-      const last = tabs[tabs.length - 1]!;
+      const tabList = container.querySelector<HTMLElement>('[aria-label="Inspector sections"]')!;
+      const tabs = tabsIn(container, "Inspector sections");
+      const last = tabs.at(-1)!;
       tabList.getBoundingClientRect = () => new DOMRect(0, 0, 200, 35);
       last.getBoundingClientRect = () => new DOMRect(240, 0, 80, 35);
       tabs[0]!.focus();
 
-      setActivePanel(BUILTIN_PANELS.at(-1)!.id);
+      setActivePanel("inspection-context");
       expect(tabList.scrollLeft).toBe(120);
       expect(document.activeElement).toBe(tabs[0]);
       expect(last.getAttribute("aria-selected")).toBe("true");
@@ -216,10 +233,9 @@ describe("devtools panel shell", () => {
         (button) => button.textContent === "Document after dispatch",
       );
       documentLink?.click();
-      expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe(
-        "State",
-      );
-      container.querySelector<HTMLButtonElement>('[role="tab"][id$="tab-history"]')?.click();
+      expect(activeViewTab(container)?.textContent).toBe("State");
+      sectionTab(container, "Timeline").click();
+      expect(activeViewTab(container)?.textContent).toBe("Transactions");
 
       container.querySelector<HTMLButtonElement>(".pm-history-list .pm-button")?.click();
       expect(container.querySelector(".pm-body")?.textContent).toContain(
@@ -275,7 +291,7 @@ describe("devtools panel shell", () => {
     let unregister = (): void => {};
 
     try {
-      expect(container.querySelectorAll('[role="tab"]')).toHaveLength(BUILTIN_PANELS.length + 1);
+      expect(tabsIn(container, "Inspector sections")).toHaveLength(BUILTIN_PANEL_GROUPS.length + 1);
       expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("No active editor");
 
       unregister = store.register({ id: "editor", view });
@@ -291,9 +307,7 @@ describe("devtools panel shell", () => {
       });
       expect(container.querySelector(".pm-extension-panel")?.textContent).toBe("Editor editor: x");
 
-      Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
-        .find((tab) => tab.textContent === "State")
-        ?.click();
+      sectionTab(container, "Document").click();
       expect(cleanup).toHaveBeenCalledOnce();
       expect(container.querySelector(".pm-extension-panel")).toBeNull();
     } finally {
@@ -339,10 +353,8 @@ describe("devtools panel shell", () => {
         "React extension content",
       );
 
-      Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
-        .find((tab) => tab.textContent === "State")
-        ?.click();
-      expect(onActivePanelChange).toHaveBeenCalledWith("state");
+      sectionTab(container, "Document").click();
+      expect(onActivePanelChange).toHaveBeenLastCalledWith("state");
       expect(container.querySelector('[data-testid="react-extension"]')).not.toBeNull();
     } finally {
       await act(async () => dispose());
@@ -398,5 +410,113 @@ describe("devtools panel shell", () => {
     }
 
     expect(activeSignal?.aborted).toBe(true);
+  });
+
+  it("groups the views into sections and appends each extension panel as its own section", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const extensions: readonly DevtoolsExtension[] = [
+      {
+        id: "integration",
+        panels: [{ id: "integration", title: "Integration", requiresInstance: false, mount() {} }],
+      },
+      {
+        id: "webmcp",
+        panels: [{ id: "webmcp", title: "WebMCP", order: 90, mount() {} }],
+      },
+    ];
+    const dispose = render(() => <ProseMirrorDevtoolsPanel extensions={extensions} />, container);
+
+    try {
+      expect(tabsIn(container, "Inspector sections").map(({ textContent }) => textContent)).toEqual(
+        [
+          "Document",
+          "Timeline0",
+          "Snapshots",
+          "Performance0",
+          "Plugins",
+          "WebMCP",
+          "Integration",
+          "Context",
+        ],
+      );
+      expect(viewTitles(container, "Document")).toEqual(["State", "Selection", "Schema"]);
+
+      sectionTab(container, "Timeline").click();
+      expect(viewTitles(container, "Timeline")).toEqual(["Transactions", "Events"]);
+      expect(activeViewTab(container)?.textContent).toBe("Transactions");
+      expect(tabsIn(container, "Document views")).toEqual([]);
+
+      for (const title of ["Snapshots", "Performance"]) {
+        sectionTab(container, title).click();
+        expect(container.querySelectorAll('[role="tablist"]')).toHaveLength(1);
+        expect(activeViewTab(container)).toBe(sectionTab(container, title));
+      }
+
+      sectionTab(container, "Integration").click();
+      expect(container.querySelectorAll('[role="tablist"]')).toHaveLength(1);
+      expect(activeViewTab(container)?.textContent).toBe("Integration");
+    } finally {
+      dispose();
+    }
+  });
+
+  it("returns to the view last used in a section", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const onActivePanelChange = vi.fn();
+    const dispose = render(
+      () => <ProseMirrorDevtoolsPanel onActivePanelChange={onActivePanelChange} />,
+      container,
+    );
+
+    try {
+      sectionTab(container, "Timeline").click();
+      tabsIn(container, "Timeline views")
+        .find(({ textContent }) => textContent === "Events")!
+        .click();
+      sectionTab(container, "Plugins").click();
+      expect(activeViewTab(container)?.textContent).toBe("Plugins");
+
+      sectionTab(container, "Timeline").click();
+      expect(activeViewTab(container)?.textContent).toBe("Events");
+      expect(onActivePanelChange.mock.calls.map(([id]) => id)).toEqual([
+        "history",
+        "events",
+        "plugins",
+        "events",
+      ]);
+    } finally {
+      dispose();
+    }
+  });
+
+  it("opens the section of the default view and moves between views with the keyboard", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const onActivePanelChange = vi.fn();
+    const dispose = render(
+      () => (
+        <ProseMirrorDevtoolsPanel defaultPanel="schema" onActivePanelChange={onActivePanelChange} />
+      ),
+      container,
+    );
+
+    try {
+      expect(sectionTab(container, "Document").getAttribute("aria-selected")).toBe("true");
+      expect(activeViewTab(container)?.textContent).toBe("Schema");
+
+      const views = tabsIn(container, "Document views");
+      views[2]!.focus();
+      views[2]!.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Home" }));
+      expect(document.activeElement).toBe(views[0]);
+      expect(activeViewTab(container)?.textContent).toBe("State");
+      views[0]!.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowLeft" }));
+      expect(document.activeElement).toBe(views[2]);
+      expect(onActivePanelChange.mock.calls.map(([id]) => id)).toEqual(["state", "schema"]);
+      expect(sectionTab(container, "Document").getAttribute("aria-selected")).toBe("true");
+    } finally {
+      dispose();
+    }
   });
 });
