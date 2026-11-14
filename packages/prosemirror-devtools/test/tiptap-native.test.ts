@@ -1,4 +1,4 @@
-import { Editor, Extension } from "@tiptap/core";
+import { Editor, Extension, Node, type AnyExtension } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { act, createElement, StrictMode, useEffect, useState } from "react";
@@ -38,14 +38,36 @@ function inspectorExtension(options: TiptapDevtoolsOptions) {
   });
 }
 
-function createEditor(options: TiptapDevtoolsOptions): Editor {
+const Callout = Node.create({
+  name: "callout",
+  group: "block",
+  content: "inline*",
+  parseHTML: () => [{ tag: "aside" }],
+  renderHTML: () => ["aside", 0],
+  addNodeView:
+    () =>
+    ({ node }) => {
+      const dom = document.createElement("aside");
+      return {
+        dom,
+        contentDOM: dom,
+        update: (next) => next.type === node.type,
+      };
+    },
+});
+
+function createEditor(
+  options: TiptapDevtoolsOptions,
+  content = "<ul><li><p>First item</p></li></ul>",
+  extensions: AnyExtension[] = [],
+): Editor {
   const inspector = inspectorExtension(options);
   const element = document.createElement("div");
   document.body.append(element);
   const editor = new Editor({
     element,
-    extensions: [inspector, StarterKit],
-    content: "<ul><li><p>First item</p></li></ul>",
+    extensions: [inspector, StarterKit, ...extensions],
+    content,
     enableExtensionDispatchTransaction: true,
   });
   editors.add(editor);
@@ -199,5 +221,37 @@ describe("native Tiptap 3 integration", () => {
     ).toBe(false);
     editor.unregisterPlugin(key);
     expect(key.getState(editor.state)).toBeUndefined();
+  });
+
+  it("records the lifecycle of node views that extensions add through addNodeView", () => {
+    const store = createProseMirrorDevtoolsStore();
+    const diagnostics = createProseMirrorDevtoolsDiagnostics();
+    const editor = createEditor(
+      { id: "tiptap-node-views", store, diagnostics, performanceMarks: false },
+      "<aside>Note</aside><p>Body</p>",
+      [Callout],
+    );
+    const callouts = () =>
+      diagnostics.getSnapshot().nodeViews.filter((record) => record.nodeType === "callout");
+
+    expect(callouts()).toEqual([
+      expect.objectContaining({ destroyed: false, updates: 0, destroys: 0 }),
+    ]);
+
+    editor.commands.insertContentAt(2, "!");
+    expect(editor.state.doc.firstChild?.textContent).toBe("N!ote");
+    expect(callouts()).toHaveLength(1);
+    expect(callouts()[0]?.updates).toBeGreaterThan(0);
+
+    editor.setOptions({ editorProps: {} });
+    editor.registerPlugin(new Plugin({ key: new PluginKey("late") }));
+    editor.commands.insertContentAt(2, "?");
+    expect(callouts()).toHaveLength(1);
+
+    const calloutSize = editor.state.doc.firstChild?.nodeSize ?? 0;
+    editor.commands.deleteRange({ from: 0, to: calloutSize });
+    expect(editor.state.doc.firstChild?.type.name).toBe("paragraph");
+    expect(callouts()).toEqual([expect.objectContaining({ destroyed: true, destroys: 1 })]);
+    diagnostics.dispose();
   });
 });
