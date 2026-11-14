@@ -5,6 +5,7 @@ import type {
   DevtoolsExtension,
 } from "../../../core/extensions";
 import type { TransactionRecord } from "../../../core/types";
+import type { YjsDispatchOrigin } from "../../../inspectors/yjs";
 
 function field(value: unknown, key: string): unknown {
   return value && typeof value === "object" && !Array.isArray(value) && key in value
@@ -130,7 +131,10 @@ function collabEffect({
 }
 
 const yjsOrigins: Readonly<
-  Record<string, Pick<DevtoolsDispatchPresentation, "badge" | "listLabel" | "text">>
+  Record<
+    YjsDispatchOrigin["kind"],
+    Pick<DevtoolsDispatchPresentation, "badge" | "listLabel" | "text">
+  >
 > = {
   local: {
     badge: "Local · Yjs",
@@ -175,7 +179,7 @@ function yjsEffect({
       : undefined;
   const origin =
     typeof rootKind === "string" && Object.hasOwn(yjsOrigins, rootKind)
-      ? yjsOrigins[rootKind]
+      ? yjsOrigins[rootKind as YjsDispatchOrigin["kind"]]
       : undefined;
   if (origin && (rootKind !== "local" || record.docChanged)) {
     return { label: "Dispatch origin", ...origin, note: transportNote(sample) };
