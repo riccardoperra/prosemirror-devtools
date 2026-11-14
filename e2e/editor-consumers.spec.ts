@@ -324,6 +324,16 @@ test("V2 Tiptap history inspector reads StarterKit undo and redo depths", async 
   expect(errors).toEqual([]);
 });
 
+test("Tiptap Rendering lists node views added by extensions", async ({ page }) => {
+  await page.goto("http://127.0.0.1:4181");
+  await page.getByRole("tab", { name: /^Plugins/ }).click();
+  await page.getByRole("tab", { name: /^Rendering/ }).click();
+  await page.getByRole("button", { name: /^Node views [1-9]/ }).click();
+  const live = page.getByRole("button", { name: /^callout #\d+/ }).filter({ hasText: "live" });
+  await expect(live).toHaveCount(1);
+  await expect(live).toContainText("Tiptap node views");
+});
+
 for (const fixture of [
   { name: "standalone", port: 4280, editor: "Standalone editor" },
   { name: "Tiptap", port: 4281, editor: "Tiptap editor" },

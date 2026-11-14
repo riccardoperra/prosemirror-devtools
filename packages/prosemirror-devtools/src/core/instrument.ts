@@ -151,31 +151,58 @@ function wrapProps(
       continue;
     }
     if (name === "nodeViews" && value && typeof value === "object") {
-      wrapped[name] = Object.fromEntries(
-        Object.entries(value).map(([nodeName, factory]) => [
-          nodeName,
-          typeof factory === "function"
-            ? function (this: unknown, ...args: unknown[]) {
-                return measure(`props.nodeViews.${nodeName}`, () => {
-                  const tracker = diagnostics?.()?.nodeView(
-                    pluginKey,
-                    pluginLabel,
-                    nodeName,
-                    args[2],
-                  );
-                  const run = () => Reflect.apply(factory as LooseFunction, this, args);
-                  const result = tracker ? tracker.run("create", run) : run();
-                  return result && typeof result === "object"
-                    ? wrapNodeView(result as NodeView, measure, tracker, diagnostics)
-                    : result;
-                });
-              }
-            : factory,
-        ]),
-      );
+      wrapped[name] = wrapNodeViewFactories(value, measure, pluginKey, pluginLabel, diagnostics);
     }
   }
   return wrapped as EditorProps<Plugin>;
+}
+
+function wrapNodeViewFactories<T extends object>(
+  nodeViews: T,
+  measure: <R>(hook: PluginHook, run: () => R) => R,
+  pluginKey: string,
+  pluginLabel: string,
+  diagnostics?: () => DevtoolsDiagnosticsRecorder | undefined,
+): T {
+  return Object.fromEntries(
+    Object.entries(nodeViews).map(([nodeName, factory]) => [
+      nodeName,
+      typeof factory === "function"
+        ? function (this: unknown, ...args: unknown[]) {
+            return measure(`props.nodeViews.${nodeName}`, () => {
+              const tracker = diagnostics?.()?.nodeView(pluginKey, pluginLabel, nodeName, args[2]);
+              const run = () => Reflect.apply(factory as LooseFunction, this, args);
+              const result = tracker ? tracker.run("create", run) : run();
+              return result && typeof result === "object"
+                ? wrapNodeView(result as NodeView, measure, tracker, diagnostics)
+                : result;
+            });
+          }
+        : factory,
+    ]),
+  ) as T;
+}
+
+function hookRunners(options: InstrumentPluginsOptions, pluginKey: string, pluginLabel: string) {
+  const store = options.store ?? prosemirrorDevtoolsStore;
+  const diagnostics = options.diagnostics
+    ? () =>
+        options.isActive && !options.isActive()
+          ? undefined
+          : getDiagnosticsRecorder(options.diagnostics)
+    : undefined;
+  const measure = <T>(hook: PluginHook, run: () => T): T => {
+    if (options.isActive && !options.isActive()) return run();
+    return store.measurePluginHook(
+      options.instanceId,
+      pluginKey,
+      pluginLabel,
+      hook,
+      run,
+      options.sessionId,
+    );
+  };
+  return { measure, diagnostics };
 }
 
 function wrapPlugin(plugin: Plugin, index: number, options: InstrumentPluginsOptions): Plugin {
@@ -213,23 +240,7 @@ function wrapPlugin(plugin: Plugin, index: number, options: InstrumentPluginsOpt
   }
 
   const pluginKey = runtimePluginKey(original);
-  const diagnostics = options.diagnostics
-    ? () =>
-        options.isActive && !options.isActive()
-          ? undefined
-          : getDiagnosticsRecorder(options.diagnostics)
-    : undefined;
-  const measure = <T>(hook: PluginHook, run: () => T): T => {
-    if (options.isActive && !options.isActive()) return run();
-    return store.measurePluginHook(
-      options.instanceId,
-      pluginKey,
-      pluginLabel,
-      hook,
-      run,
-      options.sessionId,
-    );
-  };
+  const { measure, diagnostics } = hookRunners(options, pluginKey, pluginLabel);
   const spec = original.spec as PluginSpec<unknown>;
   const wrappedSpec: PluginSpec<unknown> = { ...spec };
 
@@ -419,4 +430,17 @@ export function instrumentProseMirrorPlugins(
   const wrapped = plugins.map((plugin, index) => wrapPlugin(plugin, index, options));
   getDiagnosticsRecorder(options.diagnostics)?.registerInstrumentedPlugins(wrapped.length);
   return wrapped;
+}
+
+/**
+ * Returns node view constructors that are timed and recorded like a plugin's `props.nodeViews`,
+ * for node views passed to the EditorView directly. `source` names them in the Rendering panel.
+ */
+export function instrumentProseMirrorNodeViews<T extends NonNullable<EditorProps["nodeViews"]>>(
+  nodeViews: T,
+  options: Omit<InstrumentPluginsOptions, "getPluginLabel">,
+  source: { key: string; label: string },
+): T {
+  const { measure, diagnostics } = hookRunners(options, source.key, source.label);
+  return wrapNodeViewFactories(nodeViews, measure, source.key, source.label, diagnostics);
 }
