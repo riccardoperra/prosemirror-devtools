@@ -1,9 +1,11 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
+import { memo } from "react";
 
 import { nodeNames } from "../document";
 import { computeTotals, formatMoney } from "../model";
 import { useInvoiceSelector } from "../view-context";
+import { sameNodeAndSelection } from "./memo";
 
 function TotalsView({ editor }: ReactNodeViewProps) {
   const { currency, totals } = useInvoiceSelector(editor, (invoice) => ({
@@ -36,6 +38,7 @@ function TotalsView({ editor }: ReactNodeViewProps) {
 
 export const Totals = Node.create({
   name: nodeNames.totals,
+  group: "section",
   atom: true,
   selectable: false,
   parseHTML: () => [{ tag: "div[data-type=totals]" }],
@@ -43,5 +46,5 @@ export const Totals = Node.create({
     "div",
     mergeAttributes(HTMLAttributes, { "data-type": "totals" }),
   ],
-  addNodeView: () => ReactNodeViewRenderer(TotalsView),
+  addNodeView: () => ReactNodeViewRenderer(memo(TotalsView, sameNodeAndSelection)),
 });

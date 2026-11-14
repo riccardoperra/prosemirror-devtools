@@ -5,6 +5,7 @@ import { textAttribute } from "./attributes";
 
 export const Parties = Node.create({
   name: nodeNames.parties,
+  group: "section",
   content: `${nodeNames.party} ${nodeNames.party}`,
   isolating: true,
   parseHTML: () => [{ tag: "section[data-type=parties]" }],

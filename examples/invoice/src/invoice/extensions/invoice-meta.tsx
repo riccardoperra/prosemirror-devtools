@@ -1,5 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
+import { memo } from "react";
 
 import { TextField } from "../../ui/fields";
 import { setStatus, updateMeta } from "../commands";
@@ -14,6 +15,7 @@ import {
   type InvoiceStatus,
 } from "../model";
 import { textAttribute } from "./attributes";
+import { sameNodeAndSelection } from "./memo";
 
 function InvoiceMetaView({ node, editor }: ReactNodeViewProps) {
   const meta = node.attrs as InvoiceMeta;
@@ -87,6 +89,7 @@ function InvoiceMetaView({ node, editor }: ReactNodeViewProps) {
 
 export const InvoiceMetaNode = Node.create({
   name: nodeNames.meta,
+  group: "section",
   atom: true,
   selectable: false,
   addAttributes: () => ({
@@ -101,5 +104,5 @@ export const InvoiceMetaNode = Node.create({
     "header",
     mergeAttributes(HTMLAttributes, { "data-type": "invoice-meta" }),
   ],
-  addNodeView: () => ReactNodeViewRenderer(InvoiceMetaView),
+  addNodeView: () => ReactNodeViewRenderer(memo(InvoiceMetaView, sameNodeAndSelection)),
 });

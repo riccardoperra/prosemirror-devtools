@@ -3,12 +3,17 @@ import type { Node as ProseMirrorNode } from "prosemirror-model";
 import type { Invoice, InvoiceMeta, LineItem } from "./model";
 
 export const nodeNames = {
+  page: "page",
   meta: "invoiceMeta",
   parties: "parties",
   party: "party",
   lineItems: "lineItems",
   lineItem: "lineItem",
   totals: "totals",
+  timesheet: "timesheet",
+  paymentSchedule: "paymentSchedule",
+  signatures: "signatures",
+  signature: "signature",
   field: "field",
 } as const;
 
@@ -19,9 +24,13 @@ export interface PositionedNode {
   readonly pos: number;
 }
 
-export function readMeta(doc: ProseMirrorNode): InvoiceMeta {
-  return doc.child(0).attrs as InvoiceMeta;
-}
+const fallbackMeta: InvoiceMeta = {
+  number: "",
+  issueDate: "",
+  dueDate: "",
+  currency: "EUR",
+  status: "draft",
+};
 
 export function readLineItem(node: ProseMirrorNode): LineItem {
   const { id, quantity, unitPrice, vatRate, discountPercent } = node.attrs as Omit<
@@ -31,19 +40,27 @@ export function readLineItem(node: ProseMirrorNode): LineItem {
   return { id, quantity, unitPrice, vatRate, discountPercent, description: node.textContent };
 }
 
-export function findLineItems(doc: ProseMirrorNode): PositionedNode {
-  let found: PositionedNode | null = null;
-  doc.forEach((node, pos) => {
-    if (node.type.name === nodeNames.lineItems) found = { node, pos };
+/** Pages hold sections, so every invoice node lives at depth 2 and a scan never needs to go deeper. */
+export function sections(doc: ProseMirrorNode): PositionedNode[] {
+  const found: PositionedNode[] = [];
+  doc.forEach((page, pagePos) => {
+    page.forEach((node, offset) => found.push({ node, pos: pagePos + 1 + offset }));
   });
-  if (!found) throw new Error("The invoice schema requires a lineItems node.");
+  return found;
+}
+
+export function pages(doc: ProseMirrorNode): PositionedNode[] {
+  const found: PositionedNode[] = [];
+  doc.forEach((node, pos) => found.push({ node, pos }));
   return found;
 }
 
 export function lineItemRows(doc: ProseMirrorNode): PositionedNode[] {
-  const container = findLineItems(doc);
   const rows: PositionedNode[] = [];
-  container.node.forEach((node, offset) => rows.push({ node, pos: container.pos + 1 + offset }));
+  for (const { node, pos } of sections(doc)) {
+    if (node.type.name !== nodeNames.lineItems) continue;
+    node.forEach((row, offset) => rows.push({ node: row, pos: pos + 1 + offset }));
+  }
   return rows;
 }
 
@@ -54,21 +71,42 @@ export function rowsInRange(doc: ProseMirrorNode, from: number, to: number): Pos
   );
 }
 
-export function readPartyName(doc: ProseMirrorNode, role: PartyRole): string {
-  let name = "";
-  doc.child(1).forEach((party) => {
-    if (party.attrs.role === role) name = party.firstChild?.textContent ?? "";
-  });
-  return name;
+export function findSection(doc: ProseMirrorNode, name: string): PositionedNode | null {
+  return sections(doc).find(({ node }) => node.type.name === name) ?? null;
 }
 
+const invoices = new WeakMap<ProseMirrorNode, Invoice>();
+
+/**
+ * Every node view, the toolbar, and the read-only plugin read the invoice, so it is computed once
+ * per document and selection-only transactions cost nothing.
+ */
 export function readInvoice(doc: ProseMirrorNode): Invoice {
-  return {
-    meta: readMeta(doc),
-    seller: readPartyName(doc, "seller"),
-    buyer: readPartyName(doc, "buyer"),
-    items: lineItemRows(doc).map(({ node }) => readLineItem(node)),
-  };
+  const cached = invoices.get(doc);
+  if (cached) return cached;
+  let meta = fallbackMeta;
+  let seller = "";
+  let buyer = "";
+  const items: LineItem[] = [];
+  for (const { node } of sections(doc)) {
+    if (node.type.name === nodeNames.meta) meta = node.attrs as InvoiceMeta;
+    if (node.type.name === nodeNames.lineItems)
+      node.forEach((row) => items.push(readLineItem(row)));
+    if (node.type.name === nodeNames.parties) {
+      node.forEach((party) => {
+        const name = party.firstChild?.textContent ?? "";
+        if (party.attrs.role === "seller") seller = name;
+        else buyer = name;
+      });
+    }
+  }
+  const invoice = { meta, seller, buyer, items };
+  invoices.set(doc, invoice);
+  return invoice;
+}
+
+export function readMeta(doc: ProseMirrorNode): InvoiceMeta {
+  return readInvoice(doc).meta;
 }
 
 export function createLineItemId(): string {

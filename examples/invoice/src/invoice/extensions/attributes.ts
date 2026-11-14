@@ -23,3 +23,19 @@ export function numberAttribute(name: string, fallback: number): Attribute {
     renderHTML: (attributes) => ({ [dataName(name)]: String(attributes[name]) }),
   };
 }
+
+export function jsonAttribute<T>(name: string, fallback: T): Attribute {
+  return {
+    default: fallback,
+    parseHTML: (element) => {
+      const raw = element.getAttribute(dataName(name));
+      if (raw === null) return fallback;
+      try {
+        return JSON.parse(raw) as T;
+      } catch {
+        return fallback;
+      }
+    },
+    renderHTML: (attributes) => ({ [dataName(name)]: JSON.stringify(attributes[name]) }),
+  };
+}

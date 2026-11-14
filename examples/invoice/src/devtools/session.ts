@@ -14,6 +14,10 @@ export function measure<T>(label: string, category: string, run: () => T): T {
   return measureProseMirrorDevtools(sessionId, label, run, { store, category });
 }
 
+export function mark(label: string, category: string, data: unknown): void {
+  markProseMirrorDevtools(sessionId, label, { store, category, data });
+}
+
 export interface DomainEvent {
   readonly label: string;
   readonly tone?: DevtoolsMarkerTone;

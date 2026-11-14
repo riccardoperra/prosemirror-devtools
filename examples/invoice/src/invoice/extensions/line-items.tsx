@@ -5,6 +5,7 @@ import {
   ReactNodeViewRenderer,
   type ReactNodeViewProps,
 } from "@tiptap/react";
+import { memo } from "react";
 
 import { traceCommand } from "../../devtools/session";
 import { NumberField } from "../../ui/fields";
@@ -13,11 +14,13 @@ import { nodeNames, readLineItem } from "../document";
 import { formatMoney, isVatRate, lineNet, vatRates, type LineItem } from "../model";
 import { useInvoiceView } from "../view-context";
 import { numberAttribute, textAttribute } from "./attributes";
+import { sameNodeAndSelection } from "./memo";
 
 const columns = ["Description", "Qty", "Unit price", "VAT", "Discount", "Amount"];
 
 export const LineItems = Node.create({
   name: nodeNames.lineItems,
+  group: "section",
   content: `${nodeNames.lineItem}+`,
   isolating: true,
   parseHTML: () => [{ tag: "div[data-type=line-items]", contentElement: ".line-items-body" }],
@@ -145,5 +148,5 @@ export const LineItemNode = Node.create({
     mergeAttributes(HTMLAttributes, { "data-type": "line-item" }),
     0,
   ],
-  addNodeView: () => ReactNodeViewRenderer(LineItemView),
+  addNodeView: () => ReactNodeViewRenderer(memo(LineItemView, sameNodeAndSelection)),
 });

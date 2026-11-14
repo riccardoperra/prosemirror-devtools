@@ -1,9 +1,11 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
+import { memo } from "react";
 
 import { nodeNames } from "../document";
 import { fieldRegistry, isFieldKey } from "../fields";
 import { useInvoiceSelector } from "../view-context";
+import { sameNodeAndSelection } from "./memo";
 
 function FieldView({ node, editor, selected }: ReactNodeViewProps) {
   const key = node.attrs.key as string;
@@ -37,5 +39,5 @@ export const Field = Node.create({
   parseHTML: () => [{ tag: "span[data-field]" }],
   renderHTML: ({ HTMLAttributes }) => ["span", mergeAttributes(HTMLAttributes)],
   renderText: ({ node }) => `{{${node.attrs.key}}}`,
-  addNodeView: () => ReactNodeViewRenderer(FieldView),
+  addNodeView: () => ReactNodeViewRenderer(memo(FieldView, sameNodeAndSelection)),
 });

@@ -1,9 +1,9 @@
 import { Extension } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "prosemirror-model";
-import { Plugin, PluginKey } from "prosemirror-state";
+import { Plugin, PluginKey, type Transaction } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 
-import { measure } from "../../devtools/session";
+import { mark, measure } from "../../devtools/session";
 import { lineItemRows, readLineItem } from "../document";
 import { validateLineItem, type Issue } from "../model";
 
@@ -14,6 +14,8 @@ export interface InvalidRow {
 }
 
 export interface ValidationState {
+  /** Artificial cost per recompute, so the Performance panel has a hot plugin hook to show. */
+  readonly delayMs: number;
   readonly invalid: readonly InvalidRow[];
   readonly decorations: DecorationSet;
 }
@@ -26,11 +28,20 @@ function issueWidget(row: InvalidRow): HTMLElement {
   return element;
 }
 
-function validate(doc: ProseMirrorNode): ValidationState {
+function busyWait(ms: number): void {
+  const until = performance.now() + ms;
+  while (performance.now() < until) {
+    // Blocks on purpose: the slow-plugin scenario needs real main-thread time in the hook.
+  }
+}
+
+function validate(doc: ProseMirrorNode, delayMs: number): ValidationState {
   return measure("Validate line items", "validation", () => {
+    if (delayMs > 0) busyWait(delayMs);
     const invalid: InvalidRow[] = [];
     const decorations: Decoration[] = [];
-    for (const { node, pos } of lineItemRows(doc)) {
+    const rows = lineItemRows(doc);
+    for (const { node, pos } of rows) {
       const item = readLineItem(node);
       const issues = validateLineItem(item);
       if (issues.length === 0) continue;
@@ -49,7 +60,8 @@ function validate(doc: ProseMirrorNode): ValidationState {
         }),
       );
     }
-    return { invalid, decorations: DecorationSet.create(doc, decorations) };
+    mark("Validation", "validation", { rows: rows.length, invalid: invalid.length, delayMs });
+    return { delayMs, invalid, decorations: DecorationSet.create(doc, decorations) };
   });
 }
 
@@ -58,13 +70,21 @@ export const validationKey = new PluginKey<ValidationState>("lineItemValidation"
 export const validationPlugin = new Plugin<ValidationState>({
   key: validationKey,
   state: {
-    init: (_config, state) => validate(state.doc),
-    apply: (tr, value, _oldState, newState) => (tr.docChanged ? validate(newState.doc) : value),
+    init: (_config, state) => validate(state.doc, 0),
+    apply(tr, value, _oldState, newState) {
+      const delay = tr.getMeta(validationKey) as { delayMs: number } | undefined;
+      if (delay) return validate(newState.doc, delay.delayMs);
+      return tr.docChanged ? validate(newState.doc, value.delayMs) : value;
+    },
   },
   props: {
     decorations: (state) => validationKey.getState(state)?.decorations,
   },
 });
+
+export function setValidationDelay(tr: Transaction, delayMs: number): Transaction {
+  return tr.setMeta(validationKey, { delayMs });
+}
 
 export const LineItemValidation = Extension.create({
   name: "lineItemValidation",

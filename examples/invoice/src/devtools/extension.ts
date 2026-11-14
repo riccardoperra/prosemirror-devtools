@@ -24,6 +24,7 @@ const validationInspector = createPluginStateInspector({
   label: "Line item validation",
   plugin: validationPlugin,
   serialize: (value) => ({
+    delayMs: value.delayMs,
     invalidRows: value.invalid.length,
     rows: value.invalid.slice(0, 20).map((row) => ({
       id: row.id,

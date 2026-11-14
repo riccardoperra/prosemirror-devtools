@@ -1,20 +1,29 @@
 import type { Editor } from "@tiptap/core";
-import { Fragment, type Node as ProseMirrorNode } from "prosemirror-model";
-import { TextSelection, type EditorState, type Transaction } from "prosemirror-state";
+import { Fragment } from "prosemirror-model";
+import {
+  AllSelection,
+  NodeSelection,
+  TextSelection,
+  type EditorState,
+  type Transaction,
+} from "prosemirror-state";
 
 import { tagDomainEvent, traceCommand } from "../devtools/session";
 import {
   createLineItemId,
-  findLineItems,
+  findSection,
   lineItemRows,
   nodeNames,
-  readMeta,
+  pages,
+  readLineItem,
   rowsInRange,
+  sections,
 } from "./document";
 import type { FieldKey } from "./fields";
-import { stressLineItems } from "./fixture";
-import { canTransition, cents, type InvoiceMeta, type InvoiceStatus } from "./model";
+import { generateLineItems, initialInvoice, lineItemPages } from "./fixture";
+import { canTransition, cents, reprice, type InvoiceMeta, type InvoiceStatus } from "./model";
 import { getFindState, setFindQuery } from "./plugins/find";
+import { setValidationDelay } from "./plugins/validation";
 
 type Build = (state: EditorState) => Transaction | null;
 
@@ -27,25 +36,25 @@ function run(editor: Editor, name: string, build: Build): boolean {
   });
 }
 
-function newLineItem(state: EditorState): ProseMirrorNode {
-  return state.schema.nodes[nodeNames.lineItem]!.create({
-    id: createLineItemId(),
-    quantity: 1,
-    unitPrice: cents(0),
-    vatRate: 22,
-    discountPercent: 0,
-  });
-}
-
 function selectedRows(state: EditorState) {
   return rowsInRange(state.doc, state.selection.from, state.selection.to);
 }
 
 export function addLineItem(editor: Editor): boolean {
   return run(editor, "Add line item", (state) => {
-    const { node, pos } = findLineItems(state.doc);
-    const end = pos + node.nodeSize - 1;
-    const tr = state.tr.insert(end, newLineItem(state));
+    const container = sections(state.doc).findLast(
+      ({ node }) => node.type.name === nodeNames.lineItems,
+    );
+    if (!container) return null;
+    const end = container.pos + container.node.nodeSize - 1;
+    const row = state.schema.nodes[nodeNames.lineItem]!.create({
+      id: createLineItemId(),
+      quantity: 1,
+      unitPrice: cents(0),
+      vatRate: 22,
+      discountPercent: 0,
+    });
+    const tr = state.tr.insert(end, row);
     return tr.setSelection(TextSelection.create(tr.doc, end + 1)).scrollIntoView();
   });
 }
@@ -67,8 +76,11 @@ export function deleteRows(editor: Editor, at?: number): boolean {
     const rows = at === undefined ? selectedRows(state) : rowsInRange(state.doc, at, at + 1);
     const first = rows[0];
     const last = rows.at(-1);
-    // The schema requires at least one line item.
-    if (!first || !last || rows.length >= lineItemRows(state.doc).length) return null;
+    if (!first || !last) return null;
+    const container = state.doc.resolve(first.pos).parent;
+    // Each lineItems section keeps a row, and one delete never merges two sections.
+    if (container !== state.doc.resolve(last.pos).parent) return null;
+    if (rows.length >= container.childCount) return null;
     return state.tr.delete(first.pos, last.pos + last.node.nodeSize);
   });
 }
@@ -86,11 +98,53 @@ export function applyDiscountToAll(editor: Editor, percent: number): boolean {
   });
 }
 
+export function repriceInOneTransaction(editor: Editor, percent: number): boolean {
+  return run(editor, "Reprice rows (one transaction)", (state) => {
+    const tr = state.tr;
+    const rows = lineItemRows(state.doc);
+    for (const { node, pos } of rows) {
+      tr.setNodeAttribute(pos, "unitPrice", reprice(readLineItem(node), percent));
+    }
+    return tagDomainEvent(tr, {
+      label: "Bulk reprice",
+      data: { mode: "single transaction", rows: rows.length, percent },
+    });
+  });
+}
+
+export const repriceDispatchLimit = 200;
+
+/** One dispatch per row costs a validation pass per row, so the comparison caps the row count. */
+export function repriceRowByRow(editor: Editor, percent: number): boolean {
+  return traceCommand(editor, "Reprice rows (one dispatch each)", () => {
+    const rows = lineItemRows(editor.state.doc).slice(0, repriceDispatchLimit);
+    for (const [index, { pos }] of rows.entries()) {
+      const node = editor.state.doc.nodeAt(pos);
+      if (!node) continue;
+      const tr = editor.state.tr.setNodeAttribute(
+        pos,
+        "unitPrice",
+        reprice(readLineItem(node), percent),
+      );
+      if (index === 0) {
+        tagDomainEvent(tr, {
+          label: "Bulk reprice",
+          data: { mode: "one dispatch per row", rows: rows.length, percent },
+        });
+      }
+      editor.view.dispatch(tr);
+    }
+    return rows.length > 0;
+  });
+}
+
 export function setStatus(editor: Editor, next: InvoiceStatus): boolean {
   return run(editor, `Mark as ${next}`, (state) => {
-    const from = readMeta(state.doc).status;
+    const meta = findSection(state.doc, nodeNames.meta);
+    if (!meta) return null;
+    const from = meta.node.attrs.status as InvoiceStatus;
     if (!canTransition(from, next)) return null;
-    return tagDomainEvent(state.tr.setNodeAttribute(0, "status", next), {
+    return tagDomainEvent(state.tr.setNodeAttribute(meta.pos, "status", next), {
       label: "Status changed",
       tone: next === "void" ? "warning" : "info",
       data: { from, to: next },
@@ -99,9 +153,11 @@ export function setStatus(editor: Editor, next: InvoiceStatus): boolean {
 }
 
 export function updateMeta(editor: Editor, attrs: Partial<Omit<InvoiceMeta, "status">>): boolean {
-  return run(editor, "Edit invoice details", (state) =>
-    state.tr.setNodeMarkup(0, undefined, { ...state.doc.child(0).attrs, ...attrs }),
-  );
+  return run(editor, "Edit invoice details", (state) => {
+    const meta = findSection(state.doc, nodeNames.meta);
+    if (!meta) return null;
+    return state.tr.setNodeMarkup(meta.pos, undefined, { ...meta.node.attrs, ...attrs });
+  });
 }
 
 export function insertField(editor: Editor, key: FieldKey): boolean {
@@ -124,17 +180,113 @@ export function selectAllLineItems(editor: Editor): boolean {
   });
 }
 
+export function selectFirstRow(editor: Editor): boolean {
+  return run(editor, "Select first row", (state) => {
+    const first = lineItemRows(state.doc)[0];
+    return first
+      ? state.tr.setSelection(NodeSelection.create(state.doc, first.pos)).scrollIntoView()
+      : null;
+  });
+}
+
+export function selectPage(editor: Editor, index: number): boolean {
+  return run(editor, `Select page ${index + 1}`, (state) => {
+    const page = pages(state.doc)[index];
+    return page
+      ? state.tr.setSelection(NodeSelection.create(state.doc, page.pos)).scrollIntoView()
+      : null;
+  });
+}
+
+/** From the last row of one line-item page into the first row of the next one. */
+export function selectAcrossPages(editor: Editor): boolean {
+  return run(editor, "Select across pages", (state) => {
+    const rows = lineItemRows(state.doc);
+    const pageOf = (pos: number) => state.doc.resolve(pos).index(0);
+    const boundary = rows.findIndex(
+      (row, index) => index > 0 && pageOf(row.pos) !== pageOf(rows[index - 1]!.pos),
+    );
+    const before = rows[boundary - 1];
+    const after = rows[boundary];
+    if (boundary < 1 || !before || !after) return null;
+    const selection = TextSelection.create(
+      state.doc,
+      before.pos + 1,
+      after.pos + after.node.nodeSize - 1,
+    );
+    return state.tr.setSelection(selection).scrollIntoView();
+  });
+}
+
+export function selectEverything(editor: Editor): boolean {
+  return run(editor, "Select all", (state) => state.tr.setSelection(new AllSelection(state.doc)));
+}
+
+export const stressRowsPerPage = 25;
+
 export function loadStressInvoice(editor: Editor, count: number): boolean {
   return run(editor, "Load stress invoice", (state) => {
-    const { node, pos } = findLineItems(state.doc);
-    const rows = stressLineItems(count).map(({ description, ...attrs }) =>
-      state.schema.nodes[nodeNames.lineItem]!.create(attrs, state.schema.text(description)),
+    const itemPages = pages(state.doc).filter(({ node }) => node.attrs.kind === "lineItems");
+    const first = itemPages[0];
+    const last = itemPages.at(-1);
+    if (!first || !last) return null;
+    const replacement = lineItemPages(generateLineItems(count, 25), stressRowsPerPage).map((json) =>
+      state.schema.nodeFromJSON(json),
     );
-    const tr = state.tr.replaceWith(pos + 1, pos + node.nodeSize - 1, rows);
+    const tr = state.tr.replaceWith(first.pos, last.pos + last.node.nodeSize, replacement);
     return tagDomainEvent(tr, {
       label: "Stress invoice loaded",
       tone: "warning",
-      data: { rows: count },
+      data: { rows: count, pages: replacement.length, rowsPerPage: stressRowsPerPage },
+    });
+  });
+}
+
+export function setSlowPlugin(editor: Editor, delayMs: number): boolean {
+  return run(editor, "Set validation delay", (state) =>
+    tagDomainEvent(setValidationDelay(state.tr, delayMs), {
+      label: "Slow plugin configured",
+      tone: delayMs > 0 ? "warning" : "neutral",
+      data: { delayMs },
+    }),
+  );
+}
+
+export function insertPageBreak(editor: Editor): boolean {
+  return run(editor, "Insert page break", (state) => {
+    const { $from } = state.selection;
+    if ($from.depth < 2 || $from.index(1) === 0) return null;
+    const splitAt = $from.before(2);
+    const continued = [{ type: state.schema.nodes[nodeNames.page]!, attrs: { kind: "continued" } }];
+    // canSplit refuses isolating parents, but both halves are non-empty here, so the split is valid.
+    return tagDomainEvent(state.tr.split(splitAt, 1, continued).scrollIntoView(), {
+      label: "Page break inserted",
+      data: { page: $from.index(0) + 1 },
+    });
+  });
+}
+
+export function moveSectionToNextPage(editor: Editor): boolean {
+  return run(editor, "Move section to next page", (state) => {
+    const { $from } = state.selection;
+    if ($from.depth < 2) return null;
+    const page = $from.node(1);
+    const section = $from.node(2);
+    const sectionStart = $from.before(2);
+    const pageEnd = $from.after(1);
+    const tr = state.tr;
+    if (state.doc.nodeAt(pageEnd)) {
+      tr.insert(pageEnd + 1, section);
+    } else {
+      const pageType = state.schema.nodes[nodeNames.page]!;
+      tr.insert(pageEnd, pageType.create({ kind: "continued" }, section));
+    }
+    // Insertion happens after the source, so the source range is still valid here.
+    if (page.childCount === 1) tr.delete($from.before(1), pageEnd);
+    else tr.delete(sectionStart, sectionStart + section.nodeSize);
+    return tagDomainEvent(tr.scrollIntoView(), {
+      label: "Section moved",
+      data: { section: section.type.name, fromPage: $from.index(0) + 1 },
     });
   });
 }
@@ -157,6 +309,12 @@ export function findStep(editor: Editor, direction: 1 | -1): boolean {
       .setSelection(TextSelection.create(state.doc, match.from, match.to))
       .scrollIntoView();
   });
+}
+
+export function resetDocument(editor: Editor): boolean {
+  return traceCommand(editor, "Reset document", () =>
+    editor.commands.setContent(initialInvoice, { emitUpdate: true }),
+  );
 }
 
 export function undo(editor: Editor): boolean {
@@ -195,7 +353,7 @@ export function resolveComment(editor: Editor): boolean {
 }
 
 export function selectRange(editor: Editor, from: number, to: number): boolean {
-  return traceCommand(editor, "Select comment", () =>
+  return traceCommand(editor, "Select range", () =>
     editor.chain().focus().setTextSelection({ from, to }).scrollIntoView().run(),
   );
 }

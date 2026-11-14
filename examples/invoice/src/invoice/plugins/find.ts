@@ -3,7 +3,7 @@ import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { Plugin, PluginKey, type EditorState, type Transaction } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 
-import { measure } from "../../devtools/session";
+import { mark, measure } from "../../devtools/session";
 
 export interface FindMatch {
   readonly from: number;
@@ -41,6 +41,7 @@ function search(doc: ProseMirrorNode, query: string): FindState {
       doc,
       matches.map(({ from, to }) => Decoration.inline(from, to, { class: "find-match" })),
     );
+    mark("Find decorations", "find", { query, decorations: matches.length });
     return { query, matches, decorations };
   });
 }
