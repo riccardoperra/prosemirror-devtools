@@ -168,13 +168,6 @@ function yjsEffect({
   record,
 }: DevtoolsDispatchPresentationInput): DevtoolsDispatchPresentation | undefined {
   if (field(sample, "sample") !== "prosemirror-dispatch") return;
-  const update = field(sample, "latestUpdate");
-  const direction = field(update, "local");
-  const sequence = count(update, "sequence");
-  const latest =
-    typeof direction === "boolean" && sequence !== undefined
-      ? `Last update observed at capture: ${direction ? "local" : "remote"} #${sequence}.`
-      : "No Yjs update had been observed at capture.";
   const dispatchOrigin = field(sample, "dispatchOrigin");
   const rootKind =
     field(dispatchOrigin, "kind") === "available"
@@ -185,9 +178,16 @@ function yjsEffect({
       ? yjsOrigins[rootKind]
       : undefined;
   if (origin && (rootKind !== "local" || record.docChanged)) {
-    return { label: "Dispatch origin", ...origin, note: `${latest} ${transportNote(sample)}` };
+    return { label: "Dispatch origin", ...origin, note: transportNote(sample) };
   }
   if (!record.docChanged) return;
+  const update = field(sample, "latestUpdate");
+  const direction = field(update, "local");
+  const sequence = count(update, "sequence");
+  const latest =
+    typeof direction === "boolean" && sequence !== undefined
+      ? `Last update observed at capture: ${direction ? "local" : "remote"} #${sequence}.`
+      : "No Yjs update had been observed at capture.";
   return {
     badge: "Yjs sample",
     label: "Document changed",
