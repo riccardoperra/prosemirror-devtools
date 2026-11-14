@@ -322,9 +322,12 @@ setupTiptapDevtools(this.editor, {
 });
 ```
 
-Plugin instrumentation is enabled by default for this integration. Pass `instrumentPlugins: false`
-when you need only transaction history and dispatch phases. Dynamically registered plugins are not
-instrumented automatically.
+Plugin instrumentation is enabled by default for this integration. It also covers node views that
+extensions add with `addNodeView`, including `ReactNodeViewRenderer`. Tiptap passes these to the
+EditorView directly rather than through a plugin, so pass a `diagnostics` controller to see them in
+**Rendering** under the "Tiptap node views" source. Pass `instrumentPlugins: false` when you need
+only transaction history and dispatch phases. Dynamically registered plugins are not instrumented
+automatically.
 
 The native fixture verifies Tiptap 3.31.4. Tiptap 2 has no native middleware verification here.
 
