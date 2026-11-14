@@ -33,6 +33,7 @@ function renderStateView(text: string, from = 1, to = from) {
   const container = document.createElement("div");
   document.body.append(container);
   const dispose = render(() => <StateView instance={createInstance(view)} />, container);
+  container.querySelector<HTMLButtonElement>('[aria-label="Show document structure"]')?.click();
 
   return { container, dispose, view };
 }
@@ -56,6 +57,7 @@ describe("State panel", () => {
     const container = document.createElement("div");
     document.body.append(container);
     const dispose = render(() => <StateView instance={instance()} />, container);
+    container.querySelector<HTMLButtonElement>('[aria-label="Show document structure"]')?.click();
     try {
       container
         .querySelectorAll<HTMLButtonElement>('[data-node-type="paragraph"] .pm-doc-row-main')[1]

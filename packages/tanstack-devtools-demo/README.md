@@ -9,6 +9,9 @@ corner to inspect the resulting state, transactions, and timings.
 The example also adds an application-owned **Integration** tab to demonstrate panel extensions,
 live data subscriptions, and devtools actions.
 
+In development, [`src/webmcp.ts`](./src/webmcp.ts) exposes the read-only inspection tools through
+native WebMCP and the Chrome DevTools MCP bridge. The **WebMCP** tab records every tool call.
+
 ```sh
 pnpm --filter @prosemirror-devtools/tanstack-demo dev
 ```

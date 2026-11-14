@@ -194,8 +194,8 @@ and `pmFastPluginToggle`.
 ### View switch
 
 The `ViewSwitch` component (`ui/view-switch.tsx`) for two to four mutually exclusive views of
-the same data (Structure / HTML / JSON, Before / After, Calls / Tools). Do not hand-write the
-markup. It renders a labelled `role="group"` with `pmViewSwitch` and one `pmViewSwitchOption`
+the same data (Boxes / Structure / JSON / DOM, Before / After, Calls / Tools). Do not hand-write
+the markup. It renders a labelled `role="group"` with `pmViewSwitch` and one `pmViewSwitchOption`
 button per view with `aria-pressed`. Caption text, 22px high, 6px radius on the group, square
 inner buttons. The pressed button uses `--pm-accent-soft` and `--pm-accent`. Button nodes stay
 stable when labels change (for example counts), so focus is not lost.
@@ -218,6 +218,18 @@ WebMCP calls.
   `--pm-blue` dot or badge in the row, not another background or bar.
 - Layout: identifier (mono, muted), title and metadata stacked, then right-aligned outcome badge
   and duration.
+
+### Document diagrams
+
+The Boxes and DOM views draw the document, so they encode data that list rows do not.
+
+- A box or chip has a 1px `--pm-border` border and the 4px radius. A start border carries the
+  node type color: 3px on a box, 2px on a chip. Boxes and the DOM view's node badges use the same
+  hue.
+- Marks are amber (`--pm-yellow` on `--pm-yellow-soft`) in both views. Widgets are green. Elements
+  outside the document are muted with a dashed border.
+- The inspected box or chip uses an `--pm-accent` border on `--pm-accent-soft`. Rows inside the
+  DOM view are list rows and follow the list row states.
 
 ### Badge
 

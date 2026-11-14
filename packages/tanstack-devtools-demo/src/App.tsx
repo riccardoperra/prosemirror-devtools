@@ -4,10 +4,13 @@ import { prosemirrorDevtoolsStore } from "prosemirror-inspector";
 import { createProseMirrorDevtoolsPlugin } from "prosemirror-inspector/react";
 import { playgroundDevtoolsExtension } from "./DevtoolsIntegrationExtension";
 import { ProseMirrorEditor } from "./ProseMirrorEditor";
+import { webMcp } from "./webmcp";
 
 const prosemirrorPlugin = createProseMirrorDevtoolsPlugin({
   defaultPanel: "playground-integration",
-  extensions: [playgroundDevtoolsExtension],
+  extensions: webMcp
+    ? [playgroundDevtoolsExtension, webMcp.extension]
+    : [playgroundDevtoolsExtension],
   store: prosemirrorDevtoolsStore,
 });
 
