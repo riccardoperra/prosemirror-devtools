@@ -385,7 +385,7 @@ export const scenarios: readonly Scenario[] = [
       {
         panel: "Transactions",
         observe:
-          "The replace dispatch that adds the text has a Yjs sample badge. The sample is the Y.Doc's latest update at capture, not this dispatch's origin, and y-sync renders a remote update before Yjs reports it, so this one reads “No Yjs update had been observed at capture”.",
+          "The replace dispatch that adds the text reads “Remote · Yjs · Update applied”. Its detail shows the dispatch origin: the binding applied a Y.Doc update from another client. Your own edits carry no Yjs label in the list.",
       },
       {
         panel: "Context",
