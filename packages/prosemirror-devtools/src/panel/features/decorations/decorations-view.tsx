@@ -10,6 +10,7 @@ import type { RegisteredProseMirrorInstance } from "../../../core/types";
 import { formatMs, formatTime } from "../../formatters";
 import { JsonTree } from "../../json-tree";
 import { cx, panelStyles } from "../../styles";
+import { ViewSwitch } from "../../ui/view-switch";
 import { Badge } from "../../ui/badge";
 import { ResizableSplit } from "../../ui/resizable-split";
 import { collectDecorationRows } from "./decoration-list";
@@ -175,32 +176,18 @@ export function DecorationsView(props: { instance: RegisteredProseMirrorInstance
         }}
       >
         <div class={panelStyles.pmPaneHeader}>
-          <div
-            aria-label="Decoration diagnostics view"
-            class={panelStyles.pmViewSwitch}
-            role="group"
-          >
-            <button
-              aria-pressed={mode() === "decorations"}
-              onClick={() => {
-                setMode("decorations");
-                resetList();
-              }}
-              type="button"
-            >
-              Decorations {rangeList().total}
-            </button>
-            <button
-              aria-pressed={mode() === "nodeViews"}
-              onClick={() => {
-                setMode("nodeViews");
-                resetList();
-              }}
-              type="button"
-            >
-              Node views {nodeViews().length}
-            </button>
-          </div>
+          <ViewSwitch
+            label="Decoration diagnostics view"
+            onChange={(next) => {
+              setMode(next);
+              resetList();
+            }}
+            options={[
+              { value: "decorations", label: `Decorations ${rangeList().total}` },
+              { value: "nodeViews", label: `Node views ${nodeViews().length}` },
+            ]}
+            value={mode()}
+          />
           <select
             aria-label="Filter diagnostics by plugin"
             class={panelStyles.pmInstanceSelect}

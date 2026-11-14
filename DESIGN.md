@@ -60,7 +60,7 @@ Rules:
 - **10px is the minimum.** Text inside a chart (axis ticks, frame-budget label, timeline sequence
   numbers) may use 9px. The decorative, `aria-hidden` brand mark is exempt. No other text goes
   below 10px.
-- Weights are 500, 650 and 700. Do not introduce 750 or 800.
+- Weights are 500, 650 and 700. Do not introduce 600, 750 or 800.
 - Section titles use the `pmSectionTitle` style: caption size, weight 700, uppercase, `0.06em`
   tracking, `--pm-muted`. Write the source text in sentence case; CSS uppercases it.
 - Numbers use `font-variant-numeric: tabular-nums` (inherited from the root).
@@ -81,8 +81,9 @@ blocks inside a section, **8px**.
 | `8px`       | Cards and warnings.                                                                        |
 | `999px`     | Badges and status dots only.                                                               |
 
-Define these as `--pm-radius-sm` (4px), `--pm-radius` (6px) and `--pm-radius-lg` (8px). Today
-`--prosemirror-devtools-radius` is 7px; changing it to 6px is part of this guide.
+Use the tokens `--pm-radius-sm` (4px), `--pm-radius` (6px, from the public
+`--prosemirror-devtools-radius`) and `--pm-radius-lg` (8px), never a literal value. Chart marks
+(legend swatches, the dot inside a plugin hook chip) may use 1–2px.
 Full-width elements are always square: a rounded shape inside a list reads as a floating chip.
 
 ### Elevation
@@ -186,12 +187,18 @@ All buttons use a panel class. A bare `<button>` is not allowed.
 
 Hover: `--pm-panel-2`. Disabled: `--pm-faint` text, no hover.
 
+A control with a specific look in one feature gets its own class instead of a parent selector
+such as `.group > button`: for example `pmStepButton` (previous and next dispatch in Performance)
+and `pmFastPluginToggle`.
+
 ### View switch
 
-`pmViewSwitch` for two to four mutually exclusive views of the same data (Structure / HTML /
-JSON, Before / After, Calls / Tools). Caption text, 22px high, 6px radius on the group, square
-inner buttons. The pressed button uses `--pm-accent-soft` and `--pm-accent`. Use
-`aria-pressed` on each button.
+The `ViewSwitch` component (`ui/view-switch.tsx`) for two to four mutually exclusive views of
+the same data (Structure / HTML / JSON, Before / After, Calls / Tools). Do not hand-write the
+markup. It renders a labelled `role="group"` with `pmViewSwitch` and one `pmViewSwitchOption`
+button per view with `aria-pressed`. Caption text, 22px high, 6px radius on the group, square
+inner buttons. The pressed button uses `--pm-accent-soft` and `--pm-accent`. Button nodes stay
+stable when labels change (for example counts), so focus is not lost.
 
 ### List row
 
@@ -260,7 +267,9 @@ The panel resets every property it relies on for its own controls and containers
 such as `button {}` while component classes, declared later, still win. Host rules that are more
 specific than one class (for example `.app button`) can still leak; components must set every
 property they depend on. Every component then sets its own radius, padding, border and
-background. This includes `<pre>` blocks: hosts commonly style `pre` globally, so `pmCode` sets
+background. Global panel defaults for controls (such as `font: inherit`) also use
+`.pm-devtools :where(...)`: a selector like `.pm-devtools button` outranks every single-class
+component rule and silently discards its font or color. This includes `<pre>` blocks: hosts commonly style `pre` globally, so `pmCode` sets
 its own background, border and padding. Test the panel inside
 a host that styles `button`, `input` and `select` globally. The standalone demo does this
 (`packages/standalone-demo/src/style.css`), so any rounding or padding that appears there and not
@@ -305,10 +314,10 @@ impact.
 | 3   | Text below the minimum: 8, 8.5, 9 and 9.5px in 26 rules (`font-size` and `font` shorthands), including the view switch (9px) and chart summaries.                                                           | `panel.module.css`                                                                                              | Move to the 10px caption step; keep 9px only for chart ticks. **Fixed:** 10px everywhere except the chart and brand exceptions.                                                                                        |
 | 4   | Stacked grey bands in Plugins, Rendering and Schema: pane note, heading, note, disclosure, each on `--pm-panel-2`, with empty strips of background between sections.                                        | Inspection read-out sections                                                                                    | Use the [section](#section) and [note](#note) rules: one heading band, note inside the body, no gaps. **Fixed:** `pmSection` and `pmSectionNote`; host `section` margins reset.                                        |
 | 5   | Disclosure summaries ("Coverage and read point", "Technical details", "Related evidence") are larger or smaller than body text and vary between tabs.                                                       | Inspection read-out, Context, dispatch inspector                                                                | Apply the [disclosure](#disclosure) rule. **Fixed:** one `pmDisclosure`, also used by Related evidence and Raw effect samples.                                                                                         |
-| 6   | Radius values 2, 3, 4, 5, 6, 7, 8, 9 and 13px are used without a scale.                                                                                                                                     | 34 rules in `panel.module.css`                                                                                  | Map each to the [radius scale](#radius).                                                                                                                                                                               |
-| 7   | Font weights 750 and 800 alongside 650 and 700.                                                                                                                                                             | Brand, section title, rank badges                                                                               | Use 650 or 700.                                                                                                                                                                                                        |
-| 8   | Unclassed buttons: the Performance navigation arrow renders at 15px; view switch buttons rely on the parent selector.                                                                                       | Performance chart navigation, view switches                                                                     | Give each button a panel class.                                                                                                                                                                                        |
-| 9   | Badge casing is mixed: `unhandled`, `Returned`, `Recording`, `History`.                                                                                                                                     | Events, WebMCP, Context, Transactions                                                                           | Apply the [badge](#badge) text rules.                                                                                                                                                                                  |
+| 6   | Radius values 2, 3, 4, 5, 6, 7, 8, 9 and 13px are used without a scale.                                                                                                                                     | 34 rules in `panel.module.css`                                                                                  | Map each to the [radius scale](#radius). **Fixed:** radius tokens everywhere; base radius 6px; 1–2px only for chart marks.                                                                                             |
+| 7   | Font weights 750 and 800 alongside 650 and 700.                                                                                                                                                             | Brand, section title, rank badges                                                                               | Use 650 or 700. **Fixed:** 750, 800 and 600 replaced by 650 or 700; section titles use 700 and `0.06em`.                                                                                                               |
+| 8   | Unclassed buttons: the Performance navigation arrow renders at 15px; view switch buttons rely on the parent selector.                                                                                       | Performance chart navigation, view switches                                                                     | Give each button a panel class. **Fixed:** `ViewSwitch` replaces eight hand-written switches; `pmStepButton` and `pmFastPluginToggle`.                                                                                 |
+| 9   | Badge casing is mixed: `unhandled`, `Returned`, `Recording`, `History`.                                                                                                                                     | Events, WebMCP, Context, Transactions                                                                           | Apply the [badge](#badge) text rules. **Fixed:** event statuses and coverage badges use sentence case; data values stay verbatim.                                                                                      |
 | 10  | Empty and loading states differ: centered in Snapshots and Performance, a left-aligned note band in Events and WebMCP.                                                                                      | Several panels                                                                                                  | Use one empty-state component.                                                                                                                                                                                         |
 | 11  | Context is the only tab with a 15px page heading and card summaries.                                                                                                                                        | Context                                                                                                         | Use the title step (13px). Cards are allowed for the overview layout.                                                                                                                                                  |
 | 12  | 44 inline `style={{}}` objects set spacing, grids and colors in components.                                                                                                                                 | `features/**`, `ui/**`                                                                                          | Move recurring ones to classes; keep inline styles only for computed values.                                                                                                                                           |

@@ -1,6 +1,7 @@
 import { createMemo, createSignal, Show, type JSX } from "solid-js";
 
 import { panelStyles } from "../../../styles";
+import { ViewSwitch } from "../../../ui/view-switch";
 
 import type { TransactionRecord } from "../../../../core/types";
 import { groupPluginTimings } from "../../../../performance/group-plugin-timings";
@@ -42,22 +43,15 @@ interface DispatchCostViewSwitchProps {
 
 function DispatchCostViewSwitch(props: DispatchCostViewSwitchProps): JSX.Element {
   return (
-    <div aria-label="Dispatch cost view" class={panelStyles.pmViewSwitch} role="group">
-      <button
-        aria-pressed={props.value === "ranking"}
-        onClick={() => props.onChange("ranking")}
-        type="button"
-      >
-        Ranking
-      </button>
-      <button
-        aria-pressed={props.value === "timeline"}
-        onClick={() => props.onChange("timeline")}
-        type="button"
-      >
-        Timeline
-      </button>
-    </div>
+    <ViewSwitch
+      label="Dispatch cost view"
+      onChange={props.onChange}
+      options={[
+        { value: "ranking", label: "Ranking" },
+        { value: "timeline", label: "Timeline" },
+      ]}
+      value={props.value}
+    />
   );
 }
 

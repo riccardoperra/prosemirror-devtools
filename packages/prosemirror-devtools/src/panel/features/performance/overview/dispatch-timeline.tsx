@@ -636,6 +636,7 @@ export function DispatchTimeline(props: DispatchTimelineProps): JSX.Element {
         <div aria-label="Dispatch selection" class={panelStyles.pmDispatchSelection} role="group">
           <button
             aria-label="Select previous dispatch"
+            class={panelStyles.pmStepButton}
             disabled={!model().hasPrevious}
             onClick={() => selectAtIndex(model().window.selectedIndex - 1)}
             title="Previous dispatch"
@@ -656,6 +657,7 @@ export function DispatchTimeline(props: DispatchTimelineProps): JSX.Element {
           </output>
           <button
             aria-label="Select next dispatch"
+            class={panelStyles.pmStepButton}
             disabled={!model().hasNext}
             onClick={() => selectAtIndex(model().window.selectedIndex + 1)}
             title="Next dispatch"

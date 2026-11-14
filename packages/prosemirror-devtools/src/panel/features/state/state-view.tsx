@@ -3,6 +3,7 @@ import { DOMSerializer } from "prosemirror-model";
 import { createMemo, createSignal, Show, type JSX } from "solid-js";
 
 import { panelStyles } from "../../styles";
+import { ViewSwitch } from "../../ui/view-switch";
 
 import { inspectState } from "../../../core/serialize";
 import type { RegisteredProseMirrorInstance } from "../../../core/types";
@@ -70,32 +71,16 @@ export function StateView(props: StateViewProps): JSX.Element {
         <div class={panelStyles.pmPaneHeader}>
           <span class={panelStyles.pmPaneTitle}>Document</span>
           <span class={panelStyles.pmSpacer} />
-          <div aria-label="Document view" class={panelStyles.pmViewSwitch} role="group">
-            <button
-              aria-label="Show exported document HTML"
-              aria-pressed={documentView() === "html"}
-              onClick={() => setDocumentView("html")}
-              type="button"
-            >
-              HTML
-            </button>
-            <button
-              aria-label="Show document structure"
-              aria-pressed={documentView() === "structure"}
-              onClick={() => setDocumentView("structure")}
-              type="button"
-            >
-              Structure
-            </button>
-            <button
-              aria-label="Show document JSON"
-              aria-pressed={documentView() === "json"}
-              onClick={() => setDocumentView("json")}
-              type="button"
-            >
-              JSON
-            </button>
-          </div>
+          <ViewSwitch
+            label="Document view"
+            onChange={setDocumentView}
+            options={[
+              { value: "html", label: "HTML", ariaLabel: "Show exported document HTML" },
+              { value: "structure", label: "Structure", ariaLabel: "Show document structure" },
+              { value: "json", label: "JSON", ariaLabel: "Show document JSON" },
+            ]}
+            value={documentView()}
+          />
           <Badge>{state().doc.childCount} roots</Badge>
         </div>
         <div class={panelStyles.pmInspectorStats}>

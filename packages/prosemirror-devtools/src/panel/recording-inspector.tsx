@@ -8,6 +8,7 @@ import type { ProseMirrorRecording } from "../recordings/types";
 import { useResolvedTheme } from "./hooks/use-resolved-theme";
 import type { ProseMirrorDevtoolsPanelStyle } from "./panel.types";
 import { cx, ensurePanelStyles, panelStyles } from "./styles";
+import { ViewSwitch } from "./ui/view-switch";
 import { Badge } from "./ui/badge";
 import { CopyDiagnosticContext } from "./ui/copy-diagnostic-context";
 import { InspectionReadout } from "./ui/inspection-readout";
@@ -139,19 +140,15 @@ export function RecordingInspector(props: RecordingInspectorProps): JSX.Element 
             </select>
           </label>
           <Show when={selectedPoint() !== "current"}>
-            <div class={panelStyles.pmViewSwitch} aria-label="Recorded dispatch phase" role="group">
-              <For each={["before", "after"] as const}>
-                {(value) => (
-                  <button
-                    type="button"
-                    aria-pressed={phase() === value}
-                    onClick={() => setPhase(value)}
-                  >
-                    {value === "before" ? "Before dispatch" : "After dispatch"}
-                  </button>
-                )}
-              </For>
-            </div>
+            <ViewSwitch
+              label="Recorded dispatch phase"
+              onChange={setPhase}
+              options={[
+                { value: "before", label: "Before dispatch" },
+                { value: "after", label: "After dispatch" },
+              ]}
+              value={phase()}
+            />
           </Show>
           <label>
             Evidence{" "}
