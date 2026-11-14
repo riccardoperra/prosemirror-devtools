@@ -5,7 +5,6 @@ import {
   createProseMirrorDevtoolsDiagnostics,
   type ProseMirrorInspector,
 } from "prosemirror-inspector/core";
-import type { EditorState, Plugin } from "prosemirror-state";
 import { createHistoryInspector } from "prosemirror-inspector/inspectors/history";
 import { createTiptapInspector } from "prosemirror-inspector/inspectors/tiptap";
 import {
@@ -45,11 +44,6 @@ const validationInspector = createPluginStateInspector({
     })),
   }),
 });
-
-/** prosemirror-history's key is private, so the installed plugin is found by its runtime key string. */
-function installedHistory(state: EditorState): Plugin | undefined {
-  return state.plugins.find((plugin) => (plugin as unknown as { key: string }).key === "history$");
-}
 
 /** Awareness traffic is presence, not document transport, so only document messages are reported. */
 function transportSignal(event: ProviderEvent): TransportSignal | null {
@@ -106,7 +100,7 @@ export const createInvoiceDevtools = (collab: CollabSession | null): AnyExtensio
       const shared = collab ? collabInspectors(editor, collab) : null;
       this.storage.disposeCollab = () => shared?.dispose();
       const inspectors: readonly ProseMirrorInspector[] = [
-        ...(shared?.inspectors ?? []),
+        ...(shared?.inspectors ?? [createHistoryInspector()]),
         createTiptapInspector({
           editor,
           pluginAssociations: [
@@ -127,14 +121,7 @@ export const createInvoiceDevtools = (collab: CollabSession | null): AnyExtensio
         store,
         diagnostics,
         performanceExtension: true,
-        // Tiptap installs history() when it builds the state, after this hook. The session reads
-        // its inspectors when it registers the mounted view, where the installed plugin exists.
-        get inspectors() {
-          const history = installedHistory(editor.state);
-          return history
-            ? [...inspectors, createHistoryInspector({ plugin: history })]
-            : inspectors;
-        },
+        inspectors,
       });
     },
     onCreate() {
