@@ -211,9 +211,7 @@ describe("host inspection context", () => {
       host,
     );
     try {
-      Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
-        .find((button) => button.textContent === "Schema at endpoint")
-        ?.click();
+      host.querySelector<HTMLButtonElement>('[aria-label="Show schema at cursor"]')?.click();
       expect(
         host.querySelector<HTMLInputElement>('[aria-label="Schema inspection position"]')?.value,
       ).toBe("1");
