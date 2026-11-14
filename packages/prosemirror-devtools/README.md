@@ -266,45 +266,45 @@ host height, and both tab rows support arrow keys, Home, and End.
 
 ## Tiptap 3
 
-The Tiptap entrypoint integrates with Tiptap's lifecycle and native transaction middleware without
-importing `@tiptap/core` into this package.
+`prosemirror-inspector` does not depend on Tiptap. Your project owns a small extension file and
+spreads the inspector's hooks into it. Copy this file, for example as `tiptap-devtools.ts`:
 
 ```ts
-import { Extension } from "@tiptap/core";
+import { Extension, type Editor } from "@tiptap/core";
+import { createTiptapInspector } from "prosemirror-inspector/inspectors/tiptap";
 import {
-  attachTiptapDevtools,
-  detachTiptapDevtools,
-  dispatchTiptapTransaction,
-  setupTiptapDevtools,
+  createTiptapDevtoolsHooks,
+  type TiptapDevtoolsOptions,
 } from "prosemirror-inspector/tiptap";
 
-export const TiptapDevtools = Extension.create({
-  name: "prosemirrorDevtools",
-  priority: 10_000,
+export function createTiptapDevtools(options: TiptapDevtoolsOptions) {
+  return Extension.create({
+    name: "prosemirrorDevtools",
+    // Runs first, so the measured dispatch includes every lower-priority dispatch middleware.
+    priority: 10_000,
+    ...createTiptapDevtoolsHooks((editor: Editor) => ({
+      ...options,
+      inspectors: [createTiptapInspector({ editor }), ...(options.inspectors ?? [])],
+    })),
+  });
+}
+```
 
-  onBeforeCreate() {
-    setupTiptapDevtools(this.editor, {
-      id: "main-editor",
-      label: "Main editor",
-    });
-  },
+Then add it to the editor:
 
-  onCreate() {
-    attachTiptapDevtools(this.editor);
-  },
-
-  dispatchTransaction(props) {
-    dispatchTiptapTransaction(this.editor, props);
-  },
-
-  onDestroy() {
-    detachTiptapDevtools(this.editor);
-  },
+```ts
+const editor = new Editor({
+  extensions: [StarterKit, createTiptapDevtools({ id: "main-editor", label: "Main editor" })],
 });
 ```
 
-Add `TiptapDevtools` to the editor's `extensions` array. Keep a high priority so the measurement
-surrounds ordinary lower-priority middleware. Do not call `props.next` yourself;
+The [Tiptap example](https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/tiptap/src/tiptap-devtools.ts)
+imports the same file, so the browser tests cover it.
+
+`createTiptapDevtoolsHooks` returns `onBeforeCreate`, `onCreate`, `dispatchTransaction`, and
+`onDestroy`. They call `setupTiptapDevtools`, `attachTiptapDevtools`, `dispatchTiptapTransaction`,
+and `detachTiptapDevtools`, which remain exported for custom extensions. Pass options directly, or a
+function when an option needs the editor. Do not call `props.next` yourself;
 `dispatchTiptapTransaction` forwards it exactly once.
 
 Keep Tiptap's `enableExtensionDispatchTransaction` option enabled (the default), and do not also
@@ -332,11 +332,17 @@ automatically.
 
 The native fixture verifies Tiptap 3.31.4. Tiptap 2 has no native middleware verification here.
 
-With `@tiptap/react`, call `resumeTiptapDevtools(editor)` in the editor effect setup and
-`suspendTiptapDevtools(editor)` in its cleanup. Keep `detachTiptapDevtools` in `onDestroy` for terminal
-cleanup. Suspension releases the registration before Tiptap's deferred destroy and permits Strict
-Mode to resume the same editor. See the
-[native Tiptap fixture](https://github.com/riccardoperra/prosemirror-devtools/tree/main/examples/tiptap).
+With `@tiptap/react`, resume the registration in the editor effect and suspend it in its cleanup.
+Suspension releases the registration before Tiptap's deferred destroy and lets Strict Mode resume
+the same editor. The extension's `onDestroy` still performs the final cleanup.
+
+```ts
+useEffect(() => {
+  if (!editor) return;
+  resumeTiptapDevtools(editor);
+  return () => suspendTiptapDevtools(editor);
+}, [editor]);
+```
 
 ## Controlled React ProseMirror
 
