@@ -68,7 +68,7 @@ consumer, delle input rules, degli strumenti agentici e del browser.
 
 ## Ripetere i controlli
 
-Usare Node 26.5.0 e pnpm 11.22.0 come nel workspace. I comandi non pubblicano pacchetti.
+Usare Node 26.5.0 e pnpm 12.18.0 come nel workspace. I comandi non pubblicano pacchetti.
 
 ```sh
 pnpm install --frozen-lockfile
