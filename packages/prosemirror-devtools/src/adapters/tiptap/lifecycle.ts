@@ -43,7 +43,6 @@ export interface TiptapDispatchTransactionProps {
 
 type DispatchRecorder = ReturnType<typeof createProseMirrorDispatchRecorder>;
 
-
 type TiptapIntegration = Readonly<{
   options: TiptapDevtoolsOptions;
   setup: () => void;
