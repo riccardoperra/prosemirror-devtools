@@ -14,6 +14,7 @@ import { InvoiceViewContext } from "../invoice/view-context";
 import { CommentsSidebar } from "./CommentsSidebar";
 import { FindBar } from "./FindBar";
 import { InvoiceBubbleMenu } from "./InvoiceBubbleMenu";
+import { PresenceBar } from "./PresenceBar";
 import { ScenariosPanel } from "./ScenariosPanel";
 import { Toolbar } from "./Toolbar";
 
@@ -86,13 +87,15 @@ function InvoiceWorkspace({ editor }: { editor: Editor }) {
           findOpen={findOpen}
           onToggleFind={() => (findOpen ? closeFind() : setFindOpen(true))}
         />
-        <p className="topbar-note">
-          {collab
-            ? `${collab.config.user.name} · room ${collab.config.room} · this browser only`
-            : devtoolsEnabled
+        {collab ? (
+          <PresenceBar editor={editor} collab={collab} />
+        ) : (
+          <p className="topbar-note">
+            {devtoolsEnabled
               ? "⌘⇧D outside the editor opens the inspector"
               : "Diagnostics are off in production"}
-        </p>
+          </p>
+        )}
         {findOpen ? <FindBar editor={editor} onClose={closeFind} /> : null}
       </header>
       <div className="workspace">

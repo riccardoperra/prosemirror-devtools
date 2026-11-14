@@ -223,6 +223,160 @@ body {
     white-space: nowrap;
   }
 
+  /* Presence: who is in the room, as avatars that fade and scale in and out. */
+
+  .presence {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .presence-avatars {
+    display: flex;
+    margin: 0;
+    padding: 0 0 0 6px;
+    list-style: none;
+  }
+
+  .presence-avatar {
+    position: relative;
+    margin-left: -6px;
+    transition:
+      opacity var(--popover-duration) var(--ease-out),
+      transform var(--popover-duration) var(--ease-out);
+
+    @starting-style {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+
+  .presence-avatar[data-leaving] {
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+  }
+
+  .presence-avatar > button {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--peer-color);
+    box-shadow: 0 0 0 2px var(--canvas);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .presence-avatar > button[data-self] {
+    box-shadow:
+      0 0 0 2px var(--canvas),
+      0 0 0 3.5px var(--peer-color);
+  }
+
+  .presence-avatar > button[aria-disabled] {
+    cursor: default;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .presence-avatar > button:hover:not([aria-disabled]) {
+      background: var(--peer-color);
+      filter: brightness(1.08);
+    }
+  }
+
+  .presence-count {
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .presence-invite {
+    white-space: nowrap;
+  }
+
+  .presence-info {
+    position: relative;
+  }
+
+  .presence-info > [tabindex] {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 50%;
+    color: var(--text-muted);
+    font:
+      italic 600 10px/1 Georgia,
+      serif;
+    cursor: help;
+  }
+
+  /* Tooltips wait a beat on hover, but show at once for keyboard focus. */
+  .presence-tip {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: -4px;
+    z-index: 10;
+    display: grid;
+    gap: 2px;
+    width: max-content;
+    max-width: 240px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--text);
+    color: var(--surface);
+    font-size: 12px;
+    line-height: 1.4;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.97);
+    transform-origin: top right;
+    transition:
+      opacity 125ms var(--ease-out),
+      transform 125ms var(--ease-out);
+  }
+
+  .presence-tip > span {
+    color: rgb(255 255 255 / 0.72);
+  }
+
+  :is(.presence-avatar, .presence-info):hover > .presence-tip {
+    opacity: 1;
+    transform: none;
+    transition-delay: 300ms;
+  }
+
+  :is(.presence-avatar, .presence-info):has(:focus-visible) > .presence-tip {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .presence-avatar,
+    .presence-tip {
+      transition-property: opacity;
+    }
+
+    .presence-avatar[data-leaving],
+    .presence-tip {
+      transform: none;
+    }
+
+    .presence-avatar {
+      @starting-style {
+        transform: none;
+      }
+    }
+  }
+
   .toolbar {
     display: flex;
     align-items: center;
@@ -1354,6 +1508,17 @@ body {
 
     .topbar-note {
       display: none;
+    }
+
+    /* The title gives way first, so the toolbar and the presence bar keep their full width. */
+    .topbar:has(.presence) {
+      grid-template-columns: minmax(0, 1fr) auto auto;
+    }
+
+    .topbar h1 {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .toolbar {
