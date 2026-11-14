@@ -38,6 +38,9 @@ button:disabled {
   flex-wrap: wrap;
   margin: 20px 0;
 }
+.toolbar[hidden] {
+  display: none;
+}
 .editor {
   background: white;
   border: 1px solid #bec6d0;

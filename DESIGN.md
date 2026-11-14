@@ -164,7 +164,9 @@ A titled block inside a detail pane or a sections layout.
   border.
 - Heading: `pmDetailHeading`, 32px minimum height, `--pm-panel-2` background, section title,
   then badges, then right-aligned actions. Square corners.
-- Body: content directly inside the section, on the `--pm-panel` background.
+- Body: content directly inside the section, on the `--pm-panel` background. Use
+  `pmSectionBody` (8px 10px padding, 4px gap) for text and stacked rows; consecutive bodies are
+  separated by a border. Use `pmCode` for monospace payloads such as tool input and output.
 - Sections stack directly. No margin between them: the background must not show through as an
   empty strip.
 
@@ -214,8 +216,8 @@ Hover: `--pm-panel-2`. Disabled: `--pm-faint` text, no hover.
 
 ### View switch
 
-`pmViewSwitch` for two to four mutually exclusive views of the same data (Structure / HTML /
-JSON, Before / After, Calls / Tools). Caption text, 22px high, 6px radius on the group, square
+`pmViewSwitch` for two to four mutually exclusive views of the same data (Boxes / Structure /
+JSON / DOM, Before / After, Calls / Tools). Caption text, 22px high, 6px radius on the group, square
 inner buttons. The pressed button uses `--pm-accent-soft` and `--pm-accent`. Use
 `aria-pressed` on each button.
 
@@ -237,6 +239,18 @@ WebMCP calls.
   `--pm-blue` dot or badge in the row, not another background or bar.
 - Layout: identifier (mono, muted), title and metadata stacked, then right-aligned outcome badge
   and duration.
+
+### Document diagrams
+
+The Boxes and DOM views draw the document, so they encode data that list rows do not.
+
+- A box or chip has a 1px `--pm-border` border and the 4px radius. A start border carries the
+  node type color: 3px on a box, 2px on a chip. Boxes and the DOM view's node badges use the same
+  hue.
+- Marks are amber (`--pm-yellow` on `--pm-yellow-soft`) in both views. Widgets are green. Elements
+  outside the document are muted with a dashed border.
+- The inspected box or chip uses an `--pm-accent` border on `--pm-accent-soft`. Rows inside the
+  DOM view are list rows and follow the list row states.
 
 ### Badge
 
@@ -286,7 +300,8 @@ The panel resets every property it relies on for its own controls and containers
 such as `button {}` while component classes, declared later, still win. Host rules that are more
 specific than one class (for example `.app button`) can still leak; components must set every
 property they depend on. Every component then sets its own radius, padding, border and
-background. Test the panel inside
+background. This includes `<pre>` blocks: hosts commonly style `pre` globally, so `pmCode` sets
+its own background, border and padding. Test the panel inside
 a host that styles `button`, `input` and `select` globally. The standalone demo does this
 (`packages/standalone-demo/src/style.css`), so any rounding or padding that appears there and not
 in this guide is a leak.

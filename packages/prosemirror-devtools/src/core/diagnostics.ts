@@ -78,6 +78,24 @@ export interface DevtoolsDiagnosticsSnapshot {
     readonly decorations: { readonly truncated: boolean };
     readonly nodeViews: { readonly observed: number; readonly discarded: number };
   };
+  /**
+   * Whether `instrumentProseMirrorPlugins` ran with this controller, and how many plugins it
+   * wrapped. Plugin hooks, input handlers, decorations and NodeViews are observed only through
+   * instrumented plugins. External controllers may omit this field; then coverage is unknown.
+   */
+  instrumentation?: { readonly instrumented: boolean; readonly plugins: number };
+}
+
+/**
+ * Explains why plugin-level observations are missing, or returns `null` when plugins are
+ * instrumented or the controller does not report instrumentation.
+ */
+export function uninstrumentedPluginsReason(
+  snapshot: DevtoolsDiagnosticsSnapshot | undefined,
+): string | null {
+  return snapshot?.instrumentation?.instrumented === false
+    ? "Plugin hooks and input handlers are not instrumented for this session, so handler events, decorations and NodeViews are not captured. Only commands traced with diagnostics.traceCommand are recorded. Pass the plugins through session.instrumentPlugins before creating the EditorState."
+    : null;
 }
 
 export interface DevtoolsDiagnosticsController {
@@ -115,6 +133,8 @@ export interface DevtoolsDiagnosticsRecorder {
   ): DevtoolsNodeViewTracker;
   recordDispatch(instanceId: string, id: number, sessionId?: string, generation?: number): void;
   observeDocument(doc: ProseMirrorNode): void;
+  /** Counts plugins wrapped with this controller so readers can report missing coverage. */
+  registerInstrumentedPlugins(count: number): void;
 }
 
 const recorders = new WeakMap<DevtoolsDiagnosticsController, DevtoolsDiagnosticsRecorder>();
@@ -209,6 +229,8 @@ export function createProseMirrorDevtoolsDiagnostics(
   let discardedEvents = 0;
   let discardedNodeViews = 0;
   let truncatedDecorations = false;
+  let pluginsInstrumented = false;
+  let instrumentedPluginCount = 0;
   const activeEvents: DevtoolsDiagnosticEvent[] = [];
   const decorations = new Map<
     string,
@@ -229,6 +251,7 @@ export function createProseMirrorDevtoolsDiagnostics(
     events: [],
     decorations: [],
     nodeViews: [],
+    instrumentation: { instrumented: false, plugins: 0 },
   };
 
   const publish = (): void => {
@@ -267,6 +290,7 @@ export function createProseMirrorDevtoolsDiagnostics(
         decorations: { truncated: truncatedDecorations },
         nodeViews: { observed: nextNodeViewId, discarded: discardedNodeViews },
       },
+      instrumentation: { instrumented: pluginsInstrumented, plugins: instrumentedPluginCount },
     };
     for (const listener of [...listeners]) {
       try {
@@ -326,6 +350,12 @@ export function createProseMirrorDevtoolsDiagnostics(
             ...(generation === undefined ? {} : { generation }),
           },
         ].slice(-budgets.events);
+    },
+    registerInstrumentedPlugins(count) {
+      if (disposed) return;
+      pluginsInstrumented = true;
+      instrumentedPluginCount += Math.max(0, count);
+      publish();
     },
     observeDocument(doc) {
       if (disposed) return;

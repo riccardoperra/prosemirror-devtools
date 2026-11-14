@@ -38,36 +38,43 @@ function sameValue(left: SerializedValue, right: SerializedValue): boolean {
   );
 }
 
-function selectValue(
-  value: SerializedValue,
-  path: readonly (string | number)[],
-): { readonly kind: "found"; readonly value: SerializedValue } | { readonly kind: "missing" } {
+type SelectedValue =
+  | { readonly kind: "found"; readonly value: SerializedValue }
+  | { readonly kind: "missing"; readonly reason: string };
+
+function describeValue(value: SerializedValue): string {
+  if (Array.isArray(value)) return `an array of ${value.length} items`;
+  if (value === null) return "null";
+  return typeof value === "object" ? "an object" : `a ${typeof value}`;
+}
+
+function selectValue(value: SerializedValue, path: readonly (string | number)[]): SelectedValue {
   let current = value;
-  for (const segment of path) {
+  for (const [index, segment] of path.entries()) {
+    let next: SerializedValue | undefined;
     if (Array.isArray(current)) {
-      if (
-        typeof segment !== "number" ||
-        !Number.isInteger(segment) ||
-        segment < 0 ||
-        segment >= current.length
-      ) {
-        return { kind: "missing" };
+      if (typeof segment === "number" && Number.isInteger(segment) && segment >= 0) {
+        next = current[segment];
       }
-      const next = current[segment];
-      if (next === undefined) return { kind: "missing" };
-      current = next;
     } else if (
       current !== null &&
       typeof current === "object" &&
       typeof segment === "string" &&
       Object.hasOwn(current, segment)
     ) {
-      const next = current[segment];
-      if (next === undefined) return { kind: "missing" };
-      current = next;
-    } else {
-      return { kind: "missing" };
+      next = current[segment];
     }
+    if (next === undefined) {
+      const hint =
+        Array.isArray(current) && typeof segment === "string"
+          ? " Arrays accept only integer indexes."
+          : "";
+      return {
+        kind: "missing",
+        reason: `The path ${JSON.stringify(path)} does not resolve: segment ${index} (${JSON.stringify(segment)}) is not present in ${describeValue(current)}.${hint}`,
+      };
+    }
+    current = next;
   }
   return { kind: "found", value: current };
 }
@@ -121,11 +128,13 @@ export function evaluateProseMirrorInspection(
   }
   const selected = selectValue(result.value, assertion.path);
   const predicate = assertion.predicate;
+  const evidence = [result.point];
+  if (selected.kind === "missing") {
+    return { kind: "failed", reason: selected.reason, evidence };
+  }
   let passed: boolean;
   if (predicate.kind === "exists") {
-    passed = selected.kind === "found";
-  } else if (selected.kind === "missing") {
-    passed = false;
+    passed = true;
   } else {
     switch (predicate.kind) {
       case "equals":
@@ -139,7 +148,6 @@ export function evaluateProseMirrorInspection(
         break;
     }
   }
-  const evidence = [result.point];
   return passed
     ? { kind: "passed", evidence }
     : { kind: "failed", reason: "The observed value does not satisfy the expectation.", evidence };

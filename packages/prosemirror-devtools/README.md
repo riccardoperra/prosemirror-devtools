@@ -217,7 +217,7 @@ adapter to stay active in a production build.
 
 | Section     | Panel             | Contents                                                                                           |
 | ----------- | ----------------- | -------------------------------------------------------------------------------------------------- |
-| Document    | State             | Document tree and positions, node JSON, selection, active marks, and document statistics           |
+| Document    | State             | Document tree, boxes, JSON, and annotated DOM views; node JSON, selection, marks, and statistics   |
 | Document    | Selection         | Anchor/head ancestry, offsets, boundaries, adjacent nodes, ranges, and marks                       |
 | Document    | Schema            | Node specs, mark specs, and the top node type                                                      |
 | Timeline    | Transactions      | Root/appended transactions, document restore, step diffs, changed ranges, and position mapping     |
@@ -237,6 +237,19 @@ Each panel host keeps its editor and inspection selection. Transactions and Perf
 selected dispatch. **Follow live** returns to the current state. Historical document and provider
 reads never substitute live data. The visible Transactions and Rendering names retain the public
 panel IDs `history` and `decorations`.
+
+The State panel offers four document views:
+
+- **Boxes**, the default, draws block nodes as nested boxes and inline content as chips with their
+  marks.
+- **Structure** is the node tree with the positions before and after each node.
+- **JSON** is the document as `Node.toJSON()` returns it.
+- **DOM** is the editor's rendered DOM. Each element is labelled as a node, a mark, a widget, or
+  outside the document, and each label and text node shows its document range. For a state that
+  the editor does not render, the view shows the schema's HTML export without positions.
+
+Hover a row to outline its node in the live editor. To find a node from the editor instead, turn on
+the toolbar picker (⌖), point at the editor, and click. Press Escape to cancel.
 
 Open **Context** to see capture status and installed inspectors. Expand **Technical details** for
 semantic provider values, coverage, and availability reasons. **Copy diagnostic context** copies
@@ -578,10 +591,18 @@ query discovery and returns its cleanup. Enable it only in development with a co
 and MCP setup. It uses the same query catalogue and does not start a server.
 
 The package ships `prosemirror-inspector-integrate`, `prosemirror-inspector-debug`, and
-`prosemirror-inspector-validate` under `skills/`. For Codex projects, copy them into `.agents/skills`
-from the installed package. npm does not activate skills automatically. The
+`prosemirror-inspector-validate` under `skills/`. Installing the package does not activate them.
+pnpm 12 links them into the project's agent skill directory after approval:
+
+```sh
+pnpm add -D prosemirror-inspector
+pnpm approve
+```
+
+With npm, Yarn, or earlier pnpm, use the [`skills` CLI](https://github.com/vercel-labs/skills):
+`npx skills add ./node_modules/prosemirror-inspector`. The
 [agent guide](https://github.com/riccardoperra/prosemirror-devtools/blob/main/docs/agent-validation.md)
-describes installation, prerequisites, browser evidence, and the list and undo scenario.
+describes each installation route, prerequisites, browser evidence, and the list and undo scenario.
 
 `await installProseMirrorWebMCPBridge(client)` registers the same tools for native WebMCP
 browser agents. It returns cleanup, or `null` when unsupported. Registration uses the current
