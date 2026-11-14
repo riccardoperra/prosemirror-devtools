@@ -7,6 +7,7 @@ import {
   resolveProseMirrorDevtoolsPluginMetadata,
 } from "../src/adapters/panel-props";
 import { ProseMirrorDevtoolsCore } from "../src/adapters/core";
+import { activeViewTab } from "./helpers";
 import { resolveProseMirrorDevtoolsSolidProps } from "../src/adapters/solid/panel";
 
 describe("adapter panel props", () => {
@@ -57,17 +58,18 @@ describe("adapter panel props", () => {
     document.body.append(element);
     const core = new ProseMirrorDevtoolsCore();
     core.mount(element, { defaultPanel: "state" });
-    const tabs = Array.from(element.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
-    const schemaTab = tabs.find((tab) => tab.textContent?.includes("Schema"));
+    const schemaTab = Array.from(element.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find(
+      (tab) => tab.textContent === "Schema",
+    );
     expect(schemaTab).toBeDefined();
     schemaTab!.click();
 
     core.update({ theme: "light" });
-    expect(schemaTab?.getAttribute("aria-selected")).toBe("true");
+    expect(activeViewTab(element)?.textContent).toBe("Schema");
     core.update({ activePanel: "history" });
-    expect(schemaTab?.getAttribute("aria-selected")).toBe("false");
+    expect(activeViewTab(element)?.textContent).toBe("Transactions");
     core.update({});
-    expect(schemaTab?.getAttribute("aria-selected")).toBe("true");
+    expect(activeViewTab(element)?.textContent).toBe("Schema");
 
     core.unmount();
     element.remove();

@@ -218,7 +218,7 @@ describe("WebMCP panel", () => {
         execute: ({ wait }: { wait?: boolean }) => (wait ? deferred.promise : "Ready"),
       });
       const tool = registered.get("read_document")!;
-      panel.selectTab("State");
+      panel.selectTab("Document");
       await tool.execute({}, context);
       const pending = tool.execute({ wait: true }, context);
       panel.selectTab("WebMCP");

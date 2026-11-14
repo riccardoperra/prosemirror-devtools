@@ -14,12 +14,12 @@ function revealTab(element: HTMLButtonElement | undefined): void {
 }
 
 export function useTabList({
-  activePanel,
+  activeId,
   onSelect,
   tabs,
 }: {
-  activePanel: Accessor<string>;
-  onSelect: (panelId: string) => void;
+  activeId: Accessor<string>;
+  onSelect: (id: string) => void;
   tabs: Accessor<readonly Readonly<{ id: string }>[]>;
 }): {
   handleKeyDown: (event: KeyboardEvent) => void;
@@ -35,7 +35,7 @@ export function useTabList({
   createEffect(() => {
     // Registry updates can move an already selected extension out of view.
     tabs();
-    revealTab(tabRefs.get(activePanel()));
+    revealTab(tabRefs.get(activeId()));
   });
 
   const handleKeyDown = (event: KeyboardEvent): void => {
@@ -44,7 +44,7 @@ export function useTabList({
     if (currentTabs.length === 0) return;
     const focusedIndex = currentTabs.findIndex(({ id }) => tabRefs.get(id) === event.target);
     const currentIndex =
-      focusedIndex >= 0 ? focusedIndex : currentTabs.findIndex(({ id }) => id === activePanel());
+      focusedIndex >= 0 ? focusedIndex : currentTabs.findIndex(({ id }) => id === activeId());
     let nextIndex: number | null = null;
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       const currentElement = tabRefs.get(currentTabs[currentIndex]?.id ?? "");

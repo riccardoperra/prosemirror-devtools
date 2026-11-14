@@ -39,3 +39,9 @@ export function createTestView(
 export function appendTextTransaction(state: EditorState, text: string) {
   return state.tr.insertText(text, state.doc.content.size - 1);
 }
+
+/** The tab that labels the visible tab panel: a view tab, or the tab of a single-view section. */
+export function activeViewTab(root: ParentNode): HTMLElement | null {
+  const id = root.querySelector('[role="tabpanel"]')?.getAttribute("aria-labelledby");
+  return id ? document.getElementById(id) : null;
+}
