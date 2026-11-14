@@ -1,5 +1,5 @@
 import { Extension, type AnyExtension, type Editor } from "@tiptap/core";
-import { ySyncPluginKey, yUndoPluginKey } from "@tiptap/y-tiptap";
+import { yCursorPluginKey, ySyncPluginKey, yUndoPluginKey } from "@tiptap/y-tiptap";
 import {
   createPluginStateInspector,
   createProseMirrorDevtoolsDiagnostics,
@@ -112,6 +112,9 @@ export const createInvoiceDevtools = (collab: CollabSession | null): AnyExtensio
             { extensionName: "invoiceDomainEvents", pluginKeys: [domainEventsKey] },
             { extensionName: "invoiceReadOnly", pluginKeys: [readOnlyKey] },
             { extensionName: "spotlight", pluginKeys: [spotlightKey] },
+            { extensionName: "collaboration", pluginKeys: [ySyncPluginKey, yUndoPluginKey] },
+            // Its awareness listener plugin has an unexported key, so only the cursor plugin is declared.
+            { extensionName: "collaborationCaret", pluginKeys: [yCursorPluginKey] },
           ],
         }),
         validationInspector,

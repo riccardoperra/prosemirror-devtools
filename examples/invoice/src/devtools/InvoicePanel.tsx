@@ -1,10 +1,11 @@
 import { createReactDevtoolsExtension } from "prosemirror-inspector/react";
 import type { DevtoolsExtensionContext } from "prosemirror-inspector";
-import { NodeSelection, TextSelection } from "prosemirror-state";
+import { NodeSelection, TextSelection, type EditorState } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { useMemo, useSyncExternalStore, type ReactNode } from "react";
 
-import type { CollabSession } from "../collab/session";
+import { peerRange } from "../collab/presence";
+import type { CollabPeer, CollabSession } from "../collab/session";
 import { revealSelection } from "../invoice/commands";
 import { formatMoney, type Cents } from "../invoice/model";
 import { readInvoiceDebugState, type InvoiceDebugState } from "./debug-state";
@@ -201,7 +202,21 @@ function formatBytes(bytes: number): string {
   return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-function CollaborationSection({ collab }: { collab: CollabSession }) {
+function cursorText(state: EditorState, peer: CollabPeer): string {
+  const range = peerRange(state, peer);
+  if (!range) return "no cursor";
+  const at =
+    range.anchor === range.head ? `caret ${range.head}` : `${range.anchor} → ${range.head}`;
+  return peer.self || peer.cursor?.focused ? at : `${at} · away`;
+}
+
+function CollaborationSection({
+  collab,
+  editorState,
+}: {
+  collab: CollabSession;
+  editorState: EditorState;
+}) {
   const snapshot = useSyncExternalStore(collab.subscribe, collab.getSnapshot);
   const facts: readonly (readonly [string, ReactNode])[] = [
     ["Room", <code key="room">{snapshot.room}</code>],
@@ -212,13 +227,17 @@ function CollaborationSection({ collab }: { collab: CollabSession }) {
   ];
   return (
     <Section title="Collaboration" meta={`${snapshot.peers.length} online`}>
-      <ul className="invoice-panel__peers">
+      <ul className="invoice-panel__peers" aria-label="Connected users">
         {snapshot.peers.map((peer) => (
           <li key={peer.clientId}>
             <span className="invoice-panel__peer-dot" style={{ background: peer.color }} />
-            {peer.name}
-            {peer.self ? <small>you</small> : null}
-            <code>{peer.clientId}</code>
+            <span className="invoice-panel__peer-name">
+              {peer.name}
+              <small data-tone={peer.self ? "success" : undefined}>
+                {peer.self ? "local" : "remote"}
+              </small>
+            </span>
+            <code title={`Yjs client ${peer.clientId}`}>{cursorText(editorState, peer)}</code>
           </li>
         ))}
       </ul>
@@ -250,13 +269,13 @@ export function InvoicePanel({
     () => (editorState ? readInvoiceDebugState(editorState, events) : null),
     [editorState, events],
   );
-  if (!view || !debug) {
+  if (!view || !editorState || !debug) {
     return <p className="invoice-panel__empty">The invoice editor is not registered.</p>;
   }
   return (
     <div className="invoice-panel" data-theme={context.host.theme}>
       <div className="invoice-panel__column">
-        {collab ? <CollaborationSection collab={collab} /> : null}
+        {collab ? <CollaborationSection collab={collab} editorState={editorState} /> : null}
         <DocumentSection document={debug.document} />
         <Section title="Find" meta={debug.find.query ? `“${debug.find.query}”` : "idle"}>
           <p className="invoice-panel__empty">
