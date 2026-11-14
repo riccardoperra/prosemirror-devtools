@@ -129,11 +129,45 @@ function collabEffect({
   };
 }
 
+const yjsOrigins: Readonly<
+  Record<string, Pick<DevtoolsDispatchPresentation, "badge" | "listLabel" | "text">>
+> = {
+  local: {
+    badge: "Local · Yjs",
+    text: "This editor made the change. The binding writes it to the Y.Doc.",
+  },
+  "remote-yjs": {
+    badge: "Remote · Yjs",
+    listLabel: "Update applied",
+    text: "The binding applied a Y.Doc update from another client or a provider.",
+  },
+  "yjs-undo-redo": {
+    badge: "Undo · Yjs",
+    listLabel: "Undo or redo applied",
+    text: "The binding applied this client's Y.UndoManager undo or redo.",
+  },
+  "yjs-local-transaction": {
+    badge: "Y.Doc · Yjs",
+    listLabel: "Local transaction applied",
+    text: "The binding applied a local Y.Doc transaction from another writer on this client.",
+  },
+  "yjs-render": {
+    badge: "Render · Yjs",
+    listLabel: "Document rendered",
+    text: "The binding re-rendered the whole Y.Doc into the editor.",
+  },
+  "yjs-snapshot": {
+    badge: "Snapshot · Yjs",
+    listLabel: "Snapshot view changed",
+    text: "The binding requested or cleared a snapshot view.",
+  },
+};
+
 function yjsEffect({
   value: sample,
   record,
 }: DevtoolsDispatchPresentationInput): DevtoolsDispatchPresentation | undefined {
-  if (field(sample, "sample") !== "prosemirror-dispatch" || !record.docChanged) return;
+  if (field(sample, "sample") !== "prosemirror-dispatch") return;
   const update = field(sample, "latestUpdate");
   const direction = field(update, "local");
   const sequence = count(update, "sequence");
@@ -141,6 +175,19 @@ function yjsEffect({
     typeof direction === "boolean" && sequence !== undefined
       ? `Last update observed at capture: ${direction ? "local" : "remote"} #${sequence}.`
       : "No Yjs update had been observed at capture.";
+  const dispatchOrigin = field(sample, "dispatchOrigin");
+  const rootKind =
+    field(dispatchOrigin, "kind") === "available"
+      ? field(field(field(dispatchOrigin, "value"), "root"), "kind")
+      : undefined;
+  const origin =
+    typeof rootKind === "string" && Object.hasOwn(yjsOrigins, rootKind)
+      ? yjsOrigins[rootKind]
+      : undefined;
+  if (origin && (rootKind !== "local" || record.docChanged)) {
+    return { label: "Dispatch origin", ...origin, note: `${latest} ${transportNote(sample)}` };
+  }
+  if (!record.docChanged) return;
   return {
     badge: "Yjs sample",
     label: "Document changed",
