@@ -21,9 +21,25 @@ const callStatus = {
 } as const;
 
 const callSources = {
-  webmcp: "Native WebMCP",
-  "chrome-devtools-mcp": "Chrome DevTools MCP",
+  webmcp: { label: "Native WebMCP", short: "Native" },
+  "chrome-devtools-mcp": { label: "Chrome DevTools MCP", short: "Chrome MCP" },
 } as const;
+
+type BadgeTone = "green" | "yellow" | "red" | "blue" | undefined;
+
+/** Tones for the inspection protocol's result kinds. Unknown kinds stay neutral. */
+const resultTones: Record<string, BadgeTone> = {
+  available: "green",
+  passed: "green",
+  failed: "red",
+  error: "red",
+  expired: "yellow",
+  inconclusive: "yellow",
+  unobserved: "yellow",
+  disabled: "yellow",
+  unavailable: "yellow",
+  truncated: "yellow",
+};
 
 function Payload(props: { label: string; value: string }): JSX.Element {
   return (
@@ -42,6 +58,7 @@ function Payload(props: { label: string; value: string }): JSX.Element {
 function CallDetails(props: { call: WebMcpCall }): JSX.Element {
   const status = () => callStatus[props.call.status];
   const duration = () => ("duration" in props.call ? formatMs(props.call.duration) : "");
+  const resultKind = () => (props.call.status === "succeeded" ? props.call.resultKind : undefined);
   const outcome = () => {
     const call = props.call;
     if (call.status === "succeeded") return <Payload label="Result" value={call.output} />;
@@ -63,9 +80,22 @@ function CallDetails(props: { call: WebMcpCall }): JSX.Element {
         <Show when={duration()}>
           <span class={panelStyles.pmRowDetail}>{duration()}</span>
         </Show>
+        <span class={panelStyles.pmRowDetail} title={callSources[props.call.source].label}>
+          {callSources[props.call.source].short}
+        </span>
         <Badge tone={status().tone}>{status().label}</Badge>
+        <Show when={resultKind()}>
+          {(kind) => (
+            <Badge tone={Object.hasOwn(resultTones, kind()) ? resultTones[kind()] : undefined}>
+              Result {kind()}
+            </Badge>
+          )}
+        </Show>
       </summary>
-      <div class={panelStyles.pmPerformanceNote}>Source {callSources[props.call.source]}</div>
+      <div class={panelStyles.pmPerformanceNote}>
+        Source {callSources[props.call.source].label}. Status reports whether the tool returned; the
+        result kind reports what the evidence established.
+      </div>
       <Payload label="Input" value={props.call.input} />
       {outcome()}
     </details>
@@ -83,7 +113,7 @@ function WebMcpView(props: { recorder: Recorder }): JSX.Element {
     <div class={panelStyles.pmSplit}>
       <section aria-label="Registered WebMCP tools" class={panelStyles.pmPane}>
         <div class={panelStyles.pmPaneHeader}>
-          <span class={panelStyles.pmPaneTitle}>Registered tools</span>
+          <span class={panelStyles.pmPaneTitle}>Native WebMCP tools</span>
         </div>
         <Show
           when={tools().length > 0}
@@ -91,7 +121,7 @@ function WebMcpView(props: { recorder: Recorder }): JSX.Element {
             <p class={panelStyles.pmPerformanceNote}>
               {recorder.isSupported
                 ? "No WebMCP tools registered through this inspector."
-                : "WebMCP is unavailable in this document."}
+                : "Native WebMCP is unavailable in this document, so no tools are registered with the browser. Chrome DevTools MCP calls still appear in the call history."}
             </p>
           }
         >
@@ -123,7 +153,11 @@ function WebMcpView(props: { recorder: Recorder }): JSX.Element {
         </div>
         <Show
           when={calls().size > 0}
-          fallback={<p class={panelStyles.pmPerformanceNote}>No WebMCP calls recorded.</p>}
+          fallback={
+            <p class={panelStyles.pmPerformanceNote}>
+              No calls recorded from native WebMCP or Chrome DevTools MCP.
+            </p>
+          }
         >
           <ul class={panelStyles.pmList}>
             <For each={Array.from(calls().keys()).reverse()}>

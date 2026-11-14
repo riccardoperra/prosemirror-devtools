@@ -132,6 +132,34 @@ describe("WebMCP panel", () => {
       expect(chromeCall?.textContent).toContain("prosemirror_editors");
       expect(chromeCall?.textContent).toContain("Succeeded");
       expect(chromeCall?.textContent).toContain("bridge-editor");
+      expect(nativeCall?.querySelector("summary")?.textContent).toContain("Native");
+      expect(chromeCall?.querySelector("summary")?.textContent).toContain("Chrome MCP");
+
+      const editorsTarget = (result as { editors: [{ target: object }] }).editors[0].target;
+      const execute = (name: string, input: object) =>
+        tools.find((tool) => tool.name === name)!.execute(input);
+      const inspected = execute("prosemirror_inspect", {
+        target: editorsTarget,
+        query: { kind: "document" },
+      }) as { point: object };
+      view.dispatch(view.state.tr.insertText("!"));
+      execute("prosemirror_read", { point: inspected.point, query: { kind: "selection" } });
+      execute("prosemirror_check", {
+        request: { target: editorsTarget, query: { kind: "document" } },
+        assertion: {
+          path: ["missing"],
+          predicate: { kind: "equals", expected: 1 },
+          completeness: "value",
+        },
+      });
+      const summaries = () => panel.calls().map((call) => call.querySelector("summary")!);
+      const [check, read, inspect] = summaries();
+      expect(inspect?.textContent).toContain("Result available");
+      expect(read?.textContent).toContain("Succeeded");
+      expect(read?.textContent).toContain("Result expired");
+      expect(read?.querySelector('[data-tone="yellow"]')?.textContent).toBe("Result expired");
+      expect(check?.querySelector('[data-tone="red"]')?.textContent).toBe("Result failed");
+      expect(summaries()[3]?.textContent).not.toContain("Result");
     } finally {
       disposeChrome();
       panel.dispose();
@@ -288,7 +316,8 @@ describe("WebMCP panel", () => {
     const panel = mountPanel(inspector);
     try {
       expect(inspector.isSupported).toBe(false);
-      expect(panel.tools()).toContain("WebMCP is unavailable in this document");
+      expect(panel.tools()).toContain("Native WebMCP is unavailable in this document");
+      expect(panel.tools()).toContain("Chrome DevTools MCP calls still appear");
       await expect(
         inspector.registerTool({ name: "test_tool", description: "Test tool", execute: () => {} }),
       ).rejects.toThrow("WebMCP is unavailable");

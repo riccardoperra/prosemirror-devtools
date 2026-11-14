@@ -21,7 +21,7 @@ interface Registration {
 
 type CallOutcome =
   | { status: "canceled" }
-  | { status: "succeeded"; output: string }
+  | { status: "succeeded"; output: string; resultKind?: string }
   | { status: "failed"; error: string };
 
 type CallSource = "webmcp" | "chrome-devtools-mcp";
@@ -68,6 +68,18 @@ function preview(value: unknown): string {
     return truncate(JSON.stringify(copy(value, 0), null, 2), 4_000);
   } catch {
     return "[Unavailable preview]";
+  }
+}
+
+/** Reads the top-level `kind` of a tool result, such as `expired` or `inconclusive`. */
+function resultKind(value: unknown): string | undefined {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return undefined;
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(value, "kind");
+    const kind: unknown = descriptor && "value" in descriptor ? descriptor.value : undefined;
+    return typeof kind === "string" && kind.length > 0 ? truncate(kind, 40) : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -129,7 +141,12 @@ export function createWebMcpRecorder(options: WebMcpInspectorOptions) {
     return {
       cancel: () => finish(() => ({ status: "canceled" })),
       succeed: (output: unknown) =>
-        finish(() => ({ status: "succeeded", output: preview(output) })),
+        finish(() => {
+          const kind = resultKind(output);
+          return kind === undefined
+            ? { status: "succeeded", output: preview(output) }
+            : { status: "succeeded", output: preview(output), resultKind: kind };
+        }),
       fail: (error: unknown) => finish(() => ({ status: "failed", error: errorPreview(error) })),
     };
   }
